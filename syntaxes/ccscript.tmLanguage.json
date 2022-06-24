@@ -1,0 +1,428 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "CCScript",
+  "fileTypes": ["ccs"],
+  "patterns": [
+    {
+      "include": "#statement"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.block",
+          "begin": "(/\\*)",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.begin.ccscript"
+            }
+          },
+          "end": "(\\*/)",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.end.ccscript"
+            }
+          }
+        },
+        {
+          "name": "comment.line.double-slash.ccs",
+          "begin": "(//)",
+          "end": "$\\n?",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment"
+            }
+          }
+        }
+      ]
+    },
+    "template-expression": {
+      "begin": "\\{",
+      "end": "(\\})|((?:[^\\\n])$)",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.section.embedded.begin.ccs"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.end.ccs"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#expression"
+        }
+      ]
+    },
+    "expression": {
+      "patterns": [
+        {
+          "name": "meta.flag.ccs",
+          "match": "\\b(flag)\\s+(0x[0-9A-Fa-f]+|[0-9]+)\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.ccs"
+            },
+            "2": {
+              "name": "constant.numeric.ccs"
+            }
+          }
+        },
+        {
+          "match": "\\b(0x[0-9A-Fa-f]+|[0-9]+)\\b",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.ccs"
+            }
+          }
+        },
+        {
+          "match": "\\b((long|short|byte))+(\\s*((\\[)([0-9]+)(\\])))?",
+          "captures": {
+            "1": {
+              "name": "storage.type.ccs"
+            },
+            "5": {
+              "name": "punctuation.section.array.begin.ccs"
+            },
+            "6": {
+              "name": "constant.numeric.ccs"
+            },
+            "7": {
+              "name": "punctuation.section.array.end.ccs"
+            }
+          }
+        },
+        {
+          "name": "meta.command.invocation.ccs",
+          "begin": "\\b([a-zA-Z_][a-zA-Z0-9_]*)((\\.)([a-zA-Z_][a-zA-Z0-9_]*))?(\\()",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.ccs"
+            },
+            "3": {
+              "name": "punctuation.accessor.ccs"
+            },
+            "4": {
+              "name": "entity.name.function.ccs"
+            },
+            "5": {
+              "name": "punctuation.section.parameters.begin.ccs"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#statement"
+            },
+            {
+              "match": ",",
+              "name": "punctuation.separator.parameters.ccs"
+            }
+          ],
+          "end": "(\\))",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.section.parameters.end.ccs"
+            }
+          }
+        },
+        {
+          "name": "meta.label.ccs",
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)(\\:)",
+          "captures": {
+            "1": {
+              "name": "variable.other.ccs"
+            },
+            "2": {
+              "name": "punctuation.separator.label.ccs"
+            }
+          }
+        },
+        {
+          "name": "meta.identifier.expression.ccs",
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)(\\.)([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+          "captures": {
+            "1": {
+              "name": "variable.other.module.ccs"
+            },
+            "3": {
+              "name": "punctuation.accessor.ccs"
+            },
+            "4": {
+              "name": "variable.other.property.ccs"
+            }
+          }
+        },
+        {
+          "name": "meta.identifier.ccs",
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+          "captures": {
+            "1": {
+              "name": "variable.other.ccs"
+            }
+          }
+        },
+        {
+          "name": "meta.string.ccs",
+          "begin": "(\")",
+          "end": "(\")|((?:[^\\\n])$)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.template.begin.ccs"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.template.end.ccs"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#template-expression"
+            },
+            {
+              "name": "meta.sring.controlcodes.ccs",
+              "begin": "\\[",
+              "end": "(\\])|((?:[^\\\n])$)",
+              "beginCaptures": {
+                "0": {
+                  "name": "punctuation.section.embedded.begin.ccs"
+                }
+              },
+              "endCaptures": {
+                "1": {
+                  "name": "punctuation.section.embedded.end.ccs"
+                }
+              },
+              "patterns": [
+                {
+                  "match": "\\b[0-9a-fA-F]{2}\\b",
+                  "name": "constant.numeric.hex.ccs"
+                },
+                {
+                  "include": "#template-expression"
+                }
+              ]
+            },
+            {
+              "name": "meta.string.pause.ccs",
+              "match": "\\b([\\|/])\\b",
+              "captures": {
+                "1": {
+                  "name": "keyword.operator.ccs"
+                }
+              }
+            },
+            {
+              "match": "[^\\[\\{\\}\"\\|/]+",
+              "name": "string.quoted.double.template.ccs"
+            }
+          ]
+        }
+      ]
+    },
+    "statement": {
+      "patterns": [
+        {
+          "match": "\\b(if|else)\\b",
+          "name": "keyword.control.conditional.ccs"
+        },
+        {
+          "match": "\\b(next|end|default)\\b",
+          "name": "keyword.control.ccs"
+        },
+        {
+          "match": "\\b(or|and|not)\\b",
+          "name": "keyword.operator.logical.ccs"
+        },
+        {
+          "match": "\\b(true|false)\\b",
+          "name": "constant.language.boolean.ccs"
+        },
+        {
+          "name": "meta.block.ccs",
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.begin.bracket.curly.ccs"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.end.bracket.curly.ccs"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#statement"
+            }
+          ]
+        },
+        {
+          "match": "\\b(ROMTBL)(\\[)\\s*(0x[0-9A-Fa-f]+|[0-9]+)\\s*(,)\\s*(0x[0-9A-Fa-f]+|[0-9]+)\\s*(,)\\s*(0x[0-9A-Fa-f]+|[0-9]+)\\s*(\\])\\s*(=)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.ccs"
+            },
+            "2": {
+              "name": "punctuation.section.parameters.begin.ccs"
+            },
+            "3": {
+              "name": "constant.numeric.ccs"
+            },
+            "4": {
+              "name": "punctuation.separator.parameters.ccs"
+            },
+            "5": {
+              "name": "constant.numeric.ccs"
+            },
+            "6": {
+              "name": "punctuation.separator.parameters.ccs"
+            },
+            "7": {
+              "name": "constant.numeric.ccs"
+            },
+            "8": {
+              "name": "punctuation.section.parameters.end.ccs"
+            },
+            "9": {
+              "name": "keyword.operator.assignment.ccs"
+            }
+          }
+        },
+        {
+          "match": "\\b(ROM)(\\[)\\s*(0x[0-9A-Fa-f]+|[0-9]+)\\s*(\\])\\s*(=)\\s*",
+          "captures": {
+            "1": {
+              "name": "keyword.control.ccs"
+            },
+            "2": {
+              "name": "punctuation.section.array.begin.ccs"
+            },
+            "3": {
+              "name": "constant.numeric.ccs"
+            },
+            "4": {
+              "name": "punctuation.section.array.end.ccs"
+            },
+            "5": {
+              "name": "keyword.operator.ccs"
+            }
+          }
+        },
+        {
+          "match": "\\b(ROM|ROMTBL)\\b",
+          "name": "keyword.control.ccs"
+        },
+        {
+          "match": "\\b(define)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*",
+          "captures": {
+            "1": {
+              "name": "storage.type.ccs"
+            },
+            "2": {
+              "name": "variable.other.constant.ccs"
+            },
+            "3": {
+              "name": "operator.assignment.ccs"
+            }
+          }
+        },
+        {
+          "name": "meta.menu.ccs",
+          "match": "\\b(menu)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.control.ccs"
+            }
+          }
+        },
+        {
+          "name": "meta.menu.ccs",
+          "begin": "\\b(menu)\\s+(0x[0-9A-Fa-f]+|[0-9]+)\\s*(\\{)",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.control.ccs"
+            },
+            "2": {
+              "name": "constant.numeric.ccs"
+            },
+            "3": {
+              "name": "punctuation.section.block.begin.bracket.curly.ccs"
+            }
+          },
+          "end": "\\}",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.section.block.end.bracket.curly.ccs"
+            }
+          },
+          "patterns": [
+            {
+              "match": "\\bdefault\\b",
+              "name": "keyword.control.ccs"
+            },
+            {
+              "match": "\\:",
+              "name": "punctuation.separator.label.ccs"
+            },
+            {
+              "include": "#statement"
+            }
+          ]
+        },
+        {
+          "begin": "\\b(command)\\s+([a-zA-Z_][a-zA-Z0-9_]*)(\\()",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.type.function.ccs"
+            },
+            "2": {
+              "name": "entity.name.function.ccs"
+            },
+            "3": {
+              "name": "punctuation.definition.parameters.begin.ccs"
+            }
+          },
+          "end": "\\)",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.parameters.end.ccs"
+            }
+          },
+          "patterns": [
+            {
+              "match": "\\b([a-zA-Z_][a-zA-Z_0-9]*)\\b",
+              "name": "variable.parameter.ccs"
+            },
+            {
+              "match": ",",
+              "name": "punctuation.separator.parameters.ccs"
+            }
+          ]
+        },
+        {
+          "match": "\\b(command)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "storage.type.function.ccs"
+            },
+            "2": {
+              "name": "entity.name.function.ccs"
+            }
+          }
+        },
+        {
+          "include": "#expression"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.ccs"
+}

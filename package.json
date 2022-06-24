@@ -1,0 +1,74 @@
+{
+    "name": "coilsnake-vscode",
+	"displayName": "CoilSnake",
+	"description": "CoilSnake project and CCScript language support",
+	"version": "1.0.0",
+    "publisher": "joelday",
+	"preview": true,
+	"engines": {
+		"vscode": "^1.68.0"
+	},
+    "icon": "images/icon.png",
+    "license": "MIT",
+    "keywords": ["EarthBound", "Mother 2", "CCScript", "Modding", "PK Hack"],
+	"categories": [
+		"Programming Languages"
+	],
+	"activationEvents": [
+		"onLanguage:ccscript"
+	],
+	"main": "./dist/extension.js",
+	"contributes": {
+        "languages": [{
+            "id": "ccscript",
+            "aliases": ["CCScript", "ccscript"],
+            "extensions": [".ccs"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "ccscript",
+            "scopeName": "source.ccs",
+            "path": "./syntaxes/ccscript.tmLanguage.json"
+        }]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run package",
+		"compile": "webpack",
+		"watch": "webpack --watch",
+		"package": "webpack --mode production --devtool hidden-source-map",
+		"compile-tests": "tsc -p . --outDir out",
+		"watch-tests": "tsc -p . -w --outDir out",
+		"pretest": "npm run compile-tests && npm run compile && npm run lint",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.68.0",
+		"@types/glob": "^7.2.0",
+		"@types/mocha": "^9.1.1",
+		"@types/node": "18.0.0",
+		"@typescript-eslint/eslint-plugin": "^5.29.0",
+		"@typescript-eslint/parser": "^5.29.0",
+		"eslint": "^8.18.0",
+		"glob": "^8.0.3",
+		"mocha": "^10.0.0",
+		"typescript": "^4.7.4",
+		"ts-loader": "^9.3.1",
+		"webpack": "^5.73.0",
+		"webpack-cli": "^4.10.0",
+		"@vscode/test-electron": "^2.1.4"
+	},
+    "bugs": {
+        "url": "https://github.com/joelday/coilsnake-vscode/issues",
+        "email": "joelday@gmail.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/joelday/coilsnake-vscode.git"
+    },
+    "homepage": "https://github.com/joelday/coilsnake-vscode",
+    "author": {
+        "name": "Joel Day",
+        "url": "https://github.com/joelday"
+    }
+}
