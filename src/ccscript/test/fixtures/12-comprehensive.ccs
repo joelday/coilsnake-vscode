@@ -1,0 +1,133 @@
+// Comprehensive example combining all features
+import std
+
+// Constants
+define PLAYER_HP_MAX = 999
+define BATTLE_BASE_ADDR = 0x10000
+define DEBUG_MODE = false
+
+// Entry point
+main:
+    call initialize_game
+    goto main_loop
+
+// Game initialization
+command initialize_game {
+    // Set up initial flags
+    set flag 1
+    set flag 2
+    unset flag 100
+    
+    // Initialize ROM data
+    rom[BATTLE_BASE_ADDR] = 0xFF
+    rom[BATTLE_BASE_ADDR + 1] = PLAYER_HP_MAX
+    
+    // ROM table setup
+    romtbl[0x20000, 8, 0] = 100
+    romtbl[0x20000, 8, 1] = 200
+}
+
+// Main game loop
+main_loop:
+    call process_input
+    call update_game_state
+    call render_frame
+    goto main_loop
+
+// Input processing
+command process_input {
+    menu {
+        "Start Game": goto start_game
+        "Options": call show_options
+        "Quit": goto quit_game
+        default "Cancel": goto main_loop
+    }
+}
+
+// Game state updates
+command update_game_state {
+    if flag 10 and flag 11 {
+        set flag 20
+        call trigger_event
+    }
+    
+    if not flag 30 {
+        unset flag 31
+    } else {
+        // Complex nested logic
+        if byte[0] BATTLE_BASE_ADDR > 50 {
+            call heal_player
+            rom[0x5000] = flag 40
+        }
+    }
+}
+
+// Event handling
+command trigger_event(event_id) {
+    // String with template
+    define message = "Event {event_id} triggered!"
+    std.print(message)
+    
+    // Conditional handling
+    if event_id == 1 {
+        call event_handler_1
+    } else if event_id == 2 {
+        call event_handler_2
+    } else {
+        std.print("Unknown event")
+    }
+}
+
+// Helper commands
+command heal_player {
+    rom[0x1000] = PLAYER_HP_MAX
+    std.print("Player healed!")
+}
+
+command show_options {
+    menu 2 {
+        "Sound: On": set flag 200
+        "Sound: Off": unset flag 200
+        "Difficulty: Easy": rom[0x6000] = 1
+        "Difficulty: Hard": rom[0x6000] = 3
+    }
+    goto main_loop
+}
+
+// Event handlers
+event_handler_1:
+    set flag 50
+    call std.wait(30)
+    goto main_loop
+
+event_handler_2:
+    unset flag 50
+    goto main_loop
+
+// Game start
+start_game:
+    call initialize_game
+    set flag 100
+    // Binary operators and complex expressions
+    define score = (10 + 20) * 3 - 5
+    define check = (flag 1 or flag 2) and not flag 3
+    goto gameplay_loop
+
+gameplay_loop:
+    call update_game_state
+    call render_frame
+    
+    if flag 100 {
+        goto gameplay_loop
+    } else {
+        goto game_over
+    }
+
+game_over:
+    std.print("Game Over")
+    goto main_loop
+
+quit_game:
+    std.print("Thanks for playing!")
+
+render_frame:

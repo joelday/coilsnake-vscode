@@ -1,0 +1,36 @@
+// If statements
+if flag 1 {
+    goto start
+}
+
+// If-else statements
+if flag 2 {
+    set flag 3
+} else {
+    unset flag 3
+}
+
+// Nested if statements
+if flag 4 {
+    if flag 5 {
+        set flag 6
+    } else {
+        unset flag 6
+    }
+}
+
+// If with complex conditions
+if (flag 7 and flag 8) or flag 9 {
+    call common_routine
+}
+
+// If without braces
+if flag 10
+    set flag 11
+
+if flag 12
+    set flag 13
+else
+    unset flag 13
+
+start:

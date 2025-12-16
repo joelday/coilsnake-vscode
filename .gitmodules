@@ -1,0 +1,3 @@
+[submodule "coilsnake"]
+	path = coilsnake
+	url = https://github.com/pk-hack/CoilSnake.git

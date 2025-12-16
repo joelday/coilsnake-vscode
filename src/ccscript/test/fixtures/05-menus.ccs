@@ -1,0 +1,47 @@
+// Menu with column specification
+menu 2 {
+    "Option 1": goto opt1
+    "Option 2": goto opt2
+    "Option 3": goto opt3
+}
+
+// Menu without column specification
+menu {
+    "Yes": set flag 1
+    "No": unset flag 1
+}
+
+// Menu with default option
+menu {
+    "First": call handler1
+    "Second": call handler2
+    default "Cancel": goto cancelled
+}
+
+// Menu with complex statements
+menu 3 {
+    "Save": {
+        set flag 10
+        call save_game
+        goto main_menu
+    }
+    "Load": {
+        call load_game
+        goto main_menu
+    }
+    "Quit": {
+        unset flag 10
+        goto title_screen
+    }
+}
+
+opt1:
+opt2:
+opt3:
+handler1:
+handler2:
+cancelled:
+main_menu:
+save_game:
+load_game:
+title_screen:

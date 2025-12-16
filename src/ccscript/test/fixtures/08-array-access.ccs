@@ -1,0 +1,26 @@
+// Array access expressions
+byte[0] 0x1000
+byte[1] 0x2000
+short[0] 0x3000
+long[0] 0x4000
+
+// Array access without index
+byte 0x5000
+short 0x6000
+long 0x7000
+
+// Array access in expressions
+define val1 = byte[0] 0x8000
+define val2 = short[5] 0x9000
+define val3 = long[10] 0xA000
+
+// Array access in statements
+rom[0xB000] = byte[0] 0xC000
+rom[0xD000] = short[2] 0xE000
+
+// Complex array expressions
+if byte[3] 0xF000 == 0xFF {
+    set flag 1
+}
+
+define result = (byte[0] 0x1000) + (byte[1] 0x1000)

@@ -1,0 +1,31 @@
+// Flag expressions
+define f1 = flag 0
+define f2 = flag 255
+define f3 = flag 1000
+
+// Flag in conditions
+if flag 10 {
+    set flag 11
+}
+
+if not flag 20 {
+    unset flag 21
+}
+
+// Flag in complex expressions
+define complex_flag = (flag 5 and flag 6) or flag 7
+
+// Flag comparisons
+if flag 30 == true {
+    goto next
+}
+
+if flag 40 != false {
+    call handler
+}
+
+// Flag in ROM writes
+rom[0x1000] = flag 50
+
+next:
+handler:

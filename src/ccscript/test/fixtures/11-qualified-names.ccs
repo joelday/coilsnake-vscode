@@ -1,0 +1,22 @@
+// Module-qualified names
+import std
+
+// Qualified name in call expression
+std.print("Hello")
+std.wait(60)
+
+// Qualified name in assignment
+define std_value = std.constant
+
+// Multiple module references
+game.init()
+game.save()
+game.load()
+
+// Nested qualified calls
+if game.check_flag(5) {
+    ui.show_message("Flag is set")
+}
+
+// Qualified names in complex expressions
+define result = math.add(10, 20) + math.multiply(5, 3)
