@@ -95,7 +95,7 @@ describe('Parser', () => {
             if (cmd.kind === SyntaxKind.CommandDeclaration) {
                 expect(cmd.commandKeyword.kind).toBe(SyntaxKind.CommandKeyword);
                 expect(cmd.identifier.text).toBe('myCommand');
-                expect(cmd.parameters).toHaveLength(0);
+                expect(cmd.parameterList).toBeUndefined();
                 expect(cmd.body.kind).toBe(SyntaxKind.BlockStatement);
             }
         });
@@ -105,11 +105,12 @@ describe('Parser', () => {
             const cmd = tree.statements[0];
             expect(cmd.kind).toBe(SyntaxKind.CommandDeclaration);
             if (cmd.kind === SyntaxKind.CommandDeclaration) {
-                expect(cmd.parameters).toHaveLength(3);
-                if (cmd.parameters) {
-                    expect(cmd.parameters[0]?.text).toBe('x');
-                    expect(cmd.parameters[1]?.text).toBe('y');
-                    expect(cmd.parameters[2]?.text).toBe('z');
+                expect(cmd.parameterList).toBeDefined();
+                expect(cmd.parameterList?.parameters).toHaveLength(3);
+                if (cmd.parameterList) {
+                    expect(cmd.parameterList.parameters[0]?.text).toBe('x');
+                    expect(cmd.parameterList.parameters[1]?.text).toBe('y');
+                    expect(cmd.parameterList.parameters[2]?.text).toBe('z');
                 }
             }
         });
@@ -427,7 +428,7 @@ describe('Parser', () => {
             if (expr.kind === SyntaxKind.ExpressionStatement) {
                 expect(expr.expression.kind).toBe(SyntaxKind.CallExpression);
                 if (expr.expression.kind === SyntaxKind.CallExpression) {
-                    expect(expr.expression.arguments).toHaveLength(0);
+                    expect(expr.expression.argumentList.arguments).toHaveLength(0);
                 }
             }
         });
@@ -438,7 +439,7 @@ describe('Parser', () => {
             if (expr.kind === SyntaxKind.ExpressionStatement) {
                 expect(expr.expression.kind).toBe(SyntaxKind.CallExpression);
                 if (expr.expression.kind === SyntaxKind.CallExpression) {
-                    expect(expr.expression.arguments).toHaveLength(3);
+                    expect(expr.expression.argumentList.arguments).toHaveLength(3);
                 }
             }
         });
@@ -449,7 +450,7 @@ describe('Parser', () => {
             if (expr.kind === SyntaxKind.ExpressionStatement) {
                 expect(expr.expression.kind).toBe(SyntaxKind.CallExpression);
                 if (expr.expression.kind === SyntaxKind.CallExpression) {
-                    expect(expr.expression.arguments[0]?.kind).toBe(SyntaxKind.CallExpression);
+                    expect(expr.expression.argumentList.arguments[0]?.kind).toBe(SyntaxKind.CallExpression);
                 }
             }
         });

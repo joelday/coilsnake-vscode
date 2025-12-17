@@ -256,11 +256,11 @@ describe('RedNode', () => {
     describe('Position consistency', () => {
         it('should have consistent positions across tree', () => {
             const root = parseAndCreateRedTree('define x = 1\ndefine y = 2');
-            
+
             function validatePositions(node: RedNode): boolean {
                 const children = node.getChildren();
                 let expectedPosition = node.position;
-                
+
                 for (const child of children) {
                     if (child.position !== expectedPosition) {
                         return false;
@@ -271,17 +271,17 @@ describe('RedNode', () => {
                     // Position advances by fullWidth (including trivia)
                     expectedPosition += child.fullWidth;
                 }
-                
+
                 return true;
             }
-            
+
             expect(validatePositions(root)).toBe(true);
         });
 
         it('should have no gaps in positions', () => {
             const root = parseAndCreateRedTree('define x = 1');
             const children = root.getChildren();
-            
+
             for (let i = 1; i < children.length; i++) {
                 const prev = children[i - 1];
                 const curr = children[i];

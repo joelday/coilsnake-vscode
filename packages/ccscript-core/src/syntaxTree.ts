@@ -8,7 +8,7 @@
 
 import { Scanner } from './scanner';
 import { Parser } from './parser';
-import { createRedTree, RedSourceFile, RedNode, RedToken } from './redNode';
+import { createRedTree, RedSourceFile, RedNode, RedToken, isRedToken } from './redNode';
 import { SyntaxKind } from './syntax/syntaxKind';
 import { GreenSourceFile, Diagnostic } from './syntax/types';
 import { Binder, BindingResult, SemanticDiagnostic } from './semantic/binder';
@@ -194,7 +194,7 @@ export class SyntaxTree {
      */
     getTokenAtPosition(position: number): RedToken | undefined {
         const node = this.getNodeAtPosition(position);
-        if (node instanceof RedToken) {
+        if (isRedToken(node)) {
             return node;
         }
 

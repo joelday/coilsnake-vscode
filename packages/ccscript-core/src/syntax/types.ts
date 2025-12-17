@@ -70,8 +70,7 @@ export interface GreenToken extends GreenNode {
  * Trivia - whitespace and comments
  */
 export interface GreenTrivia {
-    readonly kind: SyntaxKind.WhitespaceTrivia | SyntaxKind.NewLineTrivia |
-    SyntaxKind.SingleLineCommentTrivia | SyntaxKind.MultiLineCommentTrivia;
+    readonly kind: SyntaxKind;
     readonly text: string;
     readonly width: number;
 }
@@ -100,6 +99,27 @@ export interface RedNode<G extends GreenNode = GreenNode> {
     // Navigation
     getChildAt(index: number): RedNode | null;
     getChildren(): readonly RedNode[];
+}
+
+/**
+ * Interface for nodes that have text content (tokens)
+ */
+export interface IHasText {
+    readonly text: string;
+}
+
+/**
+ * Interface for nodes that have associated trivia (whitespace/comments)
+ */
+export interface IHasTrivia {
+    getLeadingTrivia(): readonly GreenTrivia[];
+    getTrailingTrivia(): readonly GreenTrivia[];
+}
+
+/**
+ * Interface for red token nodes - combines RedNode with text and trivia
+ */
+export interface IRedToken extends RedNode<GreenToken>, IHasText, IHasTrivia {
 }
 
 // ========== Visitor Pattern ==========
@@ -178,6 +198,26 @@ export interface GreenMenuOption extends GreenNode {
     readonly statement: GreenStatement;
 }
 
+/**
+ * Parameter list - encapsulates parameter identifiers with comma separators
+ */
+export interface GreenParameterList extends GreenNode {
+    readonly kind: SyntaxKind.ParameterList;
+    readonly openParen: GreenToken;
+    readonly parameters: readonly GreenToken[];  // identifiers only
+    readonly closeParen: GreenToken;
+}
+
+/**
+ * Argument list - encapsulates argument expressions with comma separators
+ */
+export interface GreenArgumentList extends GreenNode {
+    readonly kind: SyntaxKind.ArgumentList;
+    readonly openParen: GreenToken;
+    readonly arguments: readonly GreenExpression[];  // expressions only
+    readonly closeParen: GreenToken;
+}
+
 export interface GreenLabelDeclaration extends GreenNode {
     readonly kind: SyntaxKind.LabelDeclaration;
     readonly identifier: GreenToken;
@@ -204,9 +244,7 @@ export interface GreenCommandDeclaration extends GreenNode {
     readonly kind: SyntaxKind.CommandDeclaration;
     readonly commandKeyword: GreenToken;
     readonly identifier: GreenToken;
-    readonly openParen?: GreenToken;
-    readonly parameters?: readonly GreenToken[];  // identifiers
-    readonly closeParen?: GreenToken;
+    readonly parameterList?: GreenParameterList;
     readonly body: GreenStatement;
 }
 
@@ -295,9 +333,7 @@ export interface GreenQualifiedNameExpression extends GreenNode {
 export interface GreenCallExpression extends GreenNode {
     readonly kind: SyntaxKind.CallExpression;
     readonly target: GreenIdentifierExpression | GreenQualifiedNameExpression;
-    readonly openParen: GreenToken;
-    readonly arguments: readonly GreenExpression[];
-    readonly closeParen: GreenToken;
+    readonly argumentList: GreenArgumentList;
 }
 
 export interface GreenBinaryExpression extends GreenNode {
@@ -364,6 +400,8 @@ export type GreenNodeOfKind<K extends SyntaxKind> =
     K extends SyntaxKind.IfStatement ? GreenIfStatement :
     K extends SyntaxKind.MenuStatement ? GreenMenuStatement :
     K extends SyntaxKind.MenuOption ? GreenMenuOption :
+    K extends SyntaxKind.ParameterList ? GreenParameterList :
+    K extends SyntaxKind.ArgumentList ? GreenArgumentList :
     K extends SyntaxKind.LabelDeclaration ? GreenLabelDeclaration :
     K extends SyntaxKind.ConstantDeclaration ? GreenConstantDeclaration :
     K extends SyntaxKind.CommandDeclaration ? GreenCommandDeclaration :

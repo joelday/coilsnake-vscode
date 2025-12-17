@@ -11,8 +11,9 @@ export { Parser } from './src/parser';
 export { SyntaxTree, TreeStatistics } from './src/syntaxTree';
 
 // Syntax Tree
-export { RedNode, RedToken, RedSourceFile, createRedNode, createRedTree } from './src/redNode';
+export { RedNode, RedToken, RedSourceFile, createRedNode, createRedTree, isRedToken } from './src/redNode';
 export { SyntaxKind } from './src/syntax/syntaxKind';
+export type { IRedToken, IHasText, IHasTrivia } from './src/syntax/types';
 export * from './src/syntax/types';
 
 // Semantic Analysis

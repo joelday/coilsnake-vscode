@@ -17,19 +17,21 @@ import {
     GreenToken,
     GreenSourceFile,
     RedNode as IRedNode,
+    IRedToken,
 } from './syntax/types';
+import * as Syntax from './syntax/syntaxKind';
 
 /**
  * Base red node wrapping a green node with position
  */
 export class RedNode implements IRedNode {
     private childrenCache?: RedNode[];
-    
+
     constructor(
         public readonly green: GreenNode,
         public readonly parent: RedNode | null,
         public readonly position: number
-    ) {}
+    ) { }
 
     /**
      * Get the syntax kind of this node
@@ -74,9 +76,9 @@ export class RedNode implements IRedNode {
      */
     get span(): { start: number; length: number } {
         const leadingWidth = this.getLeadingTriviaWidth();
-        return { 
-            start: this.position + leadingWidth, 
-            length: this.width 
+        return {
+            start: this.position + leadingWidth,
+            length: this.width
         };
     }
 
@@ -165,13 +167,13 @@ export class RedNode implements IRedNode {
      */
     getChildAtPosition(pos: number): RedNode | null {
         const children = this.getChildren();
-        
+
         for (const child of children) {
             if (pos >= child.position && pos < child.end) {
                 return child;
             }
         }
-        
+
         return null;
     }
 
@@ -186,7 +188,7 @@ export class RedNode implements IRedNode {
             }
             return findDeepest(child);
         };
-        
+
         return findDeepest(this);
     }
 
@@ -196,12 +198,12 @@ export class RedNode implements IRedNode {
     getAncestors(): RedNode[] {
         const ancestors: RedNode[] = [];
         let currentNode = this.parent;
-        
+
         while (currentNode) {
             ancestors.push(currentNode);
             currentNode = currentNode.parent;
         }
-        
+
         return ancestors;
     }
 
@@ -217,7 +219,7 @@ export class RedNode implements IRedNode {
      */
     getDescendants(): RedNode[] {
         const descendants: RedNode[] = [];
-        
+
         const visit = (node: RedNode) => {
             const children = node.getChildren();
             for (const child of children) {
@@ -225,7 +227,7 @@ export class RedNode implements IRedNode {
                 visit(child);
             }
         };
-        
+
         visit(this);
         return descendants;
     }
@@ -235,9 +237,9 @@ export class RedNode implements IRedNode {
      */
     getTokens(): RedToken[] {
         const tokens: RedToken[] = [];
-        
+
         const visit = (node: RedNode) => {
-            if (node instanceof RedToken) {
+            if (isRedToken(node)) {
                 tokens.push(node);
             } else {
                 for (const child of node.getChildren()) {
@@ -245,7 +247,7 @@ export class RedNode implements IRedNode {
                 }
             }
         };
-        
+
         visit(this);
         return tokens;
     }
@@ -257,7 +259,7 @@ export class RedNode implements IRedNode {
         if (!this.parent) {
             return null;
         }
-        
+
         const siblings = this.parent.getChildren();
         const index = siblings.indexOf(this);
         return index > 0 ? siblings[index - 1] ?? null : null;
@@ -270,7 +272,7 @@ export class RedNode implements IRedNode {
         if (!this.parent) {
             return null;
         }
-        
+
         const siblings = this.parent.getChildren();
         const index = siblings.indexOf(this);
         return index >= 0 && index < siblings.length - 1 ? siblings[index + 1] ?? null : null;
@@ -321,19 +323,19 @@ export class RedNode implements IRedNode {
     private createChildren(): RedNode[] {
         const children: RedNode[] = [];
         const greenChildren = this.green.children;
-        
+
         if (!greenChildren) {
             return children;
         }
-        
+
         let childPosition = this.position;
-        
+
         for (const greenChild of greenChildren) {
             const redChild = createRedNode(greenChild, this, childPosition);
             children.push(redChild);
             childPosition += greenChild.fullWidth;  // Use fullWidth to include trivia
         }
-        
+
         return children;
     }
 
@@ -351,7 +353,10 @@ export class RedNode implements IRedNode {
 /**
  * Red node for tokens (leaf nodes with text)
  */
-export class RedToken extends RedNode {
+export class RedToken extends RedNode implements IRedToken {
+    // Override to narrow type
+    declare readonly green: GreenToken;
+
     constructor(
         green: GreenToken,
         parent: RedNode | null,
@@ -364,7 +369,7 @@ export class RedToken extends RedNode {
      * Get token text
      */
     get text(): string {
-        return (this.green as GreenToken).text;
+        return this.green.text;
     }
 
     /**
@@ -431,12 +436,12 @@ export function createRedNode(
     if ('text' in green) {
         return new RedToken(green as GreenToken, parent, position);
     }
-    
+
     // Check if it's a source file
     if (green.kind === SyntaxKind.SourceFile) {
         return new RedSourceFile(green as GreenSourceFile, position);
     }
-    
+
     // Default red node for all other node types
     return new RedNode(green, parent, position);
 }
@@ -446,4 +451,14 @@ export function createRedNode(
  */
 export function createRedTree(green: GreenSourceFile): RedSourceFile {
     return new RedSourceFile(green, 0);
+}
+
+/**
+ * Type guard to check if a node is a token
+ * 
+ * This is the canonical way to check if a RedNode is a token.
+ * Uses the syntax kind to determine token-ness.
+ */
+export function isRedToken(node: RedNode): node is RedNode & IRedToken {
+    return Syntax.SyntaxKind.isToken(node.kind);
 }

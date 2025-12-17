@@ -23,6 +23,8 @@ import {
     GreenImportStatement,
     GreenMenuStatement,
     GreenMenuOption,
+    GreenParameterList,
+    GreenArgumentList,
     GreenLabelDeclaration,
     GreenConstantDeclaration,
     GreenVariableDeclaration,
@@ -381,12 +383,10 @@ export class Parser {
         const commandKeyword = this.expectToken(SyntaxKind.CommandKeyword);
         const identifier = this.expectToken(SyntaxKind.Identifier);
 
-        let openParen: GreenToken | undefined;
-        let parameters: readonly GreenToken[] = [];
-        let closeParen: GreenToken | undefined;
+        let parameterList: GreenParameterList | undefined;
 
         if (this.check(SyntaxKind.OpenParenToken)) {
-            openParen = this.advance();
+            const openParen = this.advance();
             const params: GreenToken[] = [];
             const commas: GreenToken[] = [];
 
@@ -401,13 +401,32 @@ export class Parser {
                 }
             }
 
-            parameters = params;
-            closeParen = this.expectToken(SyntaxKind.CloseParenToken);
+            const closeParen = this.expectToken(SyntaxKind.CloseParenToken);
+
+            // Build children by interleaving parameters and commas
+            const paramChildren: GreenNode[] = [openParen];
+            for (let i = 0; i < params.length; i++) {
+                paramChildren.push(params[i]);
+                if (i < commas.length) {
+                    paramChildren.push(commas[i]);
+                }
+            }
+            paramChildren.push(closeParen);
+
+            parameterList = {
+                kind: SyntaxKind.ParameterList,
+                fullWidth: this.calculateWidth(paramChildren),
+                children: paramChildren,
+                openParen,
+                parameters: params,
+                closeParen,
+            };
         }
 
         const body = this.parseStatement() || this.createErrorStatement();
-        const children = openParen && closeParen
-            ? [commandKeyword, identifier, openParen, ...parameters, closeParen, body]
+
+        const children = parameterList
+            ? [commandKeyword, identifier, parameterList, body]
             : [commandKeyword, identifier, body];
 
         return {
@@ -416,9 +435,7 @@ export class Parser {
             children,
             commandKeyword,
             identifier,
-            openParen,
-            parameters,
-            closeParen,
+            parameterList,
             body,
         };
     }
@@ -686,24 +703,32 @@ export class Parser {
                         'Can only call identifiers or qualified names');
                 }
 
-                // Build children by interleaving arguments and commas
-                const argChildren: GreenNode[] = [];
+                // Build argument list with interleaved arguments and commas
+                const argChildren: GreenNode[] = [openParen];
                 for (let i = 0; i < args.length; i++) {
                     argChildren.push(args[i]);
                     if (i < commas.length) {
                         argChildren.push(commas[i]);
                     }
                 }
+                argChildren.push(closeParen);
 
-                const children: GreenNode[] = [expr, openParen, ...argChildren, closeParen];
+                const argumentList: GreenArgumentList = {
+                    kind: SyntaxKind.ArgumentList,
+                    fullWidth: this.calculateWidth(argChildren),
+                    children: argChildren,
+                    openParen,
+                    arguments: args,
+                    closeParen,
+                };
+
+                const children: GreenNode[] = [expr, argumentList];
                 expr = {
                     kind: SyntaxKind.CallExpression,
                     fullWidth: this.calculateWidth(children),
                     children,
                     target: expr as GreenIdentifierExpression | GreenQualifiedNameExpression,
-                    openParen,
-                    arguments: args,
-                    closeParen,
+                    argumentList,
                 };
             } else {
                 break;

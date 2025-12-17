@@ -18,21 +18,21 @@ import * as path from 'path';
 function serializeAST(node: RedNode, indent = 0): string {
     const indentStr = '  '.repeat(indent);
     const kindName = SyntaxKind[node.kind];
-    
+
     // Show fullSpan (position..end including trivia) and fullWidth
     const fullEnd = node.position + node.fullWidth;
     let result = `${indentStr}${kindName} [${node.position}..${fullEnd}) fullWidth=${node.fullWidth}`;
-    
+
     // For tokens, show the text and create trivia grouping nodes
     if (node instanceof RedToken) {
         const tokenText = node.text;
         const escapedText = tokenText.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
         result += ` text="${escapedText}"`;
         result += '\n';
-        
+
         const leadingTrivia = node.getLeadingTrivia();
         const trailingTrivia = node.getTrailingTrivia();
-        
+
         // Create leading trivia grouping node
         if (leadingTrivia.length > 0) {
             const leadingWidth = leadingTrivia.reduce((sum, t) => sum + t.width, 0);
@@ -44,7 +44,7 @@ function serializeAST(node: RedNode, indent = 0): string {
                 result += `${indentStr}    ${SyntaxKind[trivia.kind]} width=${trivia.width} "${triviaText}"\n`;
             }
         }
-        
+
         // Create trailing trivia grouping node
         if (trailingTrivia.length > 0) {
             const trailingWidth = trailingTrivia.reduce((sum, t) => sum + t.width, 0);
@@ -59,13 +59,13 @@ function serializeAST(node: RedNode, indent = 0): string {
     } else {
         result += '\n';
     }
-    
+
     // Recursively serialize children
     const children = node.getChildren();
     for (const child of children) {
         result += serializeAST(child, indent + 1);
     }
-    
+
     return result;
 }
 
@@ -83,11 +83,11 @@ describe('lib_text.ccs AST Snapshot', () => {
             'tests',
             'lib_text.ccs'
         );
-        
+
         const content = fs.readFileSync(libTextPath, 'utf-8');
         const tree = SyntaxTree.parse(content);
         const ast = serializeAST(tree.getRoot());
-        
+
         expect(ast).toMatchSnapshot();
     });
 });

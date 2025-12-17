@@ -16,11 +16,11 @@ import { SystemTestHarness } from './test/systemTestHarness';
 function serializeAST(node: RedNode, indent = 0, source = ''): string {
     const indentStr = '  '.repeat(indent);
     const kindName = SyntaxKind[node.kind];
-    
+
     // Show fullSpan (position..end including trivia) and fullWidth
     const fullEnd = node.position + node.fullWidth;
     let result = `${indentStr}${kindName} [${node.position}..${fullEnd}) fullWidth=${node.fullWidth}`;
-    
+
     // For tokens, show the text (just the token text, not trivia) and create trivia grouping nodes
     if (node instanceof RedToken) {
         // Use the token text stored in the green node (not extracted from source)
@@ -28,10 +28,10 @@ function serializeAST(node: RedNode, indent = 0, source = ''): string {
         const escapedText = tokenText.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
         result += ` text="${escapedText}"`;
         result += '\n';
-        
+
         const leadingTrivia = node.getLeadingTrivia();
         const trailingTrivia = node.getTrailingTrivia();
-        
+
         // Create leading trivia grouping node
         if (leadingTrivia.length > 0) {
             const leadingWidth = leadingTrivia.reduce((sum, t) => sum + t.width, 0);
@@ -43,7 +43,7 @@ function serializeAST(node: RedNode, indent = 0, source = ''): string {
                 result += `${indentStr}    ${SyntaxKind[trivia.kind]} width=${trivia.width} "${triviaText}"\n`;
             }
         }
-        
+
         // Create trailing trivia grouping node
         if (trailingTrivia.length > 0) {
             const trailingWidth = trailingTrivia.reduce((sum, t) => sum + t.width, 0);
@@ -58,13 +58,13 @@ function serializeAST(node: RedNode, indent = 0, source = ''): string {
     } else {
         result += '\n';
     }
-    
+
     // Recursively serialize children
     const children = node.getChildren();
     for (const child of children) {
         result += serializeAST(child, indent + 1, source);
     }
-    
+
     return result;
 }
 
