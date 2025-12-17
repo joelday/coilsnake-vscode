@@ -15,6 +15,7 @@ import { SyntaxKind } from './syntax/syntaxKind';
 import {
     GreenNode,
     GreenToken,
+    GreenTrivia,
     GreenSourceFile,
     GreenStatement,
     GreenExpression,
@@ -35,6 +36,10 @@ import {
     GreenIdentifierExpression,
     GreenQualifiedNameExpression,
     GreenErrorExpression,
+    GreenStringLiteralExpression,
+    GreenTemplateStringExpression,
+    GreenStringLiteralContent,
+    GreenStringTemplateExpression,
     Diagnostic,
     DiagnosticSeverity,
 } from './syntax/types';
@@ -763,14 +768,7 @@ export class Parser {
         }
 
         if (this.check(SyntaxKind.StringLiteral)) {
-            const token = this.advance();
-            // For now, treat as single token (template parsing would be more complex)
-            return {
-                kind: SyntaxKind.StringLiteralExpression,
-                fullWidth: token.fullWidth,
-                children: [token],
-                parts: [token],
-            };
+            return this.parseStringLiteralWithTemplates();
         }
 
         if (this.check(SyntaxKind.TrueKeyword) || this.check(SyntaxKind.FalseKeyword)) {
@@ -795,6 +793,207 @@ export class Parser {
         }
 
         return null;
+    }
+
+    /**
+     * Parse a string literal that may contain template expressions like {expr}
+     * 
+     * CCScript strings can contain embedded expressions in curly braces:
+     * "Hello, {name}!"
+     * "{itemname(86)} costs ${price}."
+     */
+    private parseStringLiteralWithTemplates(): GreenStringLiteralExpression | GreenTemplateStringExpression | null {
+        const stringToken = this.advance();
+        const text = stringToken.text;
+
+        // Create quote tokens with real source positions
+        const openQuote: GreenToken = {
+            kind: SyntaxKind.StringLiteral,
+            text: '"',
+            fullWidth: (stringToken.leadingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0) + 1,
+            leadingTrivia: stringToken.leadingTrivia,
+            children: [],
+        };
+
+        const closeQuote: GreenToken = {
+            kind: SyntaxKind.StringLiteral,
+            text: '"',
+            fullWidth: 1 + (stringToken.trailingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0),
+            trailingTrivia: stringToken.trailingTrivia,
+            children: [],
+        };
+
+        const contentText = text.slice(1, -1); // Remove quotes
+
+        // If no curly braces, return simple string literal
+        if (!contentText.includes('{')) {
+            const textToken: GreenToken = {
+                kind: SyntaxKind.StringLiteral,
+                text: contentText,
+                fullWidth: contentText.length,
+                children: [],
+            };
+
+            const content: GreenStringLiteralContent = {
+                kind: SyntaxKind.StringLiteralContent,
+                fullWidth: contentText.length,
+                children: [textToken],
+                textToken,
+            };
+
+            return {
+                kind: SyntaxKind.StringLiteralExpression,
+                fullWidth: stringToken.fullWidth,
+                children: [openQuote, content, closeQuote],
+                openQuote,
+                content,
+                closeQuote,
+            };
+        }
+
+        // Parse template string with embedded expressions
+        const parts: (GreenStringLiteralContent | GreenStringTemplateExpression)[] = [];
+        const children: GreenNode[] = [openQuote];
+
+        // Parse the string content between quotes
+        const content = text.slice(1, -1); // Remove quotes
+        let pos = 0;
+        let currentText = '';
+
+        while (pos < content.length) {
+            const char = content[pos];
+
+            if (char === '{') {
+                // Save any accumulated text before the template expression
+                if (currentText.length > 0) {
+                    const textToken: GreenToken = {
+                        kind: SyntaxKind.StringLiteral,
+                        text: currentText,
+                        fullWidth: currentText.length,
+                        children: [],
+                    };
+                    const contentNode: GreenStringLiteralContent = {
+                        kind: SyntaxKind.StringLiteralContent,
+                        fullWidth: currentText.length,
+                        children: [textToken],
+                        textToken,
+                    };
+                    parts.push(contentNode);
+                    children.push(contentNode);
+                    currentText = '';
+                }
+
+                // Find matching closing brace
+                let depth = 1;
+                let exprStart = pos + 1;
+                let exprEnd = exprStart;
+
+                while (exprEnd < content.length && depth > 0) {
+                    if (content[exprEnd] === '{') depth++;
+                    else if (content[exprEnd] === '}') depth--;
+                    exprEnd++;
+                }
+
+                if (depth === 0) {
+                    // Extract and parse the expression text
+                    const exprText = content.slice(exprStart, exprEnd - 1).trim();
+
+                    if (exprText.length > 0) {
+                        // Parse the expression
+                        const tempParser = new Parser(exprText);
+                        const expression = tempParser.parseExpression();
+                        const exprDiagnostics = tempParser.getDiagnostics();
+
+                        // Forward any diagnostics from the embedded parser
+                        exprDiagnostics.forEach(d => {
+                            // Just forward the diagnostic with adjusted message
+                            this.diagnostics.push({
+                                span: d.span,
+                                severity: d.severity,
+                                message: `In template expression: ${d.message}`,
+                            });
+                        });
+
+                        if (expression && SyntaxKind.isExpression(expression.kind)) {
+                            // Create brace tokens
+                            const openBrace: GreenToken = {
+                                kind: SyntaxKind.OpenBraceToken,
+                                text: '{',
+                                fullWidth: 1,
+                                children: [],
+                            };
+                            const closeBrace: GreenToken = {
+                                kind: SyntaxKind.CloseBraceToken,
+                                text: '}',
+                                fullWidth: 1,
+                                children: [],
+                            };
+
+                            // Create template expression node
+                            const templateExpr: GreenStringTemplateExpression = {
+                                kind: SyntaxKind.StringTemplateExpression,
+                                fullWidth: 1 + expression.fullWidth + 1,
+                                children: [openBrace, expression, closeBrace],
+                                openBrace,
+                                expression: expression as GreenExpression,
+                                closeBrace,
+                            };
+
+                            parts.push(templateExpr);
+                            children.push(templateExpr);
+                        } else {
+                            // Failed to parse - treat as literal text
+                            currentText += '{' + exprText + '}';
+                        }
+                    } else {
+                        // Empty braces - treat as literal
+                        currentText += '{}';
+                    }
+                    pos = exprEnd;
+                } else {
+                    // Unterminated template expression - treat as literal text
+                    currentText += char;
+                    pos++;
+                }
+            } else if (char === '\\' && pos + 1 < content.length) {
+                // Handle escape sequences
+                currentText += char + content[pos + 1];
+                pos += 2;
+            } else {
+                currentText += char;
+                pos++;
+            }
+        }
+
+        // Add any remaining text
+        if (currentText.length > 0) {
+            const textToken: GreenToken = {
+                kind: SyntaxKind.StringLiteral,
+                text: currentText,
+                fullWidth: currentText.length,
+                children: [],
+            };
+            const contentNode: GreenStringLiteralContent = {
+                kind: SyntaxKind.StringLiteralContent,
+                fullWidth: currentText.length,
+                children: [textToken],
+                textToken,
+            };
+            parts.push(contentNode);
+            children.push(contentNode);
+        }
+
+        // Add closing quote
+        children.push(closeQuote);
+
+        return {
+            kind: SyntaxKind.TemplateStringExpression,
+            fullWidth: stringToken.fullWidth,
+            children,
+            openQuote,
+            parts,
+            closeQuote,
+        };
     }
 
     // ========== Helper Methods ==========

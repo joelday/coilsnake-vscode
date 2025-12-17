@@ -287,6 +287,7 @@ export interface GreenErrorStatement extends GreenNode {
 export type GreenExpression =
     | GreenNumericLiteralExpression
     | GreenStringLiteralExpression
+    | GreenTemplateStringExpression
     | GreenBooleanLiteralExpression
     | GreenIdentifierExpression
     | GreenQualifiedNameExpression
@@ -295,7 +296,6 @@ export type GreenExpression =
     | GreenUnaryExpression
     | GreenFlagExpression
     | GreenArrayAccessExpression
-    | GreenStringTemplateExpression
     | GreenCountExpression
     | GreenSetcountExpression
     | GreenIfStatement          // if can be used as expression
@@ -310,7 +310,21 @@ export interface GreenNumericLiteralExpression extends GreenNode {
 
 export interface GreenStringLiteralExpression extends GreenNode {
     readonly kind: SyntaxKind.StringLiteralExpression;
-    readonly parts: readonly (GreenToken | GreenStringTemplateExpression)[];
+    readonly openQuote: GreenToken;  // Opening " with position in source
+    readonly content: GreenStringLiteralContent;
+    readonly closeQuote: GreenToken; // Closing " with position in source
+}
+
+export interface GreenTemplateStringExpression extends GreenNode {
+    readonly kind: SyntaxKind.TemplateStringExpression;
+    readonly openQuote: GreenToken;  // Opening " with position in source
+    readonly parts: readonly (GreenStringLiteralContent | GreenStringTemplateExpression)[];  // Text and {expr} parts
+    readonly closeQuote: GreenToken; // Closing " with position in source
+}
+
+export interface GreenStringLiteralContent extends GreenNode {
+    readonly kind: SyntaxKind.StringLiteralContent;
+    readonly textToken: GreenToken;  // The actual string text without quotes
 }
 
 export interface GreenBooleanLiteralExpression extends GreenNode {
@@ -411,6 +425,8 @@ export type GreenNodeOfKind<K extends SyntaxKind> =
     K extends SyntaxKind.ErrorStatement ? GreenErrorStatement :
     K extends SyntaxKind.NumericLiteralExpression ? GreenNumericLiteralExpression :
     K extends SyntaxKind.StringLiteralExpression ? GreenStringLiteralExpression :
+    K extends SyntaxKind.TemplateStringExpression ? GreenTemplateStringExpression :
+    K extends SyntaxKind.StringLiteralContent ? GreenStringLiteralContent :
     K extends SyntaxKind.BooleanLiteralExpression ? GreenBooleanLiteralExpression :
     K extends SyntaxKind.IdentifierExpression ? GreenIdentifierExpression :
     K extends SyntaxKind.QualifiedNameExpression ? GreenQualifiedNameExpression :

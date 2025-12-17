@@ -16,7 +16,7 @@
         "${workspaceFolder}/packages/*/dist/**/*.js",
         "${workspaceFolder}/packages/*/out/**/*.js"
       ],
-      "preLaunchTask": "compile"
+      "preLaunchTask": "build"
     },
     {
       "name": "Debug Language Server",

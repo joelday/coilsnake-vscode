@@ -47,7 +47,10 @@ exports[`AST Snapshots should match AST snapshot for 01-literals.ccs 1`] = `
       TrailingTrivia [89..90) fullWidth=1
         WhitespaceTrivia width=1 " "
     StringLiteralExpression [90..103) fullWidth=13
-      StringLiteral [90..103) fullWidth=13 text=""EarthBound""
+      StringLiteral [90..91) fullWidth=1 text="""
+      StringLiteralContent [91..101) fullWidth=10
+        StringLiteral [91..101) fullWidth=10 text="EarthBound"
+      StringLiteral [101..103) fullWidth=2 text="""
         TrailingTrivia [102..103) fullWidth=1
           NewLineTrivia width=1 "\\n"
   ConstantDeclaration [103..128) fullWidth=25
@@ -89,7 +92,10 @@ exports[`AST Snapshots should match AST snapshot for 01-literals.ccs 1`] = `
           NewLineTrivia width=1 "\\n"
   ExpressionStatement [211..227) fullWidth=16
     StringLiteralExpression [211..227) fullWidth=16
-      StringLiteral [211..227) fullWidth=16 text=""Hello, world!""
+      StringLiteral [211..212) fullWidth=1 text="""
+      StringLiteralContent [212..225) fullWidth=13
+        StringLiteral [212..225) fullWidth=13 text="Hello, world!"
+      StringLiteral [225..227) fullWidth=2 text="""
         TrailingTrivia [226..227) fullWidth=1
           NewLineTrivia width=1 "\\n"
   ExpressionStatement [227..232) fullWidth=5
@@ -565,7 +571,10 @@ exports[`AST Snapshots should match AST snapshot for 03-strings.ccs 1`] = `
       TrailingTrivia [51..52) fullWidth=1
         WhitespaceTrivia width=1 " "
     StringLiteralExpression [52..80) fullWidth=28
-      StringLiteral [52..80) fullWidth=28 text=""[1B 00]Hello[1B 01] World""
+      StringLiteral [52..53) fullWidth=1 text="""
+      StringLiteralContent [53..78) fullWidth=25
+        StringLiteral [53..78) fullWidth=25 text="[1B 00]Hello[1B 01] World"
+      StringLiteral [78..80) fullWidth=2 text="""
         TrailingTrivia [79..80) fullWidth=1
           NewLineTrivia width=1 "\\n"
   ConstantDeclaration [80..108) fullWidth=28
@@ -579,7 +588,10 @@ exports[`AST Snapshots should match AST snapshot for 03-strings.ccs 1`] = `
       TrailingTrivia [93..94) fullWidth=1
         WhitespaceTrivia width=1 " "
     StringLiteralExpression [94..108) fullWidth=14
-      StringLiteral [94..108) fullWidth=14 text=""Simple text""
+      StringLiteral [94..95) fullWidth=1 text="""
+      StringLiteralContent [95..106) fullWidth=11
+        StringLiteral [95..106) fullWidth=11 text="Simple text"
+      StringLiteral [106..108) fullWidth=2 text="""
         TrailingTrivia [107..108) fullWidth=1
           NewLineTrivia width=1 "\\n"
   ConstantDeclaration [108..149) fullWidth=41
@@ -593,7 +605,10 @@ exports[`AST Snapshots should match AST snapshot for 03-strings.ccs 1`] = `
       TrailingTrivia [121..122) fullWidth=1
         WhitespaceTrivia width=1 " "
     StringLiteralExpression [122..149) fullWidth=27
-      StringLiteral [122..149) fullWidth=27 text=""[FF 00 01 02]Binary data""
+      StringLiteral [122..123) fullWidth=1 text="""
+      StringLiteralContent [123..147) fullWidth=24
+        StringLiteral [123..147) fullWidth=24 text="[FF 00 01 02]Binary data"
+      StringLiteral [147..149) fullWidth=2 text="""
         TrailingTrivia [148..149) fullWidth=1
           NewLineTrivia width=1 "\\n"
   ConstantDeclaration [149..208) fullWidth=59
@@ -611,7 +626,10 @@ exports[`AST Snapshots should match AST snapshot for 03-strings.ccs 1`] = `
       TrailingTrivia [200..201) fullWidth=1
         WhitespaceTrivia width=1 " "
     StringLiteralExpression [201..208) fullWidth=7
-      StringLiteral [201..208) fullWidth=7 text=""Ness""
+      StringLiteral [201..202) fullWidth=1 text="""
+      StringLiteralContent [202..206) fullWidth=4
+        StringLiteral [202..206) fullWidth=4 text="Ness"
+      StringLiteral [206..208) fullWidth=2 text="""
         TrailingTrivia [207..208) fullWidth=1
           NewLineTrivia width=1 "\\n"
   ConstantDeclaration [208..243) fullWidth=35
@@ -624,8 +642,18 @@ exports[`AST Snapshots should match AST snapshot for 03-strings.ccs 1`] = `
     EqualsToken [224..226) fullWidth=2 text="="
       TrailingTrivia [225..226) fullWidth=1
         WhitespaceTrivia width=1 " "
-    StringLiteralExpression [226..243) fullWidth=17
-      StringLiteral [226..243) fullWidth=17 text=""Hello, {name}!""
+    TemplateStringExpression [226..243) fullWidth=17
+      StringLiteral [226..227) fullWidth=1 text="""
+      StringLiteralContent [227..234) fullWidth=7
+        StringLiteral [227..234) fullWidth=7 text="Hello, "
+      StringTemplateExpression [234..240) fullWidth=6
+        OpenBraceToken [234..235) fullWidth=1 text="{"
+        IdentifierExpression [235..239) fullWidth=4
+          Identifier [235..239) fullWidth=4 text="name"
+        CloseBraceToken [239..240) fullWidth=1 text="}"
+      StringLiteralContent [240..241) fullWidth=1
+        StringLiteral [240..241) fullWidth=1 text="!"
+      StringLiteral [241..243) fullWidth=2 text="""
         TrailingTrivia [242..243) fullWidth=1
           NewLineTrivia width=1 "\\n"
   ConstantDeclaration [243..295) fullWidth=52
@@ -638,8 +666,35 @@ exports[`AST Snapshots should match AST snapshot for 03-strings.ccs 1`] = `
     EqualsToken [258..260) fullWidth=2 text="="
       TrailingTrivia [259..260) fullWidth=1
         WhitespaceTrivia width=1 " "
-    StringLiteralExpression [260..295) fullWidth=35
-      StringLiteral [260..295) fullWidth=35 text=""Value: {10 + 20}, Flag: {flag 5}""
+    TemplateStringExpression [260..295) fullWidth=35
+      StringLiteral [260..261) fullWidth=1 text="""
+      StringLiteralContent [261..268) fullWidth=7
+        StringLiteral [261..268) fullWidth=7 text="Value: "
+      StringTemplateExpression [268..277) fullWidth=9
+        OpenBraceToken [268..269) fullWidth=1 text="{"
+        BinaryExpression [269..276) fullWidth=7
+          NumericLiteralExpression [269..272) fullWidth=3
+            NumericLiteral [269..272) fullWidth=3 text="10"
+              TrailingTrivia [271..272) fullWidth=1
+                WhitespaceTrivia width=1 " "
+          Identifier [272..274) fullWidth=2 text="+"
+            TrailingTrivia [273..274) fullWidth=1
+              WhitespaceTrivia width=1 " "
+          NumericLiteralExpression [274..276) fullWidth=2
+            NumericLiteral [274..276) fullWidth=2 text="20"
+        CloseBraceToken [276..277) fullWidth=1 text="}"
+      StringLiteralContent [277..285) fullWidth=8
+        StringLiteral [277..285) fullWidth=8 text=", Flag: "
+      StringTemplateExpression [285..293) fullWidth=8
+        OpenBraceToken [285..286) fullWidth=1 text="{"
+        FlagExpression [286..292) fullWidth=6
+          FlagKeyword [286..291) fullWidth=5 text="flag"
+            TrailingTrivia [290..291) fullWidth=1
+              WhitespaceTrivia width=1 " "
+          NumericLiteralExpression [291..292) fullWidth=1
+            NumericLiteral [291..292) fullWidth=1 text="5"
+        CloseBraceToken [292..293) fullWidth=1 text="}"
+      StringLiteral [293..295) fullWidth=2 text="""
         TrailingTrivia [294..295) fullWidth=1
           NewLineTrivia width=1 "\\n"
   ConstantDeclaration [295..440) fullWidth=145
@@ -658,16 +713,22 @@ exports[`AST Snapshots should match AST snapshot for 03-strings.ccs 1`] = `
         WhitespaceTrivia width=1 " "
     BinaryExpression [337..440) fullWidth=103
       StringLiteralExpression [337..383) fullWidth=46
-        StringLiteral [337..383) fullWidth=46 text=""This is a very long string that might span ""
+        StringLiteral [337..338) fullWidth=1 text="""
+        StringLiteralContent [338..381) fullWidth=43
+          StringLiteral [338..381) fullWidth=43 text="This is a very long string that might span "
+        StringLiteral [381..383) fullWidth=2 text="""
           TrailingTrivia [382..383) fullWidth=1
             WhitespaceTrivia width=1 " "
       Identifier [383..385) fullWidth=2 text="+"
         TrailingTrivia [384..385) fullWidth=1
           NewLineTrivia width=1 "\\n"
       StringLiteralExpression [385..440) fullWidth=55
-        StringLiteral [385..440) fullWidth=55 text=""multiple lines in the source code""
+        StringLiteral [385..405) fullWidth=20 text="""
           LeadingTrivia [385..404) fullWidth=19
             WhitespaceTrivia width=19 "                   "
+        StringLiteralContent [405..438) fullWidth=33
+          StringLiteral [405..438) fullWidth=33 text="multiple lines in the source code"
+        StringLiteral [438..440) fullWidth=2 text="""
           TrailingTrivia [439..440) fullWidth=1
             NewLineTrivia width=1 "\\n"
   ConstantDeclaration [440..524) fullWidth=84
@@ -685,7 +746,10 @@ exports[`AST Snapshots should match AST snapshot for 03-strings.ccs 1`] = `
       TrailingTrivia [492..493) fullWidth=1
         WhitespaceTrivia width=1 " "
     StringLiteralExpression [493..524) fullWidth=31
-      StringLiteral [493..524) fullWidth=31 text=""Quotes: \\" and backslash: \\\\""
+      StringLiteral [493..494) fullWidth=1 text="""
+      StringLiteralContent [494..522) fullWidth=28
+        StringLiteral [494..522) fullWidth=28 text="Quotes: \\" and backslash: \\\\"
+      StringLiteral [522..524) fullWidth=2 text="""
         TrailingTrivia [523..524) fullWidth=1
           NewLineTrivia width=1 "\\n"
   ConstantDeclaration [524..567) fullWidth=43
@@ -699,7 +763,10 @@ exports[`AST Snapshots should match AST snapshot for 03-strings.ccs 1`] = `
       TrailingTrivia [541..542) fullWidth=1
         WhitespaceTrivia width=1 " "
     StringLiteralExpression [542..567) fullWidth=25
-      StringLiteral [542..567) fullWidth=25 text=""Line 1\\nLine 2\\nLine 3""
+      StringLiteral [542..543) fullWidth=1 text="""
+      StringLiteralContent [543..565) fullWidth=22
+        StringLiteral [543..565) fullWidth=22 text="Line 1\\nLine 2\\nLine 3"
+      StringLiteral [565..567) fullWidth=2 text="""
         TrailingTrivia [566..567) fullWidth=1
           NewLineTrivia width=1 "\\n"
   EndOfFileToken [567..567) fullWidth=0 text=""
@@ -1064,9 +1131,12 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
         NewLineTrivia width=1 "\\n"
     MenuOption [43..64) fullWidth=21
       StringLiteralExpression [43..57) fullWidth=14
-        StringLiteral [43..57) fullWidth=14 text=""Option 1""
+        StringLiteral [43..48) fullWidth=5 text="""
           LeadingTrivia [43..47) fullWidth=4
             WhitespaceTrivia width=4 "    "
+        StringLiteralContent [48..56) fullWidth=8
+          StringLiteral [48..56) fullWidth=8 text="Option 1"
+        StringLiteral [56..57) fullWidth=1 text="""
       ColonToken [57..59) fullWidth=2 text=":"
         TrailingTrivia [58..59) fullWidth=1
           WhitespaceTrivia width=1 " "
@@ -1083,9 +1153,12 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
       MissingToken [69..69) fullWidth=0 text=""
       ExpressionStatement [69..83) fullWidth=14
         StringLiteralExpression [69..83) fullWidth=14
-          StringLiteral [69..83) fullWidth=14 text=""Option 2""
+          StringLiteral [69..74) fullWidth=5 text="""
             LeadingTrivia [69..73) fullWidth=4
               WhitespaceTrivia width=4 "    "
+          StringLiteralContent [74..82) fullWidth=8
+            StringLiteral [74..82) fullWidth=8 text="Option 2"
+          StringLiteral [82..83) fullWidth=1 text="""
     MissingToken [83..83) fullWidth=0 text=""
   ErrorStatement [83..85) fullWidth=2
     ColonToken [83..85) fullWidth=2 text=":"
@@ -1103,9 +1176,12 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
           NewLineTrivia width=1 "\\n"
   ExpressionStatement [95..109) fullWidth=14
     StringLiteralExpression [95..109) fullWidth=14
-      StringLiteral [95..109) fullWidth=14 text=""Option 3""
+      StringLiteral [95..100) fullWidth=5 text="""
         LeadingTrivia [95..99) fullWidth=4
           WhitespaceTrivia width=4 "    "
+      StringLiteralContent [100..108) fullWidth=8
+        StringLiteral [100..108) fullWidth=8 text="Option 3"
+      StringLiteral [108..109) fullWidth=1 text="""
   ErrorStatement [109..111) fullWidth=2
     ColonToken [109..111) fullWidth=2 text=":"
       TrailingTrivia [110..111) fullWidth=1
@@ -1133,9 +1209,12 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
         NewLineTrivia width=1 "\\n"
     MenuOption [166..181) fullWidth=15
       StringLiteralExpression [166..175) fullWidth=9
-        StringLiteral [166..175) fullWidth=9 text=""Yes""
+        StringLiteral [166..171) fullWidth=5 text="""
           LeadingTrivia [166..170) fullWidth=4
             WhitespaceTrivia width=4 "    "
+        StringLiteralContent [171..174) fullWidth=3
+          StringLiteral [171..174) fullWidth=3 text="Yes"
+        StringLiteral [174..175) fullWidth=1 text="""
       ColonToken [175..177) fullWidth=2 text=":"
         TrailingTrivia [176..177) fullWidth=1
           WhitespaceTrivia width=1 " "
@@ -1156,9 +1235,12 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
       MissingToken [188..188) fullWidth=0 text=""
       ExpressionStatement [188..196) fullWidth=8
         StringLiteralExpression [188..196) fullWidth=8
-          StringLiteral [188..196) fullWidth=8 text=""No""
+          StringLiteral [188..193) fullWidth=5 text="""
             LeadingTrivia [188..192) fullWidth=4
               WhitespaceTrivia width=4 "    "
+          StringLiteralContent [193..195) fullWidth=2
+            StringLiteral [193..195) fullWidth=2 text="No"
+          StringLiteral [195..196) fullWidth=1 text="""
     MissingToken [196..196) fullWidth=0 text=""
   ErrorStatement [196..198) fullWidth=2
     ColonToken [196..198) fullWidth=2 text=":"
@@ -1191,9 +1273,12 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
         NewLineTrivia width=1 "\\n"
     MenuOption [247..265) fullWidth=18
       StringLiteralExpression [247..258) fullWidth=11
-        StringLiteral [247..258) fullWidth=11 text=""First""
+        StringLiteral [247..252) fullWidth=5 text="""
           LeadingTrivia [247..251) fullWidth=4
             WhitespaceTrivia width=4 "    "
+        StringLiteralContent [252..257) fullWidth=5
+          StringLiteral [252..257) fullWidth=5 text="First"
+        StringLiteral [257..258) fullWidth=1 text="""
       ColonToken [258..260) fullWidth=2 text=":"
         TrailingTrivia [259..260) fullWidth=1
           WhitespaceTrivia width=1 " "
@@ -1210,9 +1295,12 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
       MissingToken [274..274) fullWidth=0 text=""
       ExpressionStatement [274..286) fullWidth=12
         StringLiteralExpression [274..286) fullWidth=12
-          StringLiteral [274..286) fullWidth=12 text=""Second""
+          StringLiteral [274..279) fullWidth=5 text="""
             LeadingTrivia [274..278) fullWidth=4
               WhitespaceTrivia width=4 "    "
+          StringLiteralContent [279..285) fullWidth=6
+            StringLiteral [279..285) fullWidth=6 text="Second"
+          StringLiteral [285..286) fullWidth=1 text="""
     MissingToken [286..286) fullWidth=0 text=""
   ErrorStatement [286..288) fullWidth=2
     ColonToken [286..288) fullWidth=2 text=":"
@@ -1236,7 +1324,10 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
         WhitespaceTrivia width=1 " "
   ExpressionStatement [314..322) fullWidth=8
     StringLiteralExpression [314..322) fullWidth=8
-      StringLiteral [314..322) fullWidth=8 text=""Cancel""
+      StringLiteral [314..315) fullWidth=1 text="""
+      StringLiteralContent [315..321) fullWidth=6
+        StringLiteral [315..321) fullWidth=6 text="Cancel"
+      StringLiteral [321..322) fullWidth=1 text="""
   ErrorStatement [322..324) fullWidth=2
     ColonToken [322..324) fullWidth=2 text=":"
       TrailingTrivia [323..324) fullWidth=1
@@ -1267,9 +1358,12 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
         NewLineTrivia width=1 "\\n"
     MenuOption [381..467) fullWidth=86
       StringLiteralExpression [381..391) fullWidth=10
-        StringLiteral [381..391) fullWidth=10 text=""Save""
+        StringLiteral [381..386) fullWidth=5 text="""
           LeadingTrivia [381..385) fullWidth=4
             WhitespaceTrivia width=4 "    "
+        StringLiteralContent [386..390) fullWidth=4
+          StringLiteral [386..390) fullWidth=4 text="Save"
+        StringLiteral [390..391) fullWidth=1 text="""
       ColonToken [391..393) fullWidth=2 text=":"
         TrailingTrivia [392..393) fullWidth=1
           WhitespaceTrivia width=1 " "
@@ -1324,9 +1418,12 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
             NewLineTrivia width=1 "\\n"
     MenuOption [467..533) fullWidth=66
       StringLiteralExpression [467..477) fullWidth=10
-        StringLiteral [467..477) fullWidth=10 text=""Load""
+        StringLiteral [467..472) fullWidth=5 text="""
           LeadingTrivia [467..471) fullWidth=4
             WhitespaceTrivia width=4 "    "
+        StringLiteralContent [472..476) fullWidth=4
+          StringLiteral [472..476) fullWidth=4 text="Load"
+        StringLiteral [476..477) fullWidth=1 text="""
       ColonToken [477..479) fullWidth=2 text=":"
         TrailingTrivia [478..479) fullWidth=1
           WhitespaceTrivia width=1 " "
@@ -1365,9 +1462,12 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
             NewLineTrivia width=1 "\\n"
     MenuOption [533..601) fullWidth=68
       StringLiteralExpression [533..543) fullWidth=10
-        StringLiteral [533..543) fullWidth=10 text=""Quit""
+        StringLiteral [533..538) fullWidth=5 text="""
           LeadingTrivia [533..537) fullWidth=4
             WhitespaceTrivia width=4 "    "
+        StringLiteralContent [538..542) fullWidth=4
+          StringLiteral [538..542) fullWidth=4 text="Quit"
+        StringLiteral [542..543) fullWidth=1 text="""
       ColonToken [543..545) fullWidth=2 text=":"
         TrailingTrivia [544..545) fullWidth=1
           WhitespaceTrivia width=1 " "
@@ -2945,7 +3045,10 @@ exports[`AST Snapshots should match AST snapshot for 11-qualified-names.ccs 1`] 
       ArgumentList [84..94) fullWidth=10
         OpenParenToken [84..85) fullWidth=1 text="("
         StringLiteralExpression [85..92) fullWidth=7
-          StringLiteral [85..92) fullWidth=7 text=""Hello""
+          StringLiteral [85..86) fullWidth=1 text="""
+          StringLiteralContent [86..91) fullWidth=5
+            StringLiteral [86..91) fullWidth=5 text="Hello"
+          StringLiteral [91..92) fullWidth=1 text="""
         CloseParenToken [92..94) fullWidth=2 text=")"
           TrailingTrivia [93..94) fullWidth=1
             NewLineTrivia width=1 "\\n"
@@ -3054,7 +3157,10 @@ exports[`AST Snapshots should match AST snapshot for 11-qualified-names.ccs 1`] 
           ArgumentList [309..325) fullWidth=16
             OpenParenToken [309..310) fullWidth=1 text="("
             StringLiteralExpression [310..323) fullWidth=13
-              StringLiteral [310..323) fullWidth=13 text=""Flag is set""
+              StringLiteral [310..311) fullWidth=1 text="""
+              StringLiteralContent [311..322) fullWidth=11
+                StringLiteral [311..322) fullWidth=11 text="Flag is set"
+              StringLiteral [322..323) fullWidth=1 text="""
             CloseParenToken [323..325) fullWidth=2 text=")"
               TrailingTrivia [324..325) fullWidth=1
                 NewLineTrivia width=1 "\\n"
@@ -3466,9 +3572,12 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
             NewLineTrivia width=1 "\\n"
         MenuOption [735..762) fullWidth=27
           StringLiteralExpression [735..755) fullWidth=20
-            StringLiteral [735..755) fullWidth=20 text=""Start Game""
+            StringLiteral [735..744) fullWidth=9 text="""
               LeadingTrivia [735..743) fullWidth=8
                 WhitespaceTrivia width=8 "        "
+            StringLiteralContent [744..754) fullWidth=10
+              StringLiteral [744..754) fullWidth=10 text="Start Game"
+            StringLiteral [754..755) fullWidth=1 text="""
           ColonToken [755..757) fullWidth=2 text=":"
             TrailingTrivia [756..757) fullWidth=1
               WhitespaceTrivia width=1 " "
@@ -3485,9 +3594,12 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
           MissingToken [773..773) fullWidth=0 text=""
           ExpressionStatement [773..790) fullWidth=17
             StringLiteralExpression [773..790) fullWidth=17
-              StringLiteral [773..790) fullWidth=17 text=""Options""
+              StringLiteral [773..782) fullWidth=9 text="""
                 LeadingTrivia [773..781) fullWidth=8
                   WhitespaceTrivia width=8 "        "
+              StringLiteralContent [782..789) fullWidth=7
+                StringLiteral [782..789) fullWidth=7 text="Options"
+              StringLiteral [789..790) fullWidth=1 text="""
         MissingToken [790..790) fullWidth=0 text=""
       ErrorStatement [790..792) fullWidth=2
         ColonToken [790..792) fullWidth=2 text=":"
@@ -3505,9 +3617,12 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
               NewLineTrivia width=1 "\\n"
       ExpressionStatement [810..824) fullWidth=14
         StringLiteralExpression [810..824) fullWidth=14
-          StringLiteral [810..824) fullWidth=14 text=""Quit""
+          StringLiteral [810..819) fullWidth=9 text="""
             LeadingTrivia [810..818) fullWidth=8
               WhitespaceTrivia width=8 "        "
+          StringLiteralContent [819..823) fullWidth=4
+            StringLiteral [819..823) fullWidth=4 text="Quit"
+          StringLiteral [823..824) fullWidth=1 text="""
       ErrorStatement [824..826) fullWidth=2
         ColonToken [824..826) fullWidth=2 text=":"
           TrailingTrivia [825..826) fullWidth=1
@@ -3530,7 +3645,10 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
             WhitespaceTrivia width=1 " "
       ExpressionStatement [857..865) fullWidth=8
         StringLiteralExpression [857..865) fullWidth=8
-          StringLiteral [857..865) fullWidth=8 text=""Cancel""
+          StringLiteral [857..858) fullWidth=1 text="""
+          StringLiteralContent [858..864) fullWidth=6
+            StringLiteral [858..864) fullWidth=6 text="Cancel"
+          StringLiteral [864..865) fullWidth=1 text="""
       ErrorStatement [865..867) fullWidth=2
         ColonToken [865..867) fullWidth=2 text=":"
           TrailingTrivia [866..867) fullWidth=1
@@ -3792,8 +3910,18 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
         EqualsToken [1338..1340) fullWidth=2 text="="
           TrailingTrivia [1339..1340) fullWidth=1
             WhitespaceTrivia width=1 " "
-        StringLiteralExpression [1340..1370) fullWidth=30
-          StringLiteral [1340..1370) fullWidth=30 text=""Event {event_id} triggered!""
+        TemplateStringExpression [1340..1370) fullWidth=30
+          StringLiteral [1340..1341) fullWidth=1 text="""
+          StringLiteralContent [1341..1347) fullWidth=6
+            StringLiteral [1341..1347) fullWidth=6 text="Event "
+          StringTemplateExpression [1347..1357) fullWidth=10
+            OpenBraceToken [1347..1348) fullWidth=1 text="{"
+            IdentifierExpression [1348..1356) fullWidth=8
+              Identifier [1348..1356) fullWidth=8 text="event_id"
+            CloseBraceToken [1356..1357) fullWidth=1 text="}"
+          StringLiteralContent [1357..1368) fullWidth=11
+            StringLiteral [1357..1368) fullWidth=11 text=" triggered!"
+          StringLiteral [1368..1370) fullWidth=2 text="""
             TrailingTrivia [1369..1370) fullWidth=1
               NewLineTrivia width=1 "\\n"
       ExpressionStatement [1370..1393) fullWidth=23
@@ -3913,7 +4041,10 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
                 ArgumentList [1567..1585) fullWidth=18
                   OpenParenToken [1567..1568) fullWidth=1 text="("
                   StringLiteralExpression [1568..1583) fullWidth=15
-                    StringLiteral [1568..1583) fullWidth=15 text=""Unknown event""
+                    StringLiteral [1568..1569) fullWidth=1 text="""
+                    StringLiteralContent [1569..1582) fullWidth=13
+                      StringLiteral [1569..1582) fullWidth=13 text="Unknown event"
+                    StringLiteral [1582..1583) fullWidth=1 text="""
                   CloseParenToken [1583..1585) fullWidth=2 text=")"
                     TrailingTrivia [1584..1585) fullWidth=1
                       NewLineTrivia width=1 "\\n"
@@ -3968,7 +4099,10 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
           ArgumentList [1680..1699) fullWidth=19
             OpenParenToken [1680..1681) fullWidth=1 text="("
             StringLiteralExpression [1681..1697) fullWidth=16
-              StringLiteral [1681..1697) fullWidth=16 text=""Player healed!""
+              StringLiteral [1681..1682) fullWidth=1 text="""
+              StringLiteralContent [1682..1696) fullWidth=14
+                StringLiteral [1682..1696) fullWidth=14 text="Player healed!"
+              StringLiteral [1696..1697) fullWidth=1 text="""
             CloseParenToken [1697..1699) fullWidth=2 text=")"
               TrailingTrivia [1698..1699) fullWidth=1
                 NewLineTrivia width=1 "\\n"
@@ -4002,9 +4136,12 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
             NewLineTrivia width=1 "\\n"
         MenuOption [1738..1763) fullWidth=25
           StringLiteralExpression [1738..1757) fullWidth=19
-            StringLiteral [1738..1757) fullWidth=19 text=""Sound: On""
+            StringLiteral [1738..1747) fullWidth=9 text="""
               LeadingTrivia [1738..1746) fullWidth=8
                 WhitespaceTrivia width=8 "        "
+            StringLiteralContent [1747..1756) fullWidth=9
+              StringLiteral [1747..1756) fullWidth=9 text="Sound: On"
+            StringLiteral [1756..1757) fullWidth=1 text="""
           ColonToken [1757..1759) fullWidth=2 text=":"
             TrailingTrivia [1758..1759) fullWidth=1
               WhitespaceTrivia width=1 " "
@@ -4025,9 +4162,12 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
           MissingToken [1772..1772) fullWidth=0 text=""
           ExpressionStatement [1772..1792) fullWidth=20
             StringLiteralExpression [1772..1792) fullWidth=20
-              StringLiteral [1772..1792) fullWidth=20 text=""Sound: Off""
+              StringLiteral [1772..1781) fullWidth=9 text="""
                 LeadingTrivia [1772..1780) fullWidth=8
                   WhitespaceTrivia width=8 "        "
+              StringLiteralContent [1781..1791) fullWidth=10
+                StringLiteral [1781..1791) fullWidth=10 text="Sound: Off"
+              StringLiteral [1791..1792) fullWidth=1 text="""
         MissingToken [1792..1792) fullWidth=0 text=""
       ErrorStatement [1792..1794) fullWidth=2
         ColonToken [1792..1794) fullWidth=2 text=":"
@@ -4049,9 +4189,12 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
                 NewLineTrivia width=1 "\\n"
       ExpressionStatement [1809..1835) fullWidth=26
         StringLiteralExpression [1809..1835) fullWidth=26
-          StringLiteral [1809..1835) fullWidth=26 text=""Difficulty: Easy""
+          StringLiteral [1809..1818) fullWidth=9 text="""
             LeadingTrivia [1809..1817) fullWidth=8
               WhitespaceTrivia width=8 "        "
+          StringLiteralContent [1818..1834) fullWidth=16
+            StringLiteral [1818..1834) fullWidth=16 text="Difficulty: Easy"
+          StringLiteral [1834..1835) fullWidth=1 text="""
       ErrorStatement [1835..1837) fullWidth=2
         ColonToken [1835..1837) fullWidth=2 text=":"
           TrailingTrivia [1836..1837) fullWidth=1
@@ -4073,9 +4216,12 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
               NewLineTrivia width=1 "\\n"
       ExpressionStatement [1853..1879) fullWidth=26
         StringLiteralExpression [1853..1879) fullWidth=26
-          StringLiteral [1853..1879) fullWidth=26 text=""Difficulty: Hard""
+          StringLiteral [1853..1862) fullWidth=9 text="""
             LeadingTrivia [1853..1861) fullWidth=8
               WhitespaceTrivia width=8 "        "
+          StringLiteralContent [1862..1878) fullWidth=16
+            StringLiteral [1862..1878) fullWidth=16 text="Difficulty: Hard"
+          StringLiteral [1878..1879) fullWidth=1 text="""
       ErrorStatement [1879..1881) fullWidth=2
         ColonToken [1879..1881) fullWidth=2 text=":"
           TrailingTrivia [1880..1881) fullWidth=1
@@ -4450,7 +4596,10 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
       ArgumentList [2476..2490) fullWidth=14
         OpenParenToken [2476..2477) fullWidth=1 text="("
         StringLiteralExpression [2477..2488) fullWidth=11
-          StringLiteral [2477..2488) fullWidth=11 text=""Game Over""
+          StringLiteral [2477..2478) fullWidth=1 text="""
+          StringLiteralContent [2478..2487) fullWidth=9
+            StringLiteral [2478..2487) fullWidth=9 text="Game Over"
+          StringLiteral [2487..2488) fullWidth=1 text="""
         CloseParenToken [2488..2490) fullWidth=2 text=")"
           TrailingTrivia [2489..2490) fullWidth=1
             NewLineTrivia width=1 "\\n"
@@ -4484,7 +4633,10 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
       ArgumentList [2534..2558) fullWidth=24
         OpenParenToken [2534..2535) fullWidth=1 text="("
         StringLiteralExpression [2535..2556) fullWidth=21
-          StringLiteral [2535..2556) fullWidth=21 text=""Thanks for playing!""
+          StringLiteral [2535..2536) fullWidth=1 text="""
+          StringLiteralContent [2536..2555) fullWidth=19
+            StringLiteral [2536..2555) fullWidth=19 text="Thanks for playing!"
+          StringLiteral [2555..2556) fullWidth=1 text="""
         CloseParenToken [2556..2558) fullWidth=2 text=")"
           TrailingTrivia [2557..2558) fullWidth=1
             NewLineTrivia width=1 "\\n"

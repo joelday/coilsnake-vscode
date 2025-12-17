@@ -86,7 +86,7 @@
         "compile": "webpack",
         "watch": "webpack --watch",
         "package": "webpack --mode production --devtool hidden-source-map",
-        "build": "tsc -p ./",
+        "build": "tsc -p ./ && webpack",
         "build:watch": "tsc -watch -p ./",
         "lint": "eslint .",
         "clean": "rm -rf out dist",

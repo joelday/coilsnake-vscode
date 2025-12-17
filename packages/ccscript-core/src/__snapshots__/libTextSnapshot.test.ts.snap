@@ -4,7 +4,7 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
 "SourceFile [0..1063) fullWidth=1063
   ExpressionStatement [0..635) fullWidth=635
     StringLiteralExpression [0..635) fullWidth=635
-      StringLiteral [0..635) fullWidth=635 text=""Text position:""
+      StringLiteral [0..619) fullWidth=619 text="""
         LeadingTrivia [0..618) fullWidth=618
           SingleLineCommentTrivia width=27 "///@name: Text Library Test"
           NewLineTrivia width=2 "\\r\\n"
@@ -48,6 +48,9 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
           NewLineTrivia width=2 "\\r\\n"
           NewLineTrivia width=2 "\\r\\n"
           NewLineTrivia width=2 "\\r\\n"
+      StringLiteralContent [619..633) fullWidth=14
+        StringLiteral [619..633) fullWidth=14 text="Text position:"
+      StringLiteral [633..635) fullWidth=2 text="""
         TrailingTrivia [634..635) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [635..652) fullWidth=17
@@ -68,7 +71,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [652..666) fullWidth=14
     StringLiteralExpression [652..666) fullWidth=14
-      StringLiteral [652..666) fullWidth=14 text=""Text color:""
+      StringLiteral [652..653) fullWidth=1 text="""
+      StringLiteralContent [653..664) fullWidth=11
+        StringLiteral [653..664) fullWidth=11 text="Text color:"
+      StringLiteral [664..666) fullWidth=2 text="""
         TrailingTrivia [665..666) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [666..681) fullWidth=15
@@ -84,7 +90,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [681..695) fullWidth=14
     StringLiteralExpression [681..695) fullWidth=14
-      StringLiteral [681..695) fullWidth=14 text=""Text blips:""
+      StringLiteral [681..682) fullWidth=1 text="""
+      StringLiteralContent [682..693) fullWidth=11
+        StringLiteral [682..693) fullWidth=11 text="Text blips:"
+      StringLiteral [693..695) fullWidth=2 text="""
         TrailingTrivia [694..695) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [695..710) fullWidth=15
@@ -100,7 +109,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [710..725) fullWidth=15
     StringLiteralExpression [710..725) fullWidth=15
-      StringLiteral [710..725) fullWidth=15 text=""Boing! Zoom!""
+      StringLiteral [710..711) fullWidth=1 text="""
+      StringLiteralContent [711..723) fullWidth=12
+        StringLiteral [711..723) fullWidth=12 text="Boing! Zoom!"
+      StringLiteral [723..725) fullWidth=2 text="""
         TrailingTrivia [724..725) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [725..740) fullWidth=15
@@ -114,7 +126,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [740..756) fullWidth=16
     StringLiteralExpression [740..756) fullWidth=16
-      StringLiteral [740..756) fullWidth=16 text=""Boring stuff.""
+      StringLiteral [740..741) fullWidth=1 text="""
+      StringLiteralContent [741..754) fullWidth=13
+        StringLiteral [741..754) fullWidth=13 text="Boring stuff."
+      StringLiteral [754..756) fullWidth=2 text="""
         TrailingTrivia [755..756) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [756..771) fullWidth=15
@@ -128,7 +143,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [771..782) fullWidth=11
     StringLiteralExpression [771..782) fullWidth=11
-      StringLiteral [771..782) fullWidth=11 text=""SMAAASH!""
+      StringLiteral [771..772) fullWidth=1 text="""
+      StringLiteralContent [772..780) fullWidth=8
+        StringLiteral [772..780) fullWidth=8 text="SMAAASH!"
+      StringLiteral [780..782) fullWidth=2 text="""
         TrailingTrivia [781..782) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [782..789) fullWidth=7
@@ -138,7 +156,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
           NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [789..800) fullWidth=11
     StringLiteralExpression [789..800) fullWidth=11
-      StringLiteral [789..800) fullWidth=11 text=""YOU WON!""
+      StringLiteral [789..790) fullWidth=1 text="""
+      StringLiteralContent [790..798) fullWidth=8
+        StringLiteral [790..798) fullWidth=8 text="YOU WON!"
+      StringLiteral [798..800) fullWidth=2 text="""
         TrailingTrivia [799..800) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [800..808) fullWidth=8
@@ -148,7 +169,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
           NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [808..823) fullWidth=15
     StringLiteralExpression [808..823) fullWidth=15
-      StringLiteral [808..823) fullWidth=15 text=""Hero's name:""
+      StringLiteral [808..809) fullWidth=1 text="""
+      StringLiteralContent [809..821) fullWidth=12
+        StringLiteral [809..821) fullWidth=12 text="Hero's name:"
+      StringLiteral [821..823) fullWidth=2 text="""
         TrailingTrivia [822..823) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [823..832) fullWidth=9
@@ -164,7 +188,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [832..846) fullWidth=14
     StringLiteralExpression [832..846) fullWidth=14
-      StringLiteral [832..846) fullWidth=14 text=""Hyper beam:""
+      StringLiteral [832..833) fullWidth=1 text="""
+      StringLiteralContent [833..844) fullWidth=11
+        StringLiteral [833..844) fullWidth=11 text="Hyper beam:"
+      StringLiteral [844..846) fullWidth=2 text="""
         TrailingTrivia [845..846) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [846..860) fullWidth=14
@@ -180,7 +207,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [860..875) fullWidth=15
     StringLiteralExpression [860..875) fullWidth=15
-      StringLiteral [860..875) fullWidth=15 text=""PSI Rockin'!""
+      StringLiteral [860..861) fullWidth=1 text="""
+      StringLiteralContent [861..873) fullWidth=12
+        StringLiteral [861..873) fullWidth=12 text="PSI Rockin'!"
+      StringLiteral [873..875) fullWidth=2 text="""
         TrailingTrivia [874..875) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [875..887) fullWidth=12
@@ -196,7 +226,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [887..899) fullWidth=12
     StringLiteralExpression [887..899) fullWidth=12
-      StringLiteral [887..899) fullWidth=12 text=""Teleport:""
+      StringLiteral [887..888) fullWidth=1 text="""
+      StringLiteralContent [888..897) fullWidth=9
+        StringLiteral [888..897) fullWidth=9 text="Teleport:"
+      StringLiteral [897..899) fullWidth=2 text="""
         TrailingTrivia [898..899) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [899..916) fullWidth=17
@@ -212,7 +245,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [916..926) fullWidth=10
     StringLiteralExpression [916..926) fullWidth=10
-      StringLiteral [916..926) fullWidth=10 text=""Number:""
+      StringLiteral [916..917) fullWidth=1 text="""
+      StringLiteralContent [917..924) fullWidth=7
+        StringLiteral [917..924) fullWidth=7 text="Number:"
+      StringLiteral [924..926) fullWidth=2 text="""
         TrailingTrivia [925..926) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [926..938) fullWidth=12
@@ -228,7 +264,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [938..953) fullWidth=15
     StringLiteralExpression [938..953) fullWidth=15
-      StringLiteral [938..953) fullWidth=15 text=""Cash monies:""
+      StringLiteral [938..939) fullWidth=1 text="""
+      StringLiteralContent [939..951) fullWidth=12
+        StringLiteral [939..951) fullWidth=12 text="Cash monies:"
+      StringLiteral [951..953) fullWidth=2 text="""
         TrailingTrivia [952..953) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [953..965) fullWidth=12
@@ -244,7 +283,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [965..980) fullWidth=15
     StringLiteralExpression [965..980) fullWidth=15
-      StringLiteral [965..980) fullWidth=15 text=""Action user:""
+      StringLiteral [965..966) fullWidth=1 text="""
+      StringLiteralContent [966..978) fullWidth=12
+        StringLiteral [966..978) fullWidth=12 text="Action user:"
+      StringLiteral [978..980) fullWidth=2 text="""
         TrailingTrivia [979..980) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [980..988) fullWidth=8
@@ -258,7 +300,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [988..1005) fullWidth=17
     StringLiteralExpression [988..1005) fullWidth=17
-      StringLiteral [988..1005) fullWidth=17 text=""Action target:""
+      StringLiteral [988..989) fullWidth=1 text="""
+      StringLiteralContent [989..1003) fullWidth=14
+        StringLiteral [989..1003) fullWidth=14 text="Action target:"
+      StringLiteral [1003..1005) fullWidth=2 text="""
         TrailingTrivia [1004..1005) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [1005..1015) fullWidth=10
@@ -272,7 +317,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [1015..1031) fullWidth=16
     StringLiteralExpression [1015..1031) fullWidth=16
-      StringLiteral [1015..1031) fullWidth=16 text=""Action delta:""
+      StringLiteral [1015..1016) fullWidth=1 text="""
+      StringLiteralContent [1016..1029) fullWidth=13
+        StringLiteral [1016..1029) fullWidth=13 text="Action delta:"
+      StringLiteral [1029..1031) fullWidth=2 text="""
         TrailingTrivia [1030..1031) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [1031..1040) fullWidth=9
@@ -286,7 +334,10 @@ exports[`lib_text.ccs AST Snapshot should match AST snapshot for lib_text.ccs 1`
             NewLineTrivia width=2 "\\r\\n"
   ExpressionStatement [1040..1053) fullWidth=13
     StringLiteralExpression [1040..1053) fullWidth=13
-      StringLiteral [1040..1053) fullWidth=13 text=""Ness's PP:""
+      StringLiteral [1040..1041) fullWidth=1 text="""
+      StringLiteralContent [1041..1051) fullWidth=10
+        StringLiteral [1041..1051) fullWidth=10 text="Ness's PP:"
+      StringLiteral [1051..1053) fullWidth=2 text="""
         TrailingTrivia [1052..1053) fullWidth=1
           WhitespaceTrivia width=1 " "
   ExpressionStatement [1053..1063) fullWidth=10

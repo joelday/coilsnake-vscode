@@ -619,4 +619,134 @@ describe('Parser', () => {
             expect(imports).toHaveLength(3);
         });
     });
+
+    describe('String template expressions', () => {
+        it('should parse string without templates', () => {
+            const tree = parse('define msg = "Hello World"');
+            const def = tree.statements[0];
+            expect(def.kind).toBe(SyntaxKind.ConstantDeclaration);
+            if (def.kind === SyntaxKind.ConstantDeclaration) {
+                const expr = def.value;
+                expect(expr.kind).toBe(SyntaxKind.StringLiteralExpression);
+                if (expr.kind === SyntaxKind.StringLiteralExpression) {
+                    expect(expr.openQuote.text).toBe('"');
+                    expect(expr.closeQuote.text).toBe('"');
+                    expect(expr.content.kind).toBe(SyntaxKind.StringLiteralContent);
+                    expect(expr.content.textToken.text).toBe('Hello World');
+                }
+            }
+        });
+
+        it('should parse string with simple template expression', () => {
+            const tree = parse('define greeting = "Hello, {name}!"');
+            const def = tree.statements[0];
+            expect(def.kind).toBe(SyntaxKind.ConstantDeclaration);
+            if (def.kind === SyntaxKind.ConstantDeclaration) {
+                const expr = def.value;
+                expect(expr.kind).toBe(SyntaxKind.TemplateStringExpression);
+                if (expr.kind === SyntaxKind.TemplateStringExpression) {
+                    expect(expr.parts.length).toBeGreaterThan(1);
+                    // Should have: "Hello, ", {name}, "!"
+                    const hasTemplateExpr = expr.parts.some(
+                        (p: any) => p.kind === SyntaxKind.StringTemplateExpression
+                    );
+                    expect(hasTemplateExpr).toBe(true);
+                }
+            }
+        });
+
+        it('should parse string template with call expression', () => {
+            const tree = parse('define text = "Item: {itemname(86)}"');
+            const def = tree.statements[0];
+            expect(def.kind).toBe(SyntaxKind.ConstantDeclaration);
+            if (def.kind === SyntaxKind.ConstantDeclaration) {
+                const expr = def.value;
+                expect(expr.kind).toBe(SyntaxKind.TemplateStringExpression);
+                if (expr.kind === SyntaxKind.TemplateStringExpression) {
+                    const templateExpr = expr.parts.find(
+                        (p: any) => 'expression' in p && p.kind === SyntaxKind.StringTemplateExpression
+                    );
+                    expect(templateExpr).toBeDefined();
+                    if (templateExpr && 'expression' in templateExpr) {
+                        expect(templateExpr.expression.kind).toBe(SyntaxKind.CallExpression);
+                    }
+                }
+            }
+        });
+
+        it('should parse string with multiple template expressions', () => {
+            const tree = parse('define msg = "{name(1)}, price: ${cost}"');
+            const def = tree.statements[0];
+            expect(def.kind).toBe(SyntaxKind.ConstantDeclaration);
+            if (def.kind === SyntaxKind.ConstantDeclaration) {
+                const expr = def.value;
+                expect(expr.kind).toBe(SyntaxKind.TemplateStringExpression);
+                if (expr.kind === SyntaxKind.TemplateStringExpression) {
+                    const templateExprs = expr.parts.filter(
+                        (p: any) => p.kind === SyntaxKind.StringTemplateExpression
+                    );
+                    expect(templateExprs.length).toBe(2);
+                }
+            }
+        });
+
+        it('should parse string template with complex expression', () => {
+            const tree = parse('define value = "Result: {10 + 20}"');
+            const def = tree.statements[0];
+            expect(def.kind).toBe(SyntaxKind.ConstantDeclaration);
+            if (def.kind === SyntaxKind.ConstantDeclaration) {
+                const expr = def.value;
+                expect(expr.kind).toBe(SyntaxKind.TemplateStringExpression);
+                if (expr.kind === SyntaxKind.TemplateStringExpression) {
+                    const templateExpr = expr.parts.find(
+                        (p: any) => 'expression' in p && p.kind === SyntaxKind.StringTemplateExpression
+                    );
+                    expect(templateExpr).toBeDefined();
+                    if (templateExpr && 'expression' in templateExpr) {
+                        expect(templateExpr.expression.kind).toBe(SyntaxKind.BinaryExpression);
+                    }
+                }
+            }
+        });
+
+        it('should parse string template with flag expression', () => {
+            const tree = parse('define check = "Flag: {flag 5}"');
+            const def = tree.statements[0];
+            expect(def.kind).toBe(SyntaxKind.ConstantDeclaration);
+            if (def.kind === SyntaxKind.ConstantDeclaration) {
+                const expr = def.value;
+                expect(expr.kind).toBe(SyntaxKind.TemplateStringExpression);
+                if (expr.kind === SyntaxKind.TemplateStringExpression) {
+                    const templateExpr = expr.parts.find(
+                        (p: any) => 'expression' in p && p.kind === SyntaxKind.StringTemplateExpression
+                    );
+                    expect(templateExpr).toBeDefined();
+                    if (templateExpr && 'expression' in templateExpr) {
+                        expect(templateExpr.expression.kind).toBe(SyntaxKind.FlagExpression);
+                    }
+                }
+            }
+        });
+
+        it('should treat unterminated template expression as literal text', () => {
+            // Unterminated template expressions are treated as literal text within the string
+            // The scanner will catch the unterminated string literal itself as an error
+            const tree = parse('define bad = "Hello {name"');
+            const def = tree.statements[0];
+            expect(def.kind).toBe(SyntaxKind.ConstantDeclaration);
+            if (def.kind === SyntaxKind.ConstantDeclaration) {
+                const expr = def.value;
+                // Even if { is present but not closed, it still creates a TemplateStringExpression
+                // The literal text part will contain the "{name" as text
+                expect(expr.kind).toBe(SyntaxKind.TemplateStringExpression);
+                if (expr.kind === SyntaxKind.TemplateStringExpression) {
+                    // Should have just text parts, no template expressions
+                    const templateExprs = expr.parts.filter(
+                        (p: any) => p.kind === SyntaxKind.StringTemplateExpression
+                    );
+                    expect(templateExprs.length).toBe(0);
+                }
+            }
+        });
+    });
 });

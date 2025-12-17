@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { SyntaxTree, RedNode, RedToken, SyntaxKind } from 'ccscript-core';
+import { SyntaxTree, RedNode, RedToken, SyntaxKind, isRedToken, GreenTrivia } from 'ccscript-core';
 
 /**
  * Represents a trivia item (whitespace, comment, etc.)
@@ -29,8 +29,8 @@ interface TriviaGroup {
 /**
  * Tree item that can represent an AST node, trivia group, or individual trivia
  */
-type ASTItem = 
-    | { type: 'node'; node: RedNode } 
+type ASTItem =
+    | { type: 'node'; node: RedNode }
     | { type: 'trivia'; trivia: TriviaItem }
     | { type: 'triviaGroup'; group: TriviaGroup };
 
@@ -68,7 +68,7 @@ export class ASTTreeItem extends vscode.TreeItem {
             const kind = item.node.kind;
             const kindName = SyntaxKind[kind];
             label = kindName;
-            
+
             if (item.node instanceof RedToken && item.node.width > 0) {
                 const text = document.getText(new vscode.Range(
                     document.positionAt(item.node.position),
@@ -80,16 +80,16 @@ export class ASTTreeItem extends vscode.TreeItem {
                     : displayText;
                 label = `${kindName}: "${truncated}"`;
             }
-            
+
             position = item.node.position;
             width = item.node.width;
         }
 
         super(label, collapsibleState);
-        
+
         this.description = `[${position}..${position + width})`;
         this.tooltip = this.createTooltip();
-        
+
         if (item.type === 'triviaGroup') {
             this.contextValue = 'ast-trivia-group';
             this.iconPath = new vscode.ThemeIcon('symbol-namespace');
@@ -105,9 +105,9 @@ export class ASTTreeItem extends vscode.TreeItem {
 
         // Set command to navigate to the position
         // Set command to reveal in editor
-        const revealTarget = item.type === 'triviaGroup' ? item.group : 
-                             item.type === 'trivia' ? item.trivia : 
-                             item.node;
+        const revealTarget = item.type === 'triviaGroup' ? item.group :
+            item.type === 'trivia' ? item.trivia :
+                item.node;
         this.command = {
             command: 'ccscript.revealASTNode',
             title: 'Reveal in Editor',
@@ -117,7 +117,7 @@ export class ASTTreeItem extends vscode.TreeItem {
 
     private createTooltip(): vscode.MarkdownString {
         const tooltip = new vscode.MarkdownString();
-        
+
         if (this.item.type === 'triviaGroup') {
             const group = this.item.group;
             tooltip.appendMarkdown(`**${group.type === 'leading' ? 'Leading' : 'Trailing'} Trivia**\n\n`);
@@ -237,16 +237,16 @@ export class ASTExplorer implements vscode.TreeDataProvider<ASTTreeItem> {
         const items: ASTTreeItem[] = [];
 
         // For tokens, create trivia group nodes
-        if (node instanceof RedToken) {
+        if (isRedToken(node)) {
             const leadingTrivia = node.getLeadingTrivia();
             const trailingTrivia = node.getTrailingTrivia();
-            
+
             // Add leading trivia group if present
             if (leadingTrivia.length > 0) {
-                const leadingWidth = leadingTrivia.reduce((sum, t) => sum + t.width, 0);
+                const leadingWidth = leadingTrivia.reduce((sum: number, t: GreenTrivia) => sum + t.width, 0);
                 items.push(new ASTTreeItem(
-                    { 
-                        type: 'triviaGroup', 
+                    {
+                        type: 'triviaGroup',
                         group: {
                             type: 'leading',
                             items: leadingTrivia,
@@ -261,11 +261,11 @@ export class ASTExplorer implements vscode.TreeDataProvider<ASTTreeItem> {
 
             // Add trailing trivia group if present
             if (trailingTrivia.length > 0) {
-                const trailingWidth = trailingTrivia.reduce((sum, t) => sum + t.width, 0);
+                const trailingWidth = trailingTrivia.reduce((sum: number, t: GreenTrivia) => sum + t.width, 0);
                 const trailingStart = node.position + node.fullWidth - trailingWidth;
                 items.push(new ASTTreeItem(
-                    { 
-                        type: 'triviaGroup', 
+                    {
+                        type: 'triviaGroup',
                         group: {
                             type: 'trailing',
                             items: trailingTrivia,
@@ -287,7 +287,7 @@ export class ASTExplorer implements vscode.TreeDataProvider<ASTTreeItem> {
             children.map((child: RedNode) => new ASTTreeItem(
                 { type: 'node', node: child },
                 this.currentDocument!,
-                child.getChildren().length > 0 || (child instanceof RedToken && (child.getLeadingTrivia().length > 0 || child.getTrailingTrivia().length > 0))
+                child.getChildren().length > 0 || (isRedToken(child) && (child.getLeadingTrivia().length > 0 || child.getTrailingTrivia().length > 0))
                     ? vscode.TreeItemCollapsibleState.Collapsed
                     : vscode.TreeItemCollapsibleState.None
             ))
@@ -328,7 +328,7 @@ export function revealASTNode(item: RedNode | TriviaItem | TriviaGroup, document
     // Determine position and width based on item type
     let position: number;
     let width: number;
-    
+
     if ('green' in item) {
         // It's a RedNode
         position = item.position;

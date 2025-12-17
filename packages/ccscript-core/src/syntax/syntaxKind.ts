@@ -81,6 +81,7 @@ export enum SyntaxKind {
     // Expressions
     NumericLiteralExpression,
     StringLiteralExpression,
+    TemplateStringExpression,
     BooleanLiteralExpression,
     IdentifierExpression,
     QualifiedNameExpression,
@@ -93,8 +94,11 @@ export enum SyntaxKind {
     CountExpression,
     SetcountExpression,
 
+    // String content types
+    StringLiteralContent,      // Text content node (reused in both simple and template strings)
+    
     // String template parts
-    StringTemplateExpression,
+    StringTemplateExpression,  // {expr} part within template string
     TemplateSpan,
 
     // Error recovery

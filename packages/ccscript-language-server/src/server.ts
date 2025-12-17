@@ -28,7 +28,7 @@ import {
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { SyntaxTree, SymbolKind, DiagnosticSeverity, SyntaxKind, RedToken, RedNode } from 'ccscript-core';
+import { SyntaxTree, SymbolKind, DiagnosticSeverity, SyntaxKind, RedToken, RedNode, isRedToken } from 'ccscript-core';
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
@@ -347,7 +347,7 @@ connection.onDocumentSymbol((params): DocumentSymbol[] => {
     const findIdentifier = (node: RedNode): RedToken | null => {
         const children = node.getChildren();
         for (const child of children) {
-            if (child instanceof RedToken && child.kind === SyntaxKind.Identifier) {
+            if (isRedToken(child) && child.kind === SyntaxKind.Identifier) {
                 return child;
             }
         }
@@ -424,9 +424,8 @@ connection.languages.semanticTokens.on((params) => {
     const tree = getOrParseDocument(document);
     const tokens: number[] = [];
 
-    // Get all tokens from the tree
-    const allNodes = tree.getRoot().getDescendants();
-    const redTokens = allNodes.filter(n => n instanceof RedToken) as RedToken[];
+    // Get all tokens from the tree (using getTokens() which correctly filters)
+    const redTokens = tree.getRoot().getTokens();
 
     let prevLine = 0;
     let prevChar = 0;
