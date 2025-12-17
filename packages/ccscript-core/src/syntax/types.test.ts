@@ -63,11 +63,11 @@ describe('CCScript Type System', () => {
         it('should have kind and width', () => {
             const node: GreenNode = {
                 kind: SyntaxKind.SourceFile,
-                width: 100,
+                fullWidth: 100,
                 children: [],
             };
             expect(node.kind).toBe(SyntaxKind.SourceFile);
-            expect(node.width).toBe(100);
+            expect(node.fullWidth).toBe(100);
             expect(node.children).toEqual([]);
         });
     });
@@ -76,13 +76,13 @@ describe('CCScript Type System', () => {
         it('should extend GreenNode with text', () => {
             const token: GreenToken = {
                 kind: SyntaxKind.Identifier,
-                width: 5,
+                fullWidth: 5,
                 text: 'hello',
                 children: [],
             };
             expect(token.kind).toBe(SyntaxKind.Identifier);
             expect(token.text).toBe('hello');
-            expect(token.width).toBe(5);
+            expect(token.fullWidth).toBe(5);
         });
 
         it('should optionally have trivia', () => {
@@ -93,7 +93,7 @@ describe('CCScript Type System', () => {
             };
             const token: GreenToken = {
                 kind: SyntaxKind.Identifier,
-                width: 7,
+                fullWidth: 7,
                 text: 'hello',
                 leadingTrivia: [trivia],
                 children: [],
@@ -164,13 +164,13 @@ describe('CCScript Type System', () => {
         it('should define GreenSourceFile', () => {
             const token: GreenToken = {
                 kind: SyntaxKind.EndOfFileToken,
-                width: 0,
+                fullWidth: 0,
                 text: '',
                 children: [],
             };
             const sourceFile: GreenSourceFile = {
                 kind: SyntaxKind.SourceFile,
-                width: 0,
+                fullWidth: 0,
                 children: [],
                 statements: [],
                 endOfFileToken: token,
@@ -197,7 +197,7 @@ describe('CCScript Type System', () => {
         it('should check node kind correctly', () => {
             const node: GreenNode = {
                 kind: SyntaxKind.SourceFile,
-                width: 100,
+                fullWidth: 100,
                 children: [],
             };
             expect(isNodeOfKind(node, SyntaxKind.SourceFile)).toBe(true);
@@ -207,13 +207,13 @@ describe('CCScript Type System', () => {
         it('should work with specific node types', () => {
             const token: GreenToken = {
                 kind: SyntaxKind.EndOfFileToken,
-                width: 0,
+                fullWidth: 0,
                 text: '',
                 children: [],
             };
             const sourceFile: GreenSourceFile = {
                 kind: SyntaxKind.SourceFile,
-                width: 0,
+                fullWidth: 0,
                 children: [],
                 statements: [],
                 endOfFileToken: token,

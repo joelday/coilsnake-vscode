@@ -16,6 +16,6 @@
     "types": ["node"]
   },
   "references": [{ "path": "../ccscript-language-server" }],
-  "include": ["extension.ts"],
+  "include": ["extension.ts", "src/**/*.ts"],
   "exclude": ["node_modules", "out"]
 }

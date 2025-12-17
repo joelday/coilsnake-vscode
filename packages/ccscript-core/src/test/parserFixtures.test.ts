@@ -42,7 +42,7 @@ describe('Parser Fixture Integration', () => {
                 expect(tree.statements).toBeDefined();
                 
                 // Width should be calculated
-                expect(tree.width).toBeGreaterThanOrEqual(0);
+                expect(tree.fullWidth).toBeGreaterThanOrEqual(0);
             });
         });
 

@@ -365,6 +365,13 @@ export class SyntaxTree {
     }
 
     /**
+     * Get all import statements
+     */
+    getImports(): RedNode[] {
+        return this.findNodesOfKind(SyntaxKind.ImportStatement);
+    }
+
+    /**
      * Get all identifiers in the tree
      */
     getIdentifiers(): RedToken[] {

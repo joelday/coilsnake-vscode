@@ -40,8 +40,7 @@ describe('SyntaxKind', () => {
         it('should have control flow keywords', () => {
             expect(SyntaxKind.IfKeyword).toBeDefined();
             expect(SyntaxKind.ElseKeyword).toBeDefined();
-            expect(SyntaxKind.NextKeyword).toBeDefined();
-            expect(SyntaxKind.EndKeyword).toBeDefined();
+            expect(SyntaxKind.ImportKeyword).toBeDefined();
         });
 
         it('should have declaration keywords', () => {

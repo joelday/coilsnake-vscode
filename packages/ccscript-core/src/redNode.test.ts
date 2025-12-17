@@ -26,19 +26,19 @@ describe('RedNode', () => {
 
         it('should have correct width', () => {
             const root = parseAndCreateRedTree('define x = 1');
-            expect(root.width).toBeGreaterThan(0);
+            expect(root.fullWidth).toBeGreaterThan(0);
         });
 
         it('should calculate end correctly', () => {
             const root = parseAndCreateRedTree('define x = 1');
-            expect(root.end).toBe(root.position + root.width);
+            expect(root.end).toBe(root.position + root.fullWidth);
         });
 
         it('should return correct span', () => {
             const root = parseAndCreateRedTree('define x = 1');
             const span = root.getSpan();
             expect(span.start).toBe(0);
-            expect(span.length).toBe(root.width);
+            expect(span.length).toBe(root.fullWidth);
         });
     });
 
@@ -268,7 +268,8 @@ describe('RedNode', () => {
                     if (!validatePositions(child)) {
                         return false;
                     }
-                    expectedPosition += child.width;
+                    // Position advances by fullWidth (including trivia)
+                    expectedPosition += child.fullWidth;
                 }
                 
                 return true;

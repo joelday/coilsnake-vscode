@@ -463,7 +463,8 @@ describe('Parser', () => {
                 expect(expr.expression.kind).toBe(SyntaxKind.FlagExpression);
                 if (expr.expression.kind === SyntaxKind.FlagExpression) {
                     expect(expr.expression.flagKeyword.kind).toBe(SyntaxKind.FlagKeyword);
-                    expect(expr.expression.number.text).toBe('42');
+                    // operand is now GreenExpression, so check the kind instead
+                    expect(expr.expression.operand.kind).toBe(SyntaxKind.NumericLiteralExpression);
                 }
             }
         });
@@ -531,7 +532,7 @@ describe('Parser', () => {
         it('should recover and continue parsing after error', () => {
             const { tree } = parseWithDiagnostics('@@@@\ndefine x = 1\n@@@@\ndefine y = 2');
             // Should have parsed at least the valid statements
-            const validStatements = tree.statements.filter(s => 
+            const validStatements = tree.statements.filter(s =>
                 s.kind === SyntaxKind.ConstantDeclaration
             );
             expect(validStatements.length).toBeGreaterThanOrEqual(2);
@@ -578,6 +579,43 @@ describe('Parser', () => {
             expect(tree.statements).toHaveLength(1);
             const ifStmt = tree.statements[0];
             expect(ifStmt.kind).toBe(SyntaxKind.IfStatement);
+        });
+    });
+
+    describe('Import statements', () => {
+        it('should parse import with identifier', () => {
+            const tree = parse('import mymodule');
+            expect(tree.statements).toHaveLength(1);
+            const stmt = tree.statements[0];
+            expect(stmt.kind).toBe(SyntaxKind.ImportStatement);
+            if (stmt.kind === SyntaxKind.ImportStatement) {
+                expect(stmt.importKeyword.kind).toBe(SyntaxKind.ImportKeyword);
+                expect(stmt.path.kind).toBe(SyntaxKind.Identifier);
+                expect(stmt.path.text).toBe('mymodule');
+            }
+        });
+
+        it('should parse import with string literal', () => {
+            const tree = parse('import "path/to/file.ccs"');
+            expect(tree.statements).toHaveLength(1);
+            const stmt = tree.statements[0];
+            expect(stmt.kind).toBe(SyntaxKind.ImportStatement);
+            if (stmt.kind === SyntaxKind.ImportStatement) {
+                expect(stmt.importKeyword.kind).toBe(SyntaxKind.ImportKeyword);
+                expect(stmt.path.kind).toBe(SyntaxKind.StringLiteral);
+                expect(stmt.path.text).toBe('"path/to/file.ccs"');
+            }
+        });
+
+        it('should parse multiple imports', () => {
+            const source = `
+                import std
+                import "lib/custom.ccs"
+                import mylib
+            `;
+            const tree = parse(source);
+            const imports = tree.statements.filter(s => s.kind === SyntaxKind.ImportStatement);
+            expect(imports).toHaveLength(3);
         });
     });
 });

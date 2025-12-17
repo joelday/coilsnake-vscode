@@ -44,11 +44,11 @@ export class Scanner {
 
         // Add end of file token with any trailing trivia
         const leadingTrivia = this.scanTrivia();
-        const triviaWidth = leadingTrivia.reduce((sum, t) => sum + t.width, 0);
+        const leadingTriviaWidth = leadingTrivia.reduce((sum, t) => sum + t.width, 0);
         tokens.push({
             kind: SyntaxKind.EndOfFileToken,
             text: '',
-            width: triviaWidth,
+            fullWidth: leadingTriviaWidth,  // Only leading trivia, no text, no trailing
             leadingTrivia: leadingTrivia.length > 0 ? leadingTrivia : undefined,
             children: [],
         });
@@ -332,13 +332,16 @@ export class Scanner {
         // Scan trailing trivia (whitespace and newlines after this token, before next token)
         // Following Roslyn's pattern: newlines go in trailing trivia, comments in leading trivia
         const trailingTrivia = this.scanTrailingTrivia();
-        const triviaWidth = leadingTrivia.reduce((sum, t) => sum + t.width, 0) +
-            trailingTrivia.reduce((sum, t) => sum + t.width, 0);
+
+        // Calculate fullWidth = leadingTriviaWidth + text.length + trailingTriviaWidth
+        const leadingTriviaWidth = leadingTrivia.reduce((sum, t) => sum + t.width, 0);
+        const trailingTriviaWidth = trailingTrivia.reduce((sum, t) => sum + t.width, 0);
+        const fullWidth = leadingTriviaWidth + text.length + trailingTriviaWidth;
 
         return {
             kind,
             text,
-            width: text.length + triviaWidth,
+            fullWidth,
             leadingTrivia: leadingTrivia.length > 0 ? leadingTrivia : undefined,
             trailingTrivia: trailingTrivia.length > 0 ? trailingTrivia : undefined,
             children: [],
@@ -411,6 +414,7 @@ export class Scanner {
             case 'false': return SyntaxKind.FalseKeyword;
             case 'flag': return SyntaxKind.FlagKeyword;
             case 'if': return SyntaxKind.IfKeyword;
+            case 'import': return SyntaxKind.ImportKeyword;
             case 'long': return SyntaxKind.LongKeyword;
             case 'menu': return SyntaxKind.MenuKeyword;
             case 'not': return SyntaxKind.NotKeyword;

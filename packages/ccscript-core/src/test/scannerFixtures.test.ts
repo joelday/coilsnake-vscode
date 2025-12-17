@@ -41,7 +41,7 @@ describe('Scanner with Fixtures', () => {
                     expect(token.text).toBeDefined();
                     
                     // All tokens should have width >= 0
-                    expect(token.width).toBeGreaterThanOrEqual(0);
+                    expect(token.fullWidth).toBeGreaterThanOrEqual(0);
                 });
             });
         });

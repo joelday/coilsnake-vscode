@@ -7,7 +7,7 @@ describe('Scanner', () => {
         it('should scan end of file token from empty string', () => {
             const scanner = new Scanner('');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens.length).toBe(1);
             expect(tokens[0].kind).toBe(SyntaxKind.EndOfFileToken);
             expect(tokens[0].text).toBe('');
@@ -16,7 +16,7 @@ describe('Scanner', () => {
         it('should scan identifier', () => {
             const scanner = new Scanner('hello');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens.length).toBe(2);
             expect(tokens[0].kind).toBe(SyntaxKind.Identifier);
             expect(tokens[0].text).toBe('hello');
@@ -26,7 +26,7 @@ describe('Scanner', () => {
         it('should scan multiple identifiers', () => {
             const scanner = new Scanner('foo bar baz');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens.length).toBe(4);
             expect(tokens[0].text).toBe('foo');
             expect(tokens[1].text).toBe('bar');
@@ -42,12 +42,11 @@ describe('Scanner', () => {
             ['default', SyntaxKind.DefaultKeyword],
             ['define', SyntaxKind.DefineKeyword],
             ['else', SyntaxKind.ElseKeyword],
-            ['end', SyntaxKind.EndKeyword],
             ['flag', SyntaxKind.FlagKeyword],
             ['if', SyntaxKind.IfKeyword],
+            ['import', SyntaxKind.ImportKeyword],
             ['long', SyntaxKind.LongKeyword],
             ['menu', SyntaxKind.MenuKeyword],
-            ['next', SyntaxKind.NextKeyword],
             ['not', SyntaxKind.NotKeyword],
             ['or', SyntaxKind.OrKeyword],
             ['rom', SyntaxKind.ROMKeyword],
@@ -77,7 +76,7 @@ describe('Scanner', () => {
         it('should scan numeric literal', () => {
             const scanner = new Scanner('42');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.NumericLiteral);
             expect(tokens[0].text).toBe('42');
         });
@@ -85,7 +84,7 @@ describe('Scanner', () => {
         it('should scan multiple numeric literals', () => {
             const scanner = new Scanner('123 456 789');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].text).toBe('123');
             expect(tokens[1].text).toBe('456');
             expect(tokens[2].text).toBe('789');
@@ -94,7 +93,7 @@ describe('Scanner', () => {
         it('should scan hex literal', () => {
             const scanner = new Scanner('0xFF');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.HexLiteral);
             expect(tokens[0].text).toBe('0xFF');
         });
@@ -102,7 +101,7 @@ describe('Scanner', () => {
         it('should scan hex literal with lowercase x', () => {
             const scanner = new Scanner('0x1a2b');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.HexLiteral);
             expect(tokens[0].text).toBe('0x1a2b');
         });
@@ -111,7 +110,7 @@ describe('Scanner', () => {
             const scanner = new Scanner('0x');
             const tokens = scanner.scanTokens();
             const diagnostics = scanner.getDiagnostics();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.HexLiteral);
             expect(diagnostics.length).toBe(1);
             expect(diagnostics[0].severity).toBe(DiagnosticSeverity.Error);
@@ -120,7 +119,7 @@ describe('Scanner', () => {
         it('should scan string literal', () => {
             const scanner = new Scanner('"hello world"');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.StringLiteral);
             expect(tokens[0].text).toBe('"hello world"');
         });
@@ -128,7 +127,7 @@ describe('Scanner', () => {
         it('should scan string with escape sequences', () => {
             const scanner = new Scanner('"hello \\"world\\""');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.StringLiteral);
             expect(tokens[0].text).toContain('\\"');
         });
@@ -137,7 +136,7 @@ describe('Scanner', () => {
             const scanner = new Scanner('"hello');
             const tokens = scanner.scanTokens();
             const diagnostics = scanner.getDiagnostics();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.StringLiteral);
             expect(diagnostics.length).toBe(1);
             expect(diagnostics[0].severity).toBe(DiagnosticSeverity.Error);
@@ -170,7 +169,7 @@ describe('Scanner', () => {
         it('should scan multiple punctuation tokens', () => {
             const scanner = new Scanner('()[]{}');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.OpenParenToken);
             expect(tokens[1].kind).toBe(SyntaxKind.CloseParenToken);
             expect(tokens[2].kind).toBe(SyntaxKind.OpenBracketToken);
@@ -184,7 +183,7 @@ describe('Scanner', () => {
         it('should attach leading whitespace as trivia', () => {
             const scanner = new Scanner('  hello');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].leadingTrivia).toBeDefined();
             expect(tokens[0].leadingTrivia?.length).toBe(1);
             expect(tokens[0].leadingTrivia?.[0].kind).toBe(SyntaxKind.WhitespaceTrivia);
@@ -194,7 +193,7 @@ describe('Scanner', () => {
         it('should attach tab as whitespace trivia', () => {
             const scanner = new Scanner('\thello');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].leadingTrivia?.[0].kind).toBe(SyntaxKind.WhitespaceTrivia);
             expect(tokens[0].leadingTrivia?.[0].text).toBe('\t');
         });
@@ -202,14 +201,14 @@ describe('Scanner', () => {
         it('should attach newline as trivia', () => {
             const scanner = new Scanner('\nhello');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].leadingTrivia?.[0].kind).toBe(SyntaxKind.NewLineTrivia);
         });
 
         it('should handle CRLF newlines', () => {
             const scanner = new Scanner('\r\nhello');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].leadingTrivia?.[0].kind).toBe(SyntaxKind.NewLineTrivia);
             expect(tokens[0].leadingTrivia?.[0].text).toBe('\r\n');
             expect(tokens[0].leadingTrivia?.[0].width).toBe(2);
@@ -218,7 +217,7 @@ describe('Scanner', () => {
         it('should attach single-line comment as trivia', () => {
             const scanner = new Scanner('// comment\nhello');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].leadingTrivia?.length).toBe(2);
             expect(tokens[0].leadingTrivia?.[0].kind).toBe(SyntaxKind.SingleLineCommentTrivia);
             expect(tokens[0].leadingTrivia?.[0].text).toBe('// comment');
@@ -227,7 +226,7 @@ describe('Scanner', () => {
         it('should attach multi-line comment as trivia', () => {
             const scanner = new Scanner('/* comment */hello');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].leadingTrivia?.[0].kind).toBe(SyntaxKind.MultiLineCommentTrivia);
             expect(tokens[0].leadingTrivia?.[0].text).toBe('/* comment */');
         });
@@ -236,7 +235,7 @@ describe('Scanner', () => {
             const scanner = new Scanner('/* comment');
             const _tokens = scanner.scanTokens();
             const diagnostics = scanner.getDiagnostics();
-            
+
             expect(diagnostics.length).toBe(1);
             expect(diagnostics[0].severity).toBe(DiagnosticSeverity.Error);
             expect(diagnostics[0].message).toContain('Unterminated');
@@ -245,7 +244,7 @@ describe('Scanner', () => {
         it('should handle multiple trivia items', () => {
             const scanner = new Scanner('  \t\n// comment\n  hello');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].leadingTrivia?.length).toBeGreaterThan(1);
         });
     });
@@ -254,7 +253,7 @@ describe('Scanner', () => {
         it('should scan simple statement', () => {
             const scanner = new Scanner('define PI = 3.14');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.DefineKeyword);
             expect(tokens[1].kind).toBe(SyntaxKind.Identifier);
             expect(tokens[1].text).toBe('PI');
@@ -265,7 +264,7 @@ describe('Scanner', () => {
         it('should scan if statement', () => {
             const scanner = new Scanner('if flag 10 { }');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.IfKeyword);
             expect(tokens[1].kind).toBe(SyntaxKind.FlagKeyword);
             expect(tokens[2].kind).toBe(SyntaxKind.NumericLiteral);
@@ -276,7 +275,7 @@ describe('Scanner', () => {
         it('should scan ROM access', () => {
             const scanner = new Scanner('rom[0x1000] = 0xFF');
             const tokens = scanner.scanTokens();
-            
+
             expect(tokens[0].kind).toBe(SyntaxKind.ROMKeyword);
             expect(tokens[1].kind).toBe(SyntaxKind.OpenBracketToken);
             expect(tokens[2].kind).toBe(SyntaxKind.HexLiteral);
@@ -298,11 +297,11 @@ if flag 1 {
 `;
             const scanner = new Scanner(source);
             const tokens = scanner.scanTokens();
-            
+
             // Verify trivia is attached
-            const tokensWithCommentTrivia = tokens.filter(t => 
-                t.leadingTrivia?.some(tr => 
-                    tr.kind === SyntaxKind.SingleLineCommentTrivia || 
+            const tokensWithCommentTrivia = tokens.filter(t =>
+                t.leadingTrivia?.some(tr =>
+                    tr.kind === SyntaxKind.SingleLineCommentTrivia ||
                     tr.kind === SyntaxKind.MultiLineCommentTrivia
                 )
             );
@@ -315,7 +314,7 @@ if flag 1 {
             const scanner = new Scanner('hello @ world');
             const tokens = scanner.scanTokens();
             const diagnostics = scanner.getDiagnostics();
-            
+
             expect(tokens[0].text).toBe('hello');
             expect(tokens[1].kind).toBe(SyntaxKind.UnexpectedToken);
             expect(tokens[2].text).toBe('world');
@@ -325,7 +324,7 @@ if flag 1 {
         it('should continue scanning after error', () => {
             const scanner = new Scanner('define @ = 42');
             const _tokens = scanner.scanTokens();
-            
+
             expect(_tokens[0].kind).toBe(SyntaxKind.DefineKeyword);
             expect(_tokens[_tokens.length - 1].kind).toBe(SyntaxKind.EndOfFileToken);
         });
@@ -335,20 +334,20 @@ if flag 1 {
         it('should track token width including trivia', () => {
             const scanner = new Scanner('  hello');
             const tokens = scanner.scanTokens();
-            
+
             // Width should include leading trivia
-            expect(tokens[0].width).toBeGreaterThan(tokens[0].text.length);
+            expect(tokens[0].fullWidth).toBeGreaterThan(tokens[0].text.length);
         });
 
         it('should have correct widths for all tokens', () => {
             const scanner = new Scanner('a b c');
             const tokens = scanner.scanTokens();
-            
+
             tokens.forEach(token => {
-                expect(token.width).toBeGreaterThanOrEqual(0);
+                expect(token.fullWidth).toBeGreaterThanOrEqual(0);
                 // Non-EOF tokens should have positive width
                 if (token.kind !== SyntaxKind.EndOfFileToken) {
-                    expect(token.width).toBeGreaterThan(0);
+                    expect(token.fullWidth).toBeGreaterThan(0);
                 }
             });
         });

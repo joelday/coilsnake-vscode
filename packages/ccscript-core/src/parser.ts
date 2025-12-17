@@ -20,6 +20,7 @@ import {
     GreenExpression,
     GreenBlockStatement,
     GreenIfStatement,
+    GreenImportStatement,
     GreenMenuStatement,
     GreenMenuOption,
     GreenLabelDeclaration,
@@ -65,7 +66,7 @@ export class Parser {
 
         while (!this.isAtEnd()) {
             // Skip unexpected tokens at statement level
-            if (this.check(SyntaxKind.CloseBraceToken) || 
+            if (this.check(SyntaxKind.CloseBraceToken) ||
                 this.check(SyntaxKind.CloseParenToken) ||
                 this.check(SyntaxKind.CloseBracketToken)) {
                 this.advance(); // Consume and continue
@@ -83,7 +84,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.SourceFile,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             statements,
             endOfFileToken,
@@ -102,6 +103,9 @@ export class Parser {
         }
 
         // Keyword-based statements
+        if (this.check(SyntaxKind.ImportKeyword)) {
+            return this.parseImportStatement();
+        }
         if (this.check(SyntaxKind.DefineKeyword)) {
             return this.parseConstantDeclaration();
         }
@@ -133,7 +137,7 @@ export class Parser {
             const children = [expr];
             return {
                 kind: SyntaxKind.ExpressionStatement,
-                width: this.calculateWidth(children),
+                fullWidth: this.calculateWidth(children),
                 children,
                 expression: expr,
             };
@@ -143,10 +147,10 @@ export class Parser {
         const errorToken = this.advance();
         this.addDiagnostic(errorToken, DiagnosticSeverity.Error,
             `Unexpected token: ${errorToken.text}`);
-        
+
         return {
             kind: SyntaxKind.ErrorStatement,
-            width: errorToken.width,
+            fullWidth: errorToken.fullWidth,
             children: [errorToken],
             errorToken,
         };
@@ -171,11 +175,38 @@ export class Parser {
 
         return {
             kind: SyntaxKind.BlockStatement,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             openBrace,
             statements,
             closeBrace,
+        };
+    }
+
+    /**
+     * Parse import statement
+     * Grammar: 'import' (IDENTIFIER | STRING_LITERAL)
+     * If identifier, '.ccs' is appended; if string literal, used as-is
+     */
+    private parseImportStatement(): GreenImportStatement {
+        const importKeyword = this.expectToken(SyntaxKind.ImportKeyword);
+
+        // Accept either identifier or string literal
+        let path: GreenToken;
+        if (this.check(SyntaxKind.Identifier) || this.check(SyntaxKind.StringLiteral)) {
+            path = this.advance();
+        } else {
+            path = this.expectToken(SyntaxKind.Identifier);
+        }
+
+        const children = [importKeyword, path];
+
+        return {
+            kind: SyntaxKind.ImportStatement,
+            fullWidth: this.calculateWidth(children),
+            children,
+            importKeyword,
+            path,
         };
     }
 
@@ -201,7 +232,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.IfStatement,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             ifKeyword,
             condition,
@@ -216,7 +247,7 @@ export class Parser {
      */
     private parseMenuStatement(): GreenMenuStatement {
         const menuKeyword = this.expectToken(SyntaxKind.MenuKeyword);
-        
+
         // Optional column count
         let columns: GreenToken | undefined;
         if (this.check(SyntaxKind.NumericLiteral)) {
@@ -242,7 +273,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.MenuStatement,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             menuKeyword,
             columns,
@@ -275,7 +306,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.MenuOption,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             defaultKeyword,
             label,
@@ -294,7 +325,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.LabelDeclaration,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             identifier,
             colon,
@@ -313,7 +344,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.ConstantDeclaration,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             defineKeyword,
             identifier,
@@ -334,7 +365,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.VariableDeclaration,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             varKeyword,
             identifier,
@@ -357,12 +388,13 @@ export class Parser {
         if (this.check(SyntaxKind.OpenParenToken)) {
             openParen = this.advance();
             const params: GreenToken[] = [];
+            const commas: GreenToken[] = [];
 
             while (!this.check(SyntaxKind.CloseParenToken) && !this.isAtEnd()) {
                 if (this.check(SyntaxKind.Identifier)) {
                     params.push(this.advance());
                     if (this.check(SyntaxKind.CommaToken)) {
-                        this.advance(); // Skip comma
+                        commas.push(this.advance());
                     }
                 } else {
                     break;
@@ -380,7 +412,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.CommandDeclaration,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             commandKeyword,
             identifier,
@@ -405,7 +437,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.ROMWriteStatement,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             romKeyword,
             openBracket,
@@ -434,7 +466,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.ROMTableWriteStatement,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             romtblKeyword,
             openBracket,
@@ -472,8 +504,8 @@ export class Parser {
         }
 
         // Array access (byte, short, long) - can contain full expressions including calls
-        if (this.check(SyntaxKind.ByteKeyword) || 
-            this.check(SyntaxKind.ShortKeyword) || 
+        if (this.check(SyntaxKind.ByteKeyword) ||
+            this.check(SyntaxKind.ShortKeyword) ||
             this.check(SyntaxKind.LongKeyword)) {
             const typeKeyword = this.advance();
             let openBracket: GreenToken | undefined;
@@ -494,7 +526,7 @@ export class Parser {
 
             return {
                 kind: SyntaxKind.ArrayAccessExpression,
-                width: this.calculateWidth(children),
+                fullWidth: this.calculateWidth(children),
                 children,
                 typeKeyword,
                 openBracket,
@@ -533,7 +565,7 @@ export class Parser {
             const children: GreenNode[] = [left, operator, right];
             left = {
                 kind: SyntaxKind.BinaryExpression,
-                width: this.calculateWidth(children),
+                fullWidth: this.calculateWidth(children),
                 children,
                 left,
                 operator,
@@ -566,7 +598,7 @@ export class Parser {
 
             return {
                 kind: SyntaxKind.FlagExpression,
-                width: this.calculateWidth(children),
+                fullWidth: this.calculateWidth(children),
                 children,
                 flagKeyword,
                 operand,
@@ -574,9 +606,9 @@ export class Parser {
         }
 
         // Check for unary operators (-, +, ~, not)
-        if (this.check(SyntaxKind.NotKeyword) || 
-            this.checkText('-') || 
-            this.checkText('+') || 
+        if (this.check(SyntaxKind.NotKeyword) ||
+            this.checkText('-') ||
+            this.checkText('+') ||
             this.checkText('~')) {
             const operator = this.advance();
             const operand = this.parseUnaryExpression() || this.createErrorExpression();
@@ -584,7 +616,7 @@ export class Parser {
 
             return {
                 kind: SyntaxKind.UnaryExpression,
-                width: this.calculateWidth(children),
+                fullWidth: this.calculateWidth(children),
                 children,
                 operator,
                 operand,
@@ -608,13 +640,13 @@ export class Parser {
             if (this.check(SyntaxKind.DotToken)) {
                 const dot = this.advance();
                 const right = this.expectToken(SyntaxKind.Identifier);
-                
+
                 // Convert to qualified name if left is identifier
                 if (expr.kind === SyntaxKind.IdentifierExpression) {
                     const children: GreenNode[] = [expr.identifier, dot, right];
                     expr = {
                         kind: SyntaxKind.QualifiedNameExpression,
-                        width: this.calculateWidth(children),
+                        fullWidth: this.calculateWidth(children),
                         children,
                         left: expr.identifier,
                         dot,
@@ -630,13 +662,15 @@ export class Parser {
             else if (this.check(SyntaxKind.OpenParenToken)) {
                 const openParen = this.advance();
                 const args: GreenExpression[] = [];
+                const commas: GreenToken[] = [];
 
                 while (!this.check(SyntaxKind.CloseParenToken) && !this.isAtEnd()) {
                     const arg = this.parseExpression();
                     if (arg) {
                         args.push(arg);
                         if (this.check(SyntaxKind.CommaToken)) {
-                            this.advance();
+                            const comma = this.advance();
+                            commas.push(comma);
                         }
                     } else {
                         break;
@@ -644,18 +678,27 @@ export class Parser {
                 }
 
                 const closeParen = this.expectToken(SyntaxKind.CloseParenToken);
-                
+
                 // Verify target is identifier or qualified name
-                if (expr.kind !== SyntaxKind.IdentifierExpression && 
+                if (expr.kind !== SyntaxKind.IdentifierExpression &&
                     expr.kind !== SyntaxKind.QualifiedNameExpression) {
                     this.addDiagnostic(openParen, DiagnosticSeverity.Error,
                         'Can only call identifiers or qualified names');
                 }
 
-                const children: GreenNode[] = [expr, openParen, ...args, closeParen];
+                // Build children by interleaving arguments and commas
+                const argChildren: GreenNode[] = [];
+                for (let i = 0; i < args.length; i++) {
+                    argChildren.push(args[i]);
+                    if (i < commas.length) {
+                        argChildren.push(commas[i]);
+                    }
+                }
+
+                const children: GreenNode[] = [expr, openParen, ...argChildren, closeParen];
                 expr = {
                     kind: SyntaxKind.CallExpression,
-                    width: this.calculateWidth(children),
+                    fullWidth: this.calculateWidth(children),
                     children,
                     target: expr as GreenIdentifierExpression | GreenQualifiedNameExpression,
                     openParen,
@@ -678,7 +721,7 @@ export class Parser {
         if (this.check(SyntaxKind.CountKeyword)) {
             return this.parseCountExpression();
         }
-        
+
         if (this.check(SyntaxKind.SetcountKeyword)) {
             return this.parseSetcountExpression();
         }
@@ -688,7 +731,7 @@ export class Parser {
             const token = this.advance();
             return {
                 kind: SyntaxKind.NumericLiteralExpression,
-                width: token.width,
+                fullWidth: token.fullWidth,
                 children: [token],
                 token,
             };
@@ -699,7 +742,7 @@ export class Parser {
             // For now, treat as single token (template parsing would be more complex)
             return {
                 kind: SyntaxKind.StringLiteralExpression,
-                width: token.width,
+                fullWidth: token.fullWidth,
                 children: [token],
                 parts: [token],
             };
@@ -709,7 +752,7 @@ export class Parser {
             const token = this.advance();
             return {
                 kind: SyntaxKind.BooleanLiteralExpression,
-                width: token.width,
+                fullWidth: token.fullWidth,
                 children: [token],
                 token,
             };
@@ -720,7 +763,7 @@ export class Parser {
             const identifier = this.advance();
             return {
                 kind: SyntaxKind.IdentifierExpression,
-                width: identifier.width,
+                fullWidth: identifier.fullWidth,
                 children: [identifier],
                 identifier,
             };
@@ -819,7 +862,7 @@ export class Parser {
         return {
             kind: SyntaxKind.MissingToken,
             text: '',
-            width: 0,
+            fullWidth: 0,
             children: [],
         };
     }
@@ -838,15 +881,15 @@ export class Parser {
         const countKeyword = this.advance(); // consume 'count'
         const openParen = this.expectToken(SyntaxKind.OpenParenToken);
         const counterName = this.expectToken(SyntaxKind.StringLiteral);
-        
+
         const children: GreenNode[] = [countKeyword, openParen, counterName];
-        
+
         // Optional: offset parameter
         if (this.check(SyntaxKind.CommaToken)) {
             const comma1 = this.advance();
             const offset = this.expectToken(SyntaxKind.NumericLiteral);
             children.push(comma1, offset);
-            
+
             // Optional: multiple parameter
             if (this.check(SyntaxKind.CommaToken)) {
                 const comma2 = this.advance();
@@ -854,13 +897,13 @@ export class Parser {
                 children.push(comma2, multiple);
             }
         }
-        
+
         const closeParen = this.expectToken(SyntaxKind.CloseParenToken);
         children.push(closeParen);
-        
+
         return {
             kind: SyntaxKind.CountExpression,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             countKeyword,
             counterName,
@@ -876,17 +919,17 @@ export class Parser {
         const openParen = this.expectToken(SyntaxKind.OpenParenToken);
         const counterName = this.expectToken(SyntaxKind.StringLiteral);
         const comma = this.expectToken(SyntaxKind.CommaToken);
-        
+
         // Parse value as expression to handle negative numbers like -1
         const valueExpr = this.parseExpression() || this.createErrorExpression();
-        
+
         const closeParen = this.expectToken(SyntaxKind.CloseParenToken);
-        
+
         const children = [setcountKeyword, openParen, counterName, comma, valueExpr, closeParen];
-        
+
         return {
             kind: SyntaxKind.SetcountExpression,
-            width: this.calculateWidth(children),
+            fullWidth: this.calculateWidth(children),
             children,
             setcountKeyword,
             counterName,
@@ -897,19 +940,26 @@ export class Parser {
     /**
      * Calculate total width of children
      */
+    /**
+     * Calculate total fullWidth of children.
+     * In Roslyn pattern, nodes store fullWidth (including all trivia).
+     */
     private calculateWidth(children: readonly GreenNode[]): number {
-        return children.reduce((sum, child) => sum + child.width, 0);
+        return children.reduce((sum, child) => sum + child.fullWidth, 0);
     }
 
     /**
      * Add diagnostic
      */
     private addDiagnostic(token: GreenToken, severity: DiagnosticSeverity, message: string): void {
-        // Approximate position from token
+        // Approximate position from token - accumulate fullWidth of all previous tokens
         let position = 0;
         for (let i = 0; i < this.pos; i++) {
-            position += this.tokens[i].width;
+            position += this.tokens[i].fullWidth;
         }
+        // Add leading trivia width to get to the token text
+        const leadingWidth = token.leadingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0;
+        position += leadingWidth;
 
         this.diagnostics.push({
             span: { start: position, length: token.text.length },
@@ -925,7 +975,7 @@ export class Parser {
         const errorToken: GreenToken = {
             kind: SyntaxKind.MissingToken,
             text: '',
-            width: 0,
+            fullWidth: 0,
             children: [],
         };
 
@@ -938,7 +988,7 @@ export class Parser {
 
         return {
             kind: SyntaxKind.ErrorExpression,
-            width: 0,
+            fullWidth: 0,
             children: [errorToken],
             errorToken,
         };
@@ -951,13 +1001,13 @@ export class Parser {
         const errorToken: GreenToken = {
             kind: SyntaxKind.MissingToken,
             text: '',
-            width: 0,
+            fullWidth: 0,
             children: [],
         };
 
         return {
             kind: SyntaxKind.ErrorStatement,
-            width: 0,
+            fullWidth: 0,
             children: [errorToken],
             errorToken,
         };

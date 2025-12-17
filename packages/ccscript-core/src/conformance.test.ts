@@ -26,10 +26,10 @@ describe('CCScript Reference Compiler Conformance', () => {
             it(`should parse ${file}`, () => {
                 const path = join(__dirname, TEST_DIR, file);
                 const source = readFileSync(path, 'utf-8');
-                
+
                 const tree = SyntaxTree.parse(source);
                 const diagnostics = tree.getDiagnostics(); // Only parser/scanner errors
-                
+
                 // Collect results for summary
                 const diagInfo = diagnostics.map(d => {
                     const pos = tree.getLineAndColumn(d.span.start);
@@ -63,20 +63,20 @@ describe('CCScript Reference Compiler Conformance', () => {
             // Summary report
             console.log('\n=== CONFORMANCE SUMMARY ===');
             console.log(`Total files tested: ${results.length}`);
-            
+
             const passed = results.filter(r => r.diagnosticCount === 0);
             const failed = results.filter(r => r.diagnosticCount > 0);
-            
+
             console.log(`Passed (no parser errors): ${passed.length}`);
             console.log(`Failed (with parser errors): ${failed.length}`);
-            
+
             if (failed.length > 0) {
                 console.log('\nFiles with errors:');
                 failed.forEach(r => {
                     console.log(`  ${r.file}: ${r.diagnosticCount} error(s)`);
                 });
             }
-            
+
             console.log(`\nConformance rate: ${(passed.length / results.length * 100).toFixed(1)}%`);
         });
     });

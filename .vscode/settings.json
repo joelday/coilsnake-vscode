@@ -14,9 +14,7 @@
     "**/out": true,
     "**/dist": true,
     "**/node_modules": true,
-    "**/coverage": true,
-    "ccscript-compiler": true,
-    "coilsnake": true
+    "**/coverage": true
   },
   // TypeScript configuration
   "typescript.tsc.autoDetect": "off",
@@ -34,5 +32,5 @@
   "eslint.workingDirectories": [{ "pattern": "./packages/*" }],
 
   // Test configuration
-    "jest.runMode": "on-demand",
+  "jest.runMode": "on-demand"
 }

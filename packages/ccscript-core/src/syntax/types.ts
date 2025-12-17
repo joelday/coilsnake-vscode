@@ -46,15 +46,19 @@ export interface Diagnostic {
 
 /**
  * Base interface for all green nodes (immutable, position-independent syntax)
+ * Following Roslyn's design:
+ * - fullWidth: total width including leading and trailing trivia
+ * - Width (computed): fullWidth - leadingTriviaWidth - trailingTriviaWidth
  */
 export interface GreenNode {
     readonly kind: SyntaxKind;
-    readonly width: number;  // Total width including trivia
+    readonly fullWidth: number;  // Total width including all trivia
     readonly children: readonly GreenElement[];
 }
 
 /**
  * Token - a leaf node in the syntax tree
+ * fullWidth = leadingTriviaWidth + text.length + trailingTriviaWidth
  */
 export interface GreenToken extends GreenNode {
     readonly text: string;
@@ -66,8 +70,8 @@ export interface GreenToken extends GreenNode {
  * Trivia - whitespace and comments
  */
 export interface GreenTrivia {
-    readonly kind: SyntaxKind.WhitespaceTrivia | SyntaxKind.NewLineTrivia | 
-                   SyntaxKind.SingleLineCommentTrivia | SyntaxKind.MultiLineCommentTrivia;
+    readonly kind: SyntaxKind.WhitespaceTrivia | SyntaxKind.NewLineTrivia |
+    SyntaxKind.SingleLineCommentTrivia | SyntaxKind.MultiLineCommentTrivia;
     readonly text: string;
     readonly width: number;
 }
@@ -88,11 +92,11 @@ export interface RedNode<G extends GreenNode = GreenNode> {
     readonly green: G;
     readonly parent: RedNode | null;
     readonly position: number;  // Absolute position in source text
-    
+
     // Computed properties
     get span(): TextSpan;
     get end(): number;
-    
+
     // Navigation
     getChildAt(index: number): RedNode | null;
     getChildren(): readonly RedNode[];
@@ -121,9 +125,10 @@ export interface GreenSourceFile extends GreenNode {
 
 // ========== Statements ==========
 
-export type GreenStatement = 
+export type GreenStatement =
     | GreenBlockStatement
     | GreenIfStatement
+    | GreenImportStatement
     | GreenMenuStatement
     | GreenLabelDeclaration
     | GreenConstantDeclaration
@@ -148,6 +153,12 @@ export interface GreenIfStatement extends GreenNode {
     readonly thenStatement: GreenStatement;
     readonly elseKeyword?: GreenToken;
     readonly elseStatement?: GreenStatement;
+}
+
+export interface GreenImportStatement extends GreenNode {
+    readonly kind: SyntaxKind.ImportStatement;
+    readonly importKeyword: GreenToken;
+    readonly path: GreenToken;  // Identifier or StringLiteral
 }
 
 export interface GreenMenuStatement extends GreenNode {
@@ -235,7 +246,7 @@ export interface GreenErrorStatement extends GreenNode {
 
 // ========== Expressions ==========
 
-export type GreenExpression = 
+export type GreenExpression =
     | GreenNumericLiteralExpression
     | GreenStringLiteralExpression
     | GreenBooleanLiteralExpression
@@ -347,7 +358,7 @@ export interface GreenErrorExpression extends GreenNode {
 /**
  * Extract the green node type for a given syntax kind
  */
-export type GreenNodeOfKind<K extends SyntaxKind> = 
+export type GreenNodeOfKind<K extends SyntaxKind> =
     K extends SyntaxKind.SourceFile ? GreenSourceFile :
     K extends SyntaxKind.BlockStatement ? GreenBlockStatement :
     K extends SyntaxKind.IfStatement ? GreenIfStatement :

@@ -9,17 +9,17 @@ export enum SyntaxKind {
     NewLineTrivia,
     SingleLineCommentTrivia,
     MultiLineCommentTrivia,
-    
+
     // Literals
     NumericLiteral,
     HexLiteral,
     StringLiteral,
     TrueKeyword,
     FalseKeyword,
-    
+
     // Identifiers
     Identifier,
-    
+
     // Keywords
     AndKeyword,
     ByteKeyword,
@@ -30,6 +30,7 @@ export enum SyntaxKind {
     ElseKeyword,
     FlagKeyword,
     IfKeyword,
+    ImportKeyword,
     LongKeyword,
     MenuKeyword,
     NotKeyword,
@@ -39,7 +40,7 @@ export enum SyntaxKind {
     SetcountKeyword,
     ShortKeyword,
     VarKeyword,
-    
+
     // Punctuation
     OpenBraceToken,
     CloseBraceToken,
@@ -53,17 +54,18 @@ export enum SyntaxKind {
     EqualsToken,
     PipeToken,         // | pause in strings
     SlashToken,        // / pause in strings
-    
+
     // String Components
     StringTextPart,
     ControlCodeSequence,
-    
+
     // Nodes
     SourceFile,
-    
+
     // Statements
     BlockStatement,
     IfStatement,
+    ImportStatement,
     MenuStatement,
     MenuOption,
     LabelDeclaration,
@@ -75,7 +77,7 @@ export enum SyntaxKind {
     ROMWriteStatement,
     ROMTableWriteStatement,
     ExpressionStatement,
-    
+
     // Expressions
     NumericLiteralExpression,
     StringLiteralExpression,
@@ -90,11 +92,11 @@ export enum SyntaxKind {
     ArrayAccessExpression,
     CountExpression,
     SetcountExpression,
-    
+
     // String template parts
     StringTemplateExpression,
     TemplateSpan,
-    
+
     // Error recovery
     MissingToken,
     UnexpectedToken,
@@ -110,23 +112,23 @@ export namespace SyntaxKind {
     export function isTrivia(kind: SyntaxKind): boolean {
         return kind >= SyntaxKind.WhitespaceTrivia && kind <= SyntaxKind.MultiLineCommentTrivia;
     }
-    
+
     export function isKeyword(kind: SyntaxKind): boolean {
         return kind >= SyntaxKind.AndKeyword && kind <= SyntaxKind.ShortKeyword;
     }
-    
+
     export function isToken(kind: SyntaxKind): boolean {
         return kind <= SyntaxKind.SlashToken;
     }
-    
+
     export function isStatement(kind: SyntaxKind): boolean {
         return kind >= SyntaxKind.BlockStatement && kind <= SyntaxKind.ErrorStatement;
     }
-    
+
     export function isExpression(kind: SyntaxKind): boolean {
         return kind >= SyntaxKind.NumericLiteralExpression && kind <= SyntaxKind.ErrorExpression;
     }
-    
+
     export function isLiteral(kind: SyntaxKind): boolean {
         return kind >= SyntaxKind.NumericLiteral && kind <= SyntaxKind.FalseKeyword;
     }

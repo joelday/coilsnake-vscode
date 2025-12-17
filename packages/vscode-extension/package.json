@@ -34,7 +34,52 @@
                 ],
                 "configuration": "./language-configuration.json"
             }
-        ]
+        ],
+        "views": {
+            "explorer": [
+                {
+                    "id": "ccscript-project-explorer",
+                    "name": "CCScript Project"
+                },
+                {
+                    "id": "ccscript-ast-explorer",
+                    "name": "CCScript AST"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "ccscript.refreshProjectExplorer",
+                "title": "Refresh",
+                "icon": "$(refresh)",
+                "category": "CCScript"
+            },
+            {
+                "command": "ccscript.refreshASTExplorer",
+                "title": "Refresh AST",
+                "icon": "$(refresh)",
+                "category": "CCScript"
+            },
+            {
+                "command": "ccscript.revealASTNode",
+                "title": "Reveal in Editor",
+                "category": "CCScript"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "ccscript.refreshProjectExplorer",
+                    "when": "view == ccscript-project-explorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "ccscript.refreshASTExplorer",
+                    "when": "view == ccscript-ast-explorer",
+                    "group": "navigation"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run package",

@@ -39,24 +39,78 @@ export class RedNode implements IRedNode {
     }
 
     /**
-     * Get the width (length) of this node
+     * Get the fullWidth (total length including trivia)
+     */
+    get fullWidth(): number {
+        return this.green.fullWidth;
+    }
+
+    /**
+     * Get the width (length without trivia) - computed from fullWidth
+     * For tokens: text.length
+     * For nodes: fullWidth - leadingTriviaWidth - trailingTriviaWidth
      */
     get width(): number {
-        return this.green.width;
+        if ('text' in this.green) {
+            // Token: width is just text length
+            return (this.green as GreenToken).text.length;
+        }
+        // Node: width excludes trivia from first and last tokens
+        const leadingWidth = this.getLeadingTriviaWidth();
+        const trailingWidth = this.getTrailingTriviaWidth();
+        return this.green.fullWidth - leadingWidth - trailingWidth;
     }
 
     /**
-     * Get the end position (position + width)
+     * Get the end position (position + fullWidth)
      */
     get end(): number {
-        return this.position + this.width;
+        return this.position + this.fullWidth;
     }
 
     /**
-     * Get text span for this node
+     * Get text span for this node (excluding trivia)
+     * This is the span of the actual token/node text, not including leading/trailing trivia
      */
     get span(): { start: number; length: number } {
-        return { start: this.position, length: this.width };
+        const leadingWidth = this.getLeadingTriviaWidth();
+        return { 
+            start: this.position + leadingWidth, 
+            length: this.width 
+        };
+    }
+
+    /**
+     * Get full span including trivia
+     */
+    get fullSpan(): { start: number; length: number } {
+        return { start: this.position, length: this.fullWidth };
+    }
+
+    /**
+     * Get leading trivia width
+     */
+    getLeadingTriviaWidth(): number {
+        if ('leadingTrivia' in this.green) {
+            const leadingTrivia = (this.green as GreenToken).leadingTrivia;
+            return leadingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0;
+        }
+        // For nodes, recursively get first token's leading trivia
+        const firstChild = this.getFirstChild();
+        return firstChild ? firstChild.getLeadingTriviaWidth() : 0;
+    }
+
+    /**
+     * Get trailing trivia width
+     */
+    getTrailingTriviaWidth(): number {
+        if ('trailingTrivia' in this.green) {
+            const trailingTrivia = (this.green as GreenToken).trailingTrivia;
+            return trailingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0;
+        }
+        // For nodes, recursively get last token's trailing trivia
+        const lastChild = this.getLastChild();
+        return lastChild ? lastChild.getTrailingTriviaWidth() : 0;
     }
 
     /**
@@ -262,6 +316,7 @@ export class RedNode implements IRedNode {
 
     /**
      * Create child red nodes
+     * Position advances by fullWidth (including trivia) of each child
      */
     private createChildren(): RedNode[] {
         const children: RedNode[] = [];
@@ -276,7 +331,7 @@ export class RedNode implements IRedNode {
         for (const greenChild of greenChildren) {
             const redChild = createRedNode(greenChild, this, childPosition);
             children.push(redChild);
-            childPosition += greenChild.width;
+            childPosition += greenChild.fullWidth;  // Use fullWidth to include trivia
         }
         
         return children;
