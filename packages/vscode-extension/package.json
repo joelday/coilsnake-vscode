@@ -1,0 +1,81 @@
+{
+    "name": "coilsnake-vscode",
+    "displayName": "CoilSnake",
+    "description": "CoilSnake project and CCScript language support",
+    "version": "1.0.0",
+    "publisher": "joelday",
+    "preview": true,
+    "engines": {
+        "vscode": "^1.95.0"
+    },
+    "icon": "images/icon.png",
+    "license": "MIT",
+    "keywords": [
+        "EarthBound",
+        "Mother 2",
+        "CCScript",
+        "Modding",
+        "PK Hack"
+    ],
+    "categories": [
+        "Programming Languages"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "ccscript",
+                "aliases": [
+                    "CCScript",
+                    "ccscript"
+                ],
+                "extensions": [
+                    ".ccs"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "build": "tsc -p ./",
+        "build:watch": "tsc -watch -p ./",
+        "lint": "eslint .",
+        "clean": "rm -rf out dist",
+        "vsce:package": "vsce package"
+    },
+    "dependencies": {
+        "ccscript-language-server": "^1.0.0",
+        "vscode-languageclient": "^9.0.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.13.0",
+        "@types/node": "^22",
+        "@types/vscode": "^1.100.0",
+        "@types/webpack": "^5.28.5",
+        "@vscode/vsce": "^3.2.1",
+        "eslint": "^9.13.0",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.9.2",
+        "typescript-eslint": "^8.39.0",
+        "webpack": "^5.97.1",
+        "webpack-cli": "^5.1.4"
+    },
+    "bugs": {
+        "url": "https://github.com/joelday/coilsnake-vscode/issues",
+        "email": "joelday@gmail.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/joelday/coilsnake-vscode.git",
+        "directory": "packages/vscode-extension"
+    },
+    "homepage": "https://github.com/joelday/coilsnake-vscode",
+    "author": {
+        "name": "Joel Day",
+        "url": "https://github.com/joelday"
+    }
+}

@@ -1,13 +1,38 @@
-// Place your settings in this file to overwrite default and user settings.
+// Workspace settings for monorepo
 {
-    "files.exclude": {
-        "out": false, // set this to true to hide the "out" folder with the compiled JS files
-        "dist": false // set this to true to hide the "dist" folder with the compiled JS files
-    },
-    "search.exclude": {
-        "out": true, // set this to false to include "out" folder in search results
-        "dist": true // set this to false to include "dist" folder in search results
-    },
-    // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-    "typescript.tsc.autoDetect": "off"
+  "files.exclude": {
+    "**/out": false, // set this to true to hide the "out" folders with compiled JS files
+    "**/dist": false, // set this to true to hide the "dist" folders
+    "**/*.js": { "when": "$(basename).ts" }, // Hide .js files when .ts file exists
+    "**/*.d.ts": { "when": "$(basename).ts" }, // Hide .d.ts files when .ts file exists
+    "**/*.js.map": true,
+    "**/*.d.ts.map": true,
+    "**/node_modules": true,
+    "**/coverage": true
+  },
+  "search.exclude": {
+    "**/out": true,
+    "**/dist": true,
+    "**/node_modules": true,
+    "**/coverage": true,
+    "ccscript-compiler": true,
+    "coilsnake": true
+  },
+  // TypeScript configuration
+  "typescript.tsc.autoDetect": "off",
+  "typescript.preferences.importModuleSpecifier": "project-relative",
+  "typescript.tsdk": "node_modules/typescript/lib",
+
+  // Editor configuration
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  // ESLint configuration
+  "eslint.validate": ["javascript", "typescript"],
+  "eslint.workingDirectories": [{ "pattern": "./packages/*" }],
+
+  // Test configuration
+    "jest.runMode": "on-demand",
 }

@@ -36,7 +36,7 @@ export class Scanner {
      */
     scanTokens(): GreenToken[] {
         const tokens: GreenToken[] = [];
-        
+
         while (this.pos < this.text.length) {
             const token = this.scanToken();
             tokens.push(token);
@@ -75,7 +75,7 @@ export class Scanner {
         }
 
         // Hex literals (check before numbers since 0x starts with digit)
-        if (ch === '0' && this.pos + 1 < this.text.length && 
+        if (ch === '0' && this.pos + 1 < this.text.length &&
             (this.text[this.pos + 1] === 'x' || this.text[this.pos + 1] === 'X')) {
             return this.scanHexLiteral(leadingTrivia);
         }
@@ -135,14 +135,15 @@ export class Scanner {
         }
 
         // Unknown character - create error token
-        this.addDiagnostic(start, 1, DiagnosticSeverity.Error, 
+        this.addDiagnostic(start, 1, DiagnosticSeverity.Error,
             `Unexpected character: '${ch}'`);
         this.pos++;
         return this.createToken(SyntaxKind.UnexpectedToken, ch, leadingTrivia);
     }
 
     /**
-     * Scan leading trivia (whitespace and comments)
+     * Scan leading trivia (whitespace and comments before a token)
+     * Following Roslyn: newlines are in trailing trivia, so skip them here
      */
     private scanTrivia(): GreenTrivia[] {
         const trivia: GreenTrivia[] = [];
@@ -152,9 +153,9 @@ export class Scanner {
             const start = this.pos;
 
             if (ch === ' ' || ch === '\t') {
-                // Whitespace
-                while (this.pos < this.text.length && 
-                       (this.text[this.pos] === ' ' || this.text[this.pos] === '\t')) {
+                // Whitespace (indent at start of line)
+                while (this.pos < this.text.length &&
+                    (this.text[this.pos] === ' ' || this.text[this.pos] === '\t')) {
                     this.pos++;
                 }
                 const text = this.text.substring(start, this.pos);
@@ -164,7 +165,8 @@ export class Scanner {
                     width: text.length
                 });
             } else if (ch === '\n' || ch === '\r') {
-                // Newline
+                // Skip newlines - they should have been in previous token's trailing trivia
+                // But handle them gracefully if they appear (e.g., at start of file)
                 if (ch === '\r' && this.peek(1) === '\n') {
                     this.pos += 2;
                     trivia.push({
@@ -183,9 +185,9 @@ export class Scanner {
             } else if (ch === '/' && this.peek(1) === '/') {
                 // Single-line comment
                 this.pos += 2;
-                while (this.pos < this.text.length && 
-                       this.text[this.pos] !== '\n' && 
-                       this.text[this.pos] !== '\r') {
+                while (this.pos < this.text.length &&
+                    this.text[this.pos] !== '\n' &&
+                    this.text[this.pos] !== '\r') {
                     this.pos++;
                 }
                 const text = this.text.substring(start, this.pos);
@@ -227,7 +229,7 @@ export class Scanner {
      */
     private scanIdentifierOrKeyword(leadingTrivia: GreenTrivia[]): GreenToken {
         const start = this.pos;
-        
+
         while (this.pos < this.text.length && this.isIdentifierPart(this.text[this.pos])) {
             this.pos++;
         }
@@ -327,9 +329,11 @@ export class Scanner {
      * Create a token with trivia
      */
     private createToken(kind: SyntaxKind, text: string, leadingTrivia: GreenTrivia[]): GreenToken {
-        const trailingTrivia: GreenTrivia[] = [];
+        // Scan trailing trivia (whitespace and newlines after this token, before next token)
+        // Following Roslyn's pattern: newlines go in trailing trivia, comments in leading trivia
+        const trailingTrivia = this.scanTrailingTrivia();
         const triviaWidth = leadingTrivia.reduce((sum, t) => sum + t.width, 0) +
-                           trailingTrivia.reduce((sum, t) => sum + t.width, 0);
+            trailingTrivia.reduce((sum, t) => sum + t.width, 0);
 
         return {
             kind,
@@ -342,6 +346,57 @@ export class Scanner {
     }
 
     /**
+     * Scan trailing trivia (whitespace and newlines after a token)
+     * Following Roslyn: newlines and whitespace go in trailing trivia of previous token
+     */
+    private scanTrailingTrivia(): GreenTrivia[] {
+        const trivia: GreenTrivia[] = [];
+
+        while (this.pos < this.text.length) {
+            const ch = this.text[this.pos];
+            const start = this.pos;
+
+            if (ch === ' ' || ch === '\t') {
+                // Whitespace
+                while (this.pos < this.text.length &&
+                    (this.text[this.pos] === ' ' || this.text[this.pos] === '\t')) {
+                    this.pos++;
+                }
+                const text = this.text.substring(start, this.pos);
+                trivia.push({
+                    kind: SyntaxKind.WhitespaceTrivia,
+                    text,
+                    width: text.length
+                });
+            } else if (ch === '\n' || ch === '\r') {
+                // Newline - consume it and stop (one newline per token's trailing trivia)
+                if (ch === '\r' && this.peek(1) === '\n') {
+                    this.pos += 2;
+                    trivia.push({
+                        kind: SyntaxKind.NewLineTrivia,
+                        text: '\r\n',
+                        width: 2
+                    });
+                } else {
+                    this.pos++;
+                    trivia.push({
+                        kind: SyntaxKind.NewLineTrivia,
+                        text: ch,
+                        width: 1
+                    });
+                }
+                // Stop after first newline
+                break;
+            } else {
+                // Not trailing trivia (comment or code), stop here
+                break;
+            }
+        }
+
+        return trivia;
+    }
+
+    /**
      * Get keyword kind from identifier text
      */
     private getKeywordKind(text: string): SyntaxKind {
@@ -349,22 +404,23 @@ export class Scanner {
             case 'and': return SyntaxKind.AndKeyword;
             case 'byte': return SyntaxKind.ByteKeyword;
             case 'command': return SyntaxKind.CommandKeyword;
+            case 'count': return SyntaxKind.CountKeyword;
             case 'default': return SyntaxKind.DefaultKeyword;
             case 'define': return SyntaxKind.DefineKeyword;
             case 'else': return SyntaxKind.ElseKeyword;
-            case 'end': return SyntaxKind.EndKeyword;
             case 'false': return SyntaxKind.FalseKeyword;
             case 'flag': return SyntaxKind.FlagKeyword;
             case 'if': return SyntaxKind.IfKeyword;
             case 'long': return SyntaxKind.LongKeyword;
             case 'menu': return SyntaxKind.MenuKeyword;
-            case 'next': return SyntaxKind.NextKeyword;
             case 'not': return SyntaxKind.NotKeyword;
             case 'or': return SyntaxKind.OrKeyword;
             case 'rom': return SyntaxKind.ROMKeyword;
             case 'romtbl': return SyntaxKind.ROMTBLKeyword;
+            case 'setcount': return SyntaxKind.SetcountKeyword;
             case 'short': return SyntaxKind.ShortKeyword;
             case 'true': return SyntaxKind.TrueKeyword;
+            case 'var': return SyntaxKind.VarKeyword;
             default: return SyntaxKind.Identifier;
         }
     }

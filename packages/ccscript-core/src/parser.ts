@@ -24,6 +24,7 @@ import {
     GreenMenuOption,
     GreenLabelDeclaration,
     GreenConstantDeclaration,
+    GreenVariableDeclaration,
     GreenCommandDeclaration,
     GreenROMWriteStatement,
     GreenROMTableWriteStatement,
@@ -103,6 +104,9 @@ export class Parser {
         // Keyword-based statements
         if (this.check(SyntaxKind.DefineKeyword)) {
             return this.parseConstantDeclaration();
+        }
+        if (this.check(SyntaxKind.VarKeyword)) {
+            return this.parseVariableDeclaration();
         }
         if (this.check(SyntaxKind.CommandKeyword)) {
             return this.parseCommandDeclaration();
@@ -319,6 +323,27 @@ export class Parser {
     }
 
     /**
+     * Parse variable declaration: var name = expression
+     */
+    private parseVariableDeclaration(): GreenVariableDeclaration {
+        const varKeyword = this.expectToken(SyntaxKind.VarKeyword);
+        const identifier = this.expectToken(SyntaxKind.Identifier);
+        const equals = this.expectToken(SyntaxKind.EqualsToken);
+        const value = this.parseExpression() || this.createErrorExpression();
+        const children = [varKeyword, identifier, equals, value];
+
+        return {
+            kind: SyntaxKind.VariableDeclaration,
+            width: this.calculateWidth(children),
+            children,
+            varKeyword,
+            identifier,
+            equals,
+            value,
+        };
+    }
+
+    /**
      * Parse command declaration
      */
     private parseCommandDeclaration(): GreenCommandDeclaration {
@@ -428,8 +453,57 @@ export class Parser {
 
     /**
      * Parse expression (entry point for expression parsing)
+     * Note: if, menu, blocks, and array access can be expressions in CCScript
      */
     private parseExpression(): GreenExpression | null {
+        // If expression (can appear anywhere an expression is expected)
+        if (this.check(SyntaxKind.IfKeyword)) {
+            return this.parseIfStatement();
+        }
+
+        // Menu expression (can appear anywhere an expression is expected)
+        if (this.check(SyntaxKind.MenuKeyword)) {
+            return this.parseMenuStatement();
+        }
+
+        // Block expression (blocks can be used as expressions)
+        if (this.check(SyntaxKind.OpenBraceToken)) {
+            return this.parseBlockStatement();
+        }
+
+        // Array access (byte, short, long) - can contain full expressions including calls
+        if (this.check(SyntaxKind.ByteKeyword) || 
+            this.check(SyntaxKind.ShortKeyword) || 
+            this.check(SyntaxKind.LongKeyword)) {
+            const typeKeyword = this.advance();
+            let openBracket: GreenToken | undefined;
+            let indexValue: GreenToken | undefined;
+            let closeBracket: GreenToken | undefined;
+
+            if (this.check(SyntaxKind.OpenBracketToken)) {
+                openBracket = this.advance();
+                indexValue = this.expectToken(SyntaxKind.NumericLiteral);
+                closeBracket = this.expectToken(SyntaxKind.CloseBracketToken);
+            }
+
+            // Parse full expression (can be calls, etc.)
+            const expression = this.parseExpression() || this.createErrorExpression();
+            const children = openBracket && indexValue && closeBracket
+                ? [typeKeyword, openBracket, indexValue, closeBracket, expression]
+                : [typeKeyword, expression];
+
+            return {
+                kind: SyntaxKind.ArrayAccessExpression,
+                width: this.calculateWidth(children),
+                children,
+                typeKeyword,
+                openBracket,
+                indexValue,
+                closeBracket,
+                expression,
+            };
+        }
+
         return this.parseBinaryExpression(0);
     }
 
@@ -471,9 +545,34 @@ export class Parser {
     }
 
     /**
-     * Parse unary expression
+     * Parse unary expression (not, flag, parenthesized expressions, and other unary ops)
      */
     private parseUnaryExpression(): GreenExpression | null {
+        // Parenthesized expression - must be checked BEFORE parsePostfixExpression
+        // to avoid confusion with call syntax
+        if (this.check(SyntaxKind.OpenParenToken)) {
+            this.advance();  // consume '('
+            const expr = this.parseExpression();
+            this.expectToken(SyntaxKind.CloseParenToken);  // consume ')'
+            return expr;
+        }
+
+        // Flag expression - parse here to avoid postfix call confusion
+        if (this.check(SyntaxKind.FlagKeyword)) {
+            const flagKeyword = this.advance();
+            // Parse primary expression for the flag operand (can be identifier, number, etc.)
+            const operand = this.parsePrimaryExpression() || this.createErrorExpression();
+            const children = [flagKeyword, operand];
+
+            return {
+                kind: SyntaxKind.FlagExpression,
+                width: this.calculateWidth(children),
+                children,
+                flagKeyword,
+                operand,
+            };
+        }
+
         // Check for unary operators (-, +, ~, not)
         if (this.check(SyntaxKind.NotKeyword) || 
             this.checkText('-') || 
@@ -575,6 +674,15 @@ export class Parser {
      * Parse primary expression (literals, identifiers, etc.)
      */
     private parsePrimaryExpression(): GreenExpression | null {
+        // Count expressions
+        if (this.check(SyntaxKind.CountKeyword)) {
+            return this.parseCountExpression();
+        }
+        
+        if (this.check(SyntaxKind.SetcountKeyword)) {
+            return this.parseSetcountExpression();
+        }
+
         // Literals
         if (this.check(SyntaxKind.NumericLiteral) || this.check(SyntaxKind.HexLiteral)) {
             const token = this.advance();
@@ -607,53 +715,6 @@ export class Parser {
             };
         }
 
-        // Flag expression
-        if (this.check(SyntaxKind.FlagKeyword)) {
-            const flagKeyword = this.advance();
-            const number = this.expectToken(SyntaxKind.NumericLiteral);
-            const children = [flagKeyword, number];
-
-            return {
-                kind: SyntaxKind.FlagExpression,
-                width: this.calculateWidth(children),
-                children,
-                flagKeyword,
-                number,
-            };
-        }
-
-        // Array access (byte, short, long)
-        if (this.check(SyntaxKind.ByteKeyword) || 
-            this.check(SyntaxKind.ShortKeyword) || 
-            this.check(SyntaxKind.LongKeyword)) {
-            const typeKeyword = this.advance();
-            let openBracket: GreenToken | undefined;
-            let indexValue: GreenToken | undefined;
-            let closeBracket: GreenToken | undefined;
-
-            if (this.check(SyntaxKind.OpenBracketToken)) {
-                openBracket = this.advance();
-                indexValue = this.expectToken(SyntaxKind.NumericLiteral);
-                closeBracket = this.expectToken(SyntaxKind.CloseBracketToken);
-            }
-
-            const expression = this.parsePrimaryExpression() || this.createErrorExpression();
-            const children = openBracket && indexValue && closeBracket
-                ? [typeKeyword, openBracket, indexValue, closeBracket, expression]
-                : [typeKeyword, expression];
-
-            return {
-                kind: SyntaxKind.ArrayAccessExpression,
-                width: this.calculateWidth(children),
-                children,
-                typeKeyword,
-                openBracket,
-                indexValue,
-                closeBracket,
-                expression,
-            };
-        }
-
         // Identifier
         if (this.check(SyntaxKind.Identifier)) {
             const identifier = this.advance();
@@ -663,14 +724,6 @@ export class Parser {
                 children: [identifier],
                 identifier,
             };
-        }
-
-        // Parenthesized expression
-        if (this.check(SyntaxKind.OpenParenToken)) {
-            this.advance();
-            const expr = this.parseExpression();
-            this.expectToken(SyntaxKind.CloseParenToken);
-            return expr;
         }
 
         return null;
@@ -779,6 +832,69 @@ export class Parser {
     }
 
     /**
+     * Parse count expression: count("name"), count("name", offset), count("name", offset, multiple)
+     */
+    private parseCountExpression(): GreenExpression {
+        const countKeyword = this.advance(); // consume 'count'
+        const openParen = this.expectToken(SyntaxKind.OpenParenToken);
+        const counterName = this.expectToken(SyntaxKind.StringLiteral);
+        
+        const children: GreenNode[] = [countKeyword, openParen, counterName];
+        
+        // Optional: offset parameter
+        if (this.check(SyntaxKind.CommaToken)) {
+            const comma1 = this.advance();
+            const offset = this.expectToken(SyntaxKind.NumericLiteral);
+            children.push(comma1, offset);
+            
+            // Optional: multiple parameter
+            if (this.check(SyntaxKind.CommaToken)) {
+                const comma2 = this.advance();
+                const multiple = this.expectToken(SyntaxKind.NumericLiteral);
+                children.push(comma2, multiple);
+            }
+        }
+        
+        const closeParen = this.expectToken(SyntaxKind.CloseParenToken);
+        children.push(closeParen);
+        
+        return {
+            kind: SyntaxKind.CountExpression,
+            width: this.calculateWidth(children),
+            children,
+            countKeyword,
+            counterName,
+        };
+    }
+
+    /**
+     * Parse setcount expression: setcount("name", value)
+     * Note: value can be a negative number (unary expression)
+     */
+    private parseSetcountExpression(): GreenExpression {
+        const setcountKeyword = this.advance(); // consume 'setcount'
+        const openParen = this.expectToken(SyntaxKind.OpenParenToken);
+        const counterName = this.expectToken(SyntaxKind.StringLiteral);
+        const comma = this.expectToken(SyntaxKind.CommaToken);
+        
+        // Parse value as expression to handle negative numbers like -1
+        const valueExpr = this.parseExpression() || this.createErrorExpression();
+        
+        const closeParen = this.expectToken(SyntaxKind.CloseParenToken);
+        
+        const children = [setcountKeyword, openParen, counterName, comma, valueExpr, closeParen];
+        
+        return {
+            kind: SyntaxKind.SetcountExpression,
+            width: this.calculateWidth(children),
+            children,
+            setcountKeyword,
+            counterName,
+            valueExpr,
+        };
+    }
+
+    /**
      * Calculate total width of children
      */
     private calculateWidth(children: readonly GreenNode[]): number {
@@ -796,7 +912,7 @@ export class Parser {
         }
 
         this.diagnostics.push({
-            span: { start: position, length: token.width },
+            span: { start: position, length: token.text.length },
             severity,
             message,
         });

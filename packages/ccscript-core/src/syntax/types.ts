@@ -127,6 +127,7 @@ export type GreenStatement =
     | GreenMenuStatement
     | GreenLabelDeclaration
     | GreenConstantDeclaration
+    | GreenVariableDeclaration
     | GreenCommandDeclaration
     | GreenROMWriteStatement
     | GreenROMTableWriteStatement
@@ -175,6 +176,14 @@ export interface GreenLabelDeclaration extends GreenNode {
 export interface GreenConstantDeclaration extends GreenNode {
     readonly kind: SyntaxKind.ConstantDeclaration;
     readonly defineKeyword: GreenToken;
+    readonly identifier: GreenToken;
+    readonly equals: GreenToken;
+    readonly value: GreenExpression;
+}
+
+export interface GreenVariableDeclaration extends GreenNode {
+    readonly kind: SyntaxKind.VariableDeclaration;
+    readonly varKeyword: GreenToken;
     readonly identifier: GreenToken;
     readonly equals: GreenToken;
     readonly value: GreenExpression;
@@ -238,6 +247,11 @@ export type GreenExpression =
     | GreenFlagExpression
     | GreenArrayAccessExpression
     | GreenStringTemplateExpression
+    | GreenCountExpression
+    | GreenSetcountExpression
+    | GreenIfStatement          // if can be used as expression
+    | GreenMenuStatement        // menu can be used as expression
+    | GreenBlockStatement       // blocks can be used as expressions
     | GreenErrorExpression;
 
 export interface GreenNumericLiteralExpression extends GreenNode {
@@ -291,7 +305,7 @@ export interface GreenUnaryExpression extends GreenNode {
 export interface GreenFlagExpression extends GreenNode {
     readonly kind: SyntaxKind.FlagExpression;
     readonly flagKeyword: GreenToken;
-    readonly number: GreenToken;
+    readonly operand: GreenExpression;  // Can be any primary expression
 }
 
 export interface GreenArrayAccessExpression extends GreenNode {
@@ -308,6 +322,19 @@ export interface GreenStringTemplateExpression extends GreenNode {
     readonly openBrace: GreenToken;
     readonly expression: GreenExpression;
     readonly closeBrace: GreenToken;
+}
+
+export interface GreenCountExpression extends GreenNode {
+    readonly kind: SyntaxKind.CountExpression;
+    readonly countKeyword: GreenToken;
+    readonly counterName: GreenToken;  // string literal
+}
+
+export interface GreenSetcountExpression extends GreenNode {
+    readonly kind: SyntaxKind.SetcountExpression;
+    readonly setcountKeyword: GreenToken;
+    readonly counterName: GreenToken;   // string literal
+    readonly valueExpr: GreenExpression; // can be negative number (unary expr)
 }
 
 export interface GreenErrorExpression extends GreenNode {

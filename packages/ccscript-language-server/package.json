@@ -1,0 +1,43 @@
+{
+    "name": "ccscript-language-server",
+    "version": "1.0.0",
+    "description": "Language Server Protocol implementation for CCScript",
+    "main": "./out/server.js",
+    "bin": {
+        "ccscript-language-server": "./out/server.js"
+    },
+    "author": {
+        "name": "Joel Day",
+        "url": "https://github.com/joelday"
+    },
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/joelday/coilsnake-vscode.git",
+        "directory": "packages/ccscript-language-server"
+    },
+    "keywords": [
+        "CCScript",
+        "language-server",
+        "LSP",
+        "EarthBound"
+    ],
+    "scripts": {
+        "build": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "lint": "eslint src/",
+        "clean": "rm -rf out"
+    },
+    "dependencies": {
+        "ccscript-core": "^1.0.0",
+        "vscode-languageserver": "^9.0.1",
+        "vscode-languageserver-textdocument": "^1.0.12"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.13.0",
+        "@types/node": "^22",
+        "eslint": "^9.13.0",
+        "typescript": "^5.9.2",
+        "typescript-eslint": "^8.39.0"
+    }
+}

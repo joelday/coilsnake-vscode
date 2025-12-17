@@ -6,3 +6,17 @@ node_modules
 .DS_Store
 coverage
 ccscript-compiler/
+
+# Build artifacts (TypeScript compilation)
+*.js
+*.d.ts
+*.js.map
+*.d.ts.map
+*.tsbuildinfo
+
+# Keep specific JS config files
+!jest.config.js
+!webpack.config.js
+!eslint.config.mjs
+!**/out/**
+!**/dist/****/dist

@@ -11,6 +11,9 @@ import { Parser } from './parser';
 import { createRedTree, RedSourceFile, RedNode, RedToken } from './redNode';
 import { SyntaxKind } from './syntax/syntaxKind';
 import { GreenSourceFile, Diagnostic } from './syntax/types';
+import { Binder, BindingResult, SemanticDiagnostic } from './semantic/binder';
+import { Symbol, SymbolTable } from './semantic/symbol';
+import { Type } from './semantic/types';
 
 /**
  * Represents a parsed CCScript source file with full syntax information
@@ -21,6 +24,7 @@ export class SyntaxTree {
     private readonly greenRoot: GreenSourceFile;
     private redRootCache?: RedSourceFile;
     private diagnosticsCache?: readonly Diagnostic[];
+    private bindingCache?: BindingResult;
 
     private constructor(
         public readonly source: string,
@@ -72,6 +76,106 @@ export class SyntaxTree {
     }
 
     /**
+     * Get semantic analysis result (lazy evaluation)
+     */
+    private getBinding(): BindingResult {
+        if (!this.bindingCache) {
+            this.bindingCache = Binder.bind(this.getRoot());
+        }
+        return this.bindingCache;
+    }
+
+    /**
+     * Get all diagnostics including semantic errors
+     */
+    getAllDiagnostics(): readonly (Diagnostic | SemanticDiagnostic)[] {
+        return [
+            ...this.getDiagnostics(),
+            ...this.getSemanticDiagnostics(),
+        ];
+    }
+
+    /**
+     * Get semantic diagnostics only
+     */
+    getSemanticDiagnostics(): readonly SemanticDiagnostic[] {
+        return this.getBinding().diagnostics;
+    }
+
+    /**
+     * Get the symbol table
+     */
+    getSymbolTable(): SymbolTable {
+        return this.getBinding().symbols;
+    }
+
+    /**
+     * Get the symbol at a specific position
+     */
+    getSymbolAt(position: number): Symbol | undefined {
+        return this.getSymbolTable().getSymbolAt(position);
+    }
+
+    /**
+     * Get the type of a node
+     */
+    getTypeOf(node: RedNode): Type | undefined {
+        return this.getBinding().types.get(node);
+    }
+
+    /**
+     * Get the symbol that an identifier references
+     */
+    getReferencedSymbol(node: RedNode): Symbol | undefined {
+        return this.getBinding().references.get(node);
+    }
+
+    /**
+     * Get the scope ID for a node
+     */
+    getScopeAt(position: number): number | undefined {
+        const node = this.getNodeAtPosition(position);
+        return this.getBinding().nodeScopes.get(node.position);
+    }
+
+    /**
+     * Find all references to a symbol
+     */
+    findReferences(symbol: Symbol): RedNode[] {
+        const references: RedNode[] = [];
+        const refMap = this.getBinding().references;
+
+        for (const [node, refSymbol] of refMap.entries()) {
+            if (refSymbol === symbol) {
+                references.push(node);
+            }
+        }
+
+        return references;
+    }
+
+    /**
+     * Find all usages of an identifier (declaration + references)
+     */
+    findUsages(name: string): RedNode[] {
+        const usages: RedNode[] = [];
+        const symbols = this.getSymbolTable();
+        const matchingSymbols = symbols.getAll(name);
+
+        // Add declarations
+        for (const symbol of matchingSymbols) {
+            usages.push(symbol.declaration);
+        }
+
+        // Add references
+        for (const symbol of matchingSymbols) {
+            usages.push(...this.findReferences(symbol));
+        }
+
+        return usages;
+    }
+
+    /**
      * Check if the tree has any errors
      */
     hasErrors(): boolean {
@@ -93,7 +197,7 @@ export class SyntaxTree {
         if (node instanceof RedToken) {
             return node;
         }
-        
+
         // If not a token, find the nearest token
         const tokens = node.getTokens();
         return tokens.find(t => t.containsPosition(position));
@@ -119,7 +223,7 @@ export class SyntaxTree {
     findNodesOfKind(kind: SyntaxKind): RedNode[] {
         const results: RedNode[] = [];
         const root = this.getRoot();
-        
+
         const visit = (node: RedNode) => {
             if (node.kind === kind) {
                 results.push(node);
@@ -128,7 +232,7 @@ export class SyntaxTree {
                 visit(child);
             }
         };
-        
+
         visit(root);
         return results;
     }
@@ -139,7 +243,7 @@ export class SyntaxTree {
     findNodes(predicate: (node: RedNode) => boolean): RedNode[] {
         const results: RedNode[] = [];
         const root = this.getRoot();
-        
+
         const visit = (node: RedNode) => {
             if (predicate(node)) {
                 results.push(node);
@@ -148,7 +252,7 @@ export class SyntaxTree {
                 visit(child);
             }
         };
-        
+
         visit(root);
         return results;
     }
@@ -173,7 +277,7 @@ export class SyntaxTree {
     getLineAndColumn(position: number): { line: number; column: number } {
         let line = 0;
         let column = 0;
-        
+
         for (let i = 0; i < position && i < this.source.length; i++) {
             if (this.source[i] === '\n') {
                 line++;
@@ -182,7 +286,7 @@ export class SyntaxTree {
                 column++;
             }
         }
-        
+
         return { line, column };
     }
 
@@ -192,12 +296,12 @@ export class SyntaxTree {
     getPosition(line: number, column: number): number {
         let currentLine = 0;
         let currentColumn = 0;
-        
+
         for (let i = 0; i < this.source.length; i++) {
             if (currentLine === line && currentColumn === column) {
                 return i;
             }
-            
+
             if (this.source[i] === '\n') {
                 currentLine++;
                 currentColumn = 0;
@@ -205,7 +309,7 @@ export class SyntaxTree {
                 currentColumn++;
             }
         }
-        
+
         return this.source.length;
     }
 
@@ -272,12 +376,16 @@ export class SyntaxTree {
         const root = this.getRoot();
         const tokens = this.getTokens();
         const diagnostics = this.getDiagnostics();
-        
+        const semanticDiagnostics = this.getSemanticDiagnostics();
+        const symbols = this.getSymbolTable();
+
         return {
             totalNodes: root.getDescendants().length + 1,
             totalTokens: tokens.length,
             totalStatements: this.getStatements().length,
             totalDiagnostics: diagnostics.length,
+            totalSemanticDiagnostics: semanticDiagnostics.length,
+            totalSymbols: symbols.getAllSymbols().length,
             sourceLength: this.source.length,
             hasErrors: this.hasErrors(),
         };
@@ -300,6 +408,8 @@ export interface TreeStatistics {
     totalTokens: number;
     totalStatements: number;
     totalDiagnostics: number;
+    totalSemanticDiagnostics: number;
+    totalSymbols: number;
     sourceLength: number;
     hasErrors: boolean;
 }

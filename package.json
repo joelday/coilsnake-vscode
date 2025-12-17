@@ -1,90 +1,34 @@
 {
-    "name": "coilsnake-vscode",
-    "displayName": "CoilSnake",
-    "description": "CoilSnake project and CCScript language support",
+    "name": "coilsnake-workspace",
+    "private": true,
+    "description": "Monorepo for CCScript language server and VS Code extension",
     "version": "1.0.0",
-    "publisher": "joelday",
-    "preview": true,
-    "engines": {
-        "vscode": "^1.95.0"
+    "author": {
+        "name": "Joel Day",
+        "url": "https://github.com/joelday"
     },
-    "icon": "images/icon.png",
     "license": "MIT",
-    "keywords": [
-        "EarthBound",
-        "Mother 2",
-        "CCScript",
-        "Modding",
-        "PK Hack"
-    ],
-    "categories": [
-        "Programming Languages"
-    ],
-    "main": "./out/extension.js",
-    "contributes": {
-        "languages": [
-            {
-                "id": "ccscript",
-                "aliases": [
-                    "CCScript",
-                    "ccscript"
-                ],
-                "extensions": [
-                    ".ccs"
-                ],
-                "configuration": "./language-configuration.json"
-            }
-        ],
-        "grammars": [
-            {
-                "language": "ccscript",
-                "scopeName": "source.ccs",
-                "path": "./syntaxes/ccscript.tmLanguage.json"
-            }
-        ]
-    },
-    "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "pretest": "npm run compile && npm run lint",
-        "lint": "eslint",
-        "test": "jest",
-        "test:watch": "jest --watch",
-        "test:coverage": "jest --coverage",
-        "test:integration": "node ./out/test/runTest.js"
-    },
-    "devDependencies": {
-        "@eslint/js": "^9.13.0",
-        "@stylistic/eslint-plugin": "^2.9.0",
-        "@types/glob": "^8.1.0",
-        "@types/jest": "^30.0.0",
-        "@types/mocha": "^10.0.10",
-        "@types/node": "^22",
-        "@types/vscode": "^1.100.0",
-        "@vscode/test-electron": "^2.4.1",
-        "eslint": "^9.13.0",
-        "glob": "^11.0.0",
-        "jest": "^30.2.0",
-        "mocha": "^10.8.2",
-        "ts-jest": "^29.4.6",
-        "ts-loader": "^9.5.1",
-        "typescript": "^5.9.2",
-        "typescript-eslint": "^8.39.0",
-        "webpack": "^5.96.1",
-        "webpack-cli": "^5.1.4"
-    },
-    "bugs": {
-        "url": "https://github.com/joelday/coilsnake-vscode/issues",
-        "email": "joelday@gmail.com"
-    },
     "repository": {
         "type": "git",
         "url": "https://github.com/joelday/coilsnake-vscode.git"
     },
-    "homepage": "https://github.com/joelday/coilsnake-vscode",
-    "author": {
-        "name": "Joel Day",
-        "url": "https://github.com/joelday"
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "build": "npm run build --workspaces --if-present",
+        "compile": "npm run compile --workspaces --if-present",
+        "watch": "npm run watch --workspaces --if-present",
+        "test": "npm run test --workspaces --if-present",
+        "lint": "npm run lint --workspaces --if-present",
+        "clean": "npm run clean --workspaces --if-present",
+        "package": "npm run package --workspace=packages/vscode-extension"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.13.0",
+        "@stylistic/eslint-plugin": "^2.9.0",
+        "eslint": "^9.13.0",
+        "typescript": "^5.9.2",
+        "typescript-eslint": "^8.39.0"
     }
 }

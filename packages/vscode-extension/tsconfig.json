@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "commonjs",
+    "target": "ES2024",
+    "lib": ["ES2024"],
+    "outDir": "out",
+    "sourceMap": true,
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "declaration": true,
+    "declarationMap": true,
+    "types": ["node"]
+  },
+  "references": [{ "path": "../ccscript-language-server" }],
+  "include": ["extension.ts"],
+  "exclude": ["node_modules", "out"]
+}
