@@ -150,7 +150,7 @@ export class Binder {
         const span = identifierToken.span;
         // Generate unique ID: filePath:scopeId:kind:name
         const id = `${this.filePath}:${this.currentScope.id}:${kind}:${identifierToken.text}`;
-        
+
         return {
             id,
             name: identifierToken.text,

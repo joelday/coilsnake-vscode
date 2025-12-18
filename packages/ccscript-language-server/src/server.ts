@@ -26,6 +26,9 @@ import {
     SymbolKind as LspSymbolKind,
     Range,
     TextEdit,
+    SignatureHelp,
+    SignatureInformation,
+    ParameterInformation,
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -101,6 +104,9 @@ connection.onInitialize((params: InitializeParams) => {
                 triggerCharacters: ['.']
             },
             hoverProvider: true,
+            signatureHelpProvider: {
+                triggerCharacters: ['(', ',']
+            },
             definitionProvider: true,
             referencesProvider: true,
             documentSymbolProvider: true,
@@ -262,11 +268,33 @@ connection.onCompletion(async (params: TextDocumentPositionParams): Promise<Comp
                         symbol.kind === SymbolKind.Module ? CompletionItemKind.Module :
                             CompletionItemKind.Variable;
 
+        // Build detail string
+        let detail = symbol.type.name;
+        if (symbol.kind === SymbolKind.Command && symbol.parameters && symbol.parameters.length > 0) {
+            const paramStr = symbol.parameters.map(p => `${p.name}`).join(', ');
+            detail = `(${paramStr}) → ${symbol.type.name}`;
+        }
+
+        // Build documentation
+        const docs: string[] = [];
+        if (symbol.kind === SymbolKind.Command && symbol.parameters && symbol.parameters.length > 0) {
+            docs.push('**Parameters:**');
+            for (const param of symbol.parameters) {
+                docs.push(`- \`${param.name}\``);
+            }
+        }
+        if (symbol.modulePath) {
+            docs.push(`\n*From:* \`${symbol.modulePath}\``);
+        }
+
         completions.push({
             label: symbol.name,
             kind,
-            detail: symbol.type.name,
-            documentation: `${symbol.kind} at line ${tree.getLineAndColumn(symbol.position).line + 1}`
+            detail,
+            documentation: docs.length > 0 ? {
+                kind: MarkupKind.Markdown,
+                value: docs.join('\n')
+            } : undefined
         });
     }
 
@@ -305,20 +333,34 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
     const filePath = uriToPath(document.uri);
     const symbol = tree.getSymbolAt(offset, filePath);
     if (symbol) {
-        const content = [
-            `**${symbol.name}** (${symbol.kind})`,
-            '',
-            `Type: \`${symbol.type.name}\``,
-            '',
-            `Declared at line ${tree.getLineAndColumn(symbol.position).line + 1}`
-        ];
+        const content: string[] = [];
 
+        // Title with kind badge
+        const kindName = symbol.kind === SymbolKind.Command ? 'command' :
+            symbol.kind === SymbolKind.Constant ? 'constant' :
+                symbol.kind === SymbolKind.Variable ? 'variable' :
+                    symbol.kind === SymbolKind.Label ? 'label' : 'symbol';
+
+        // Build signature for commands
+        if (symbol.kind === SymbolKind.Command && symbol.parameters && symbol.parameters.length > 0) {
+            const paramStr = symbol.parameters.map(p => `${p.name}`).join(', ');
+            content.push(`\`\`\`ccscript\ncommand ${symbol.name}(${paramStr})\n\`\`\``);
+        } else {
+            content.push(`**${symbol.name}**`);
+        }
+
+        content.push('', `*${kindName}* • Type: \`${symbol.type.name}\``);
+
+        // Parameters section for commands
         if (symbol.parameters && symbol.parameters.length > 0) {
-            content.push('', 'Parameters:');
+            content.push('', '---', '', '**Parameters:**', '');
             for (const param of symbol.parameters) {
-                content.push(`- ${param.name}`);
+                content.push(`- \`${param.name}\``);
             }
         }
+
+        // Location info
+        content.push('', '---', '', `📍 Line ${tree.getLineAndColumn(symbol.position).line + 1}`);
 
         return {
             contents: {
@@ -334,25 +376,39 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
         // Check if this node has a symbol reference
         const refSymbol = tree.getReferencedSymbol(currentNode);
         if (refSymbol) {
-            const content = [
-                `**${refSymbol.name}** (${refSymbol.kind})`,
-                '',
-                `Type: \`${refSymbol.type.name}\``,
-                ''
-            ];
+            const content: string[] = [];
 
-            if (refSymbol.modulePath) {
-                content.push(`From: ${refSymbol.modulePath}`, '');
+            // Title with kind badge
+            const kindName = refSymbol.kind === SymbolKind.Command ? 'command' :
+                refSymbol.kind === SymbolKind.Constant ? 'constant' :
+                    refSymbol.kind === SymbolKind.Variable ? 'variable' :
+                        refSymbol.kind === SymbolKind.Label ? 'label' : 'symbol';
+
+            // Build signature for commands
+            if (refSymbol.kind === SymbolKind.Command && refSymbol.parameters && refSymbol.parameters.length > 0) {
+                const paramStr = refSymbol.parameters.map(p => `${p.name}`).join(', ');
+                content.push(`\`\`\`ccscript\ncommand ${refSymbol.name}(${paramStr})\n\`\`\``);
+            } else {
+                content.push(`**${refSymbol.name}**`);
             }
 
-            content.push(`Declared at line ${tree.getLineAndColumn(refSymbol.position).line + 1}`);
+            content.push('', `*${kindName}* • Type: \`${refSymbol.type.name}\``);
 
+            // Module info if imported
+            if (refSymbol.modulePath) {
+                content.push('', `📦 Imported from \`${refSymbol.modulePath}\``);
+            }
+
+            // Parameters section for commands
             if (refSymbol.parameters && refSymbol.parameters.length > 0) {
-                content.push('', 'Parameters:');
+                content.push('', '---', '', '**Parameters:**', '');
                 for (const param of refSymbol.parameters) {
-                    content.push(`- ${param.name}`);
+                    content.push(`- \`${param.name}\``);
                 }
             }
+
+            // Location info
+            content.push('', '---', '', `📍 Line ${tree.getLineAndColumn(refSymbol.position).line + 1}`);
 
             return {
                 contents: {
@@ -378,6 +434,107 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
     }
 
     return null;
+});
+
+// Signature help provider
+connection.onSignatureHelp(async (params: TextDocumentPositionParams): Promise<SignatureHelp | null> => {
+    const document = documents.get(params.textDocument.uri);
+    if (!document) {
+        return null;
+    }
+
+    const tree = await getOrParseDocument(document);
+    const offset = document.offsetAt(params.position);
+
+    // Find the closest call expression by walking up from cursor position
+    let node = tree.getNodeAtPosition(offset);
+    if (!node) {
+        return null;
+    }
+
+    // Walk up to find a CallExpression
+    let callNode: RedNode | null = null;
+    let currentNode: RedNode | null = node;
+    while (currentNode) {
+        if (currentNode.kind === SyntaxKind.CallExpression) {
+            callNode = currentNode;
+            break;
+        }
+        currentNode = currentNode.parent;
+    }
+
+    if (!callNode) {
+        return null;
+    }
+
+    // Get the function being called (first child should be the identifier)
+    const children = callNode.getChildren();
+    const identifierNode = children.find(c => c.kind === SyntaxKind.Identifier);
+    if (!identifierNode) {
+        return null;
+    }
+
+    // Look up the symbol for this identifier
+    const symbol = tree.getReferencedSymbol(identifierNode);
+    if (!symbol || symbol.kind !== SymbolKind.Command || !symbol.parameters) {
+        return null;
+    }
+
+    // Build signature information
+    const paramLabels: string[] = [];
+    const paramInfos: ParameterInformation[] = [];
+    
+    for (const param of symbol.parameters) {
+        const label = param.name;
+        paramLabels.push(label);
+        paramInfos.push({
+            label,
+            documentation: `Parameter: ${param.name}`
+        });
+    }
+
+    const signature = `${symbol.name}(${paramLabels.join(', ')})`;
+
+    // Determine which parameter we're currently on
+    // Count commas before cursor position within the call expression
+    let activeParameter = 0;
+    const callStart = callNode.position;
+    const callText = document.getText({
+        start: document.positionAt(callStart),
+        end: document.positionAt(callNode.end)
+    });
+
+    // Find opening paren position
+    const openParenIndex = callText.indexOf('(');
+    if (openParenIndex === -1) {
+        activeParameter = 0;
+    } else {
+        const relativeOffset = offset - callStart;
+        const textBeforeCursor = callText.substring(openParenIndex + 1, relativeOffset);
+        
+        // Count commas (simple approach - doesn't handle nested calls, but good enough for now)
+        activeParameter = (textBeforeCursor.match(/,/g) || []).length;
+    }
+
+    // Clamp to valid parameter range
+    if (activeParameter >= paramInfos.length) {
+        activeParameter = paramInfos.length - 1;
+    }
+
+    return {
+        signatures: [
+            {
+                label: signature,
+                documentation: {
+                    kind: MarkupKind.Markdown,
+                    value: `**${symbol.name}**\n\nCommand with ${symbol.parameters.length} parameter${symbol.parameters.length !== 1 ? 's' : ''}`
+                },
+                parameters: paramInfos
+            }
+        ],
+        activeSignature: 0,
+        activeParameter: Math.max(0, activeParameter)
+    };
 });
 
 // Definition provider
@@ -480,11 +637,11 @@ connection.onReferences(async (params): Promise<Location[]> => {
         const targetDoc = documents.get(targetUri);
         const targetFilePath = uriToPath(targetUri);
         const targetSymbolTable = targetTree.getSymbolTable();
-        
+
         // Look up the symbol by its unique ID in this tree
         // Imported symbols preserve the original ID, so this works across files
         const targetSymbol = targetSymbolTable.getById(symbol!.id);
-        
+
         if (!targetSymbol) {
             return; // Symbol not visible in this file
         }
@@ -663,10 +820,10 @@ connection.onRenameRequest(async (params): Promise<{ changes: { [uri: string]: T
         const targetFilePath = uriToPath(targetUri);
         const targetSymbolTable = targetTree.getSymbolTable();
         const edits: TextEdit[] = [];
-        
+
         // Look up the symbol by its unique ID in this tree
         const targetSymbol = targetSymbolTable.getById(symbol!.id);
-        
+
         if (!targetSymbol) {
             return; // Symbol not visible in this file
         }

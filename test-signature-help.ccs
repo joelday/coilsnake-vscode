@@ -1,0 +1,36 @@
+// Test file for signature help and hover improvements
+
+// Define a command with parameters
+command greet(name, age) {
+    // Command body
+}
+
+// Define another command with multiple parameters
+command calculateScore(baseScore, multiplier, bonus) {
+    // More complex command
+}
+
+// Define a constant
+define MAX_HP = 999
+
+// Define a variable
+var playerLevel = 1
+
+// Call commands - signature help should appear when typing inside the parens
+greet("Ness", 13)
+
+// Try typing here - you should see signature help popup:
+// greet(
+
+// And here with multiple params:
+// calculateScore(100, 
+
+// Hover over these to see improved formatting:
+// - Command names (greet, calculateScore)
+// - Constants (MAX_HP)
+// - Variables (playerLevel)
+// - Parameters in the command definitions above
+
+// Test label
+myLabel:
+    greet("Paula", 12)
