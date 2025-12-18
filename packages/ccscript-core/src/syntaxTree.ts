@@ -32,6 +32,7 @@ export class SyntaxTree {
 
     private constructor(
         public readonly source: string,
+        public readonly filePath: string,
         scanner: Scanner,
         parser: Parser,
         moduleResolver?: ModuleResolver,
@@ -47,13 +48,14 @@ export class SyntaxTree {
     /**
      * Parse source code into a syntax tree
      * @param source The source code to parse
+     * @param filePath Optional file path for symbol IDs (defaults to empty string for standalone parsing)
      * @param moduleResolver Optional function to resolve imported modules
      * @param siblingModules Optional array of modules in the same directory (implicitly imported)
      */
-    static parse(source: string, moduleResolver?: ModuleResolver, siblingModules?: Module[]): SyntaxTree {
+    static parse(source: string, filePath = '', moduleResolver?: ModuleResolver, siblingModules?: Module[]): SyntaxTree {
         const scanner = new Scanner(source);
         const parser = new Parser(source);
-        return new SyntaxTree(source, scanner, parser, moduleResolver, siblingModules);
+        return new SyntaxTree(source, filePath, scanner, parser, moduleResolver, siblingModules);
     }
 
     /**
@@ -108,7 +110,7 @@ export class SyntaxTree {
             this.isBinding = true;
             console.log(`[CCScript:SyntaxTree] Running semantic binding (${this.siblingModules?.length ?? 0} siblings)`);
             try {
-                this.bindingCache = Binder.bind(this.getRoot(), this.moduleResolver, this.siblingModules);
+                this.bindingCache = Binder.bind(this.getRoot(), this.filePath, this.moduleResolver, this.siblingModules);
                 console.log('[CCScript:SyntaxTree] Binding complete');
             } finally {
                 this.isBinding = false;

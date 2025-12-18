@@ -478,34 +478,43 @@ connection.onReferences(async (params): Promise<Location[]> => {
     // Helper to add location from a tree
     const addLocationsFromTree = (targetTree: SyntaxTree, targetUri: string) => {
         const targetDoc = documents.get(targetUri);
+        const targetFilePath = uriToPath(targetUri);
+        const targetSymbolTable = targetTree.getSymbolTable();
+        
+        // Look up the symbol by its unique ID in this tree
+        // Imported symbols preserve the original ID, so this works across files
+        const targetSymbol = targetSymbolTable.getById(symbol!.id);
+        
+        if (!targetSymbol) {
+            return; // Symbol not visible in this file
+        }
 
         // Add declaration if requested and in this file
         if (params.context && params.context.includeDeclaration) {
-            // Check if declaration is in this file
-            const symbolFilePath = symbol!.modulePath || filePath;
-            if (symbolFilePath === uriToPath(targetUri)) {
+            // Check if the declaration is in this file (not imported)
+            if (!targetSymbol.modulePath || targetSymbol.modulePath === targetFilePath) {
                 if (targetDoc) {
-                    const start = targetDoc.positionAt(symbol!.position);
-                    const end = targetDoc.positionAt(symbol!.position + symbol!.length);
+                    const start = targetDoc.positionAt(targetSymbol.position);
+                    const end = targetDoc.positionAt(targetSymbol.position + targetSymbol.length);
                     locations.push({
                         uri: targetUri,
                         range: { start, end }
                     });
                 } else {
-                    const pos = targetTree.getLineAndColumn(symbol!.position);
+                    const pos = targetTree.getLineAndColumn(targetSymbol.position);
                     locations.push({
                         uri: targetUri,
                         range: {
                             start: { line: pos.line, character: pos.column },
-                            end: { line: pos.line, character: pos.column + symbol!.length }
+                            end: { line: pos.line, character: pos.column + targetSymbol.length }
                         }
                     });
                 }
             }
         }
 
-        // Add all references in this file
-        const references = targetTree.findReferences(symbol!);
+        // Add all references in this file to the target symbol
+        const references = targetTree.findReferences(targetSymbol);
         for (const ref of references) {
             if (targetDoc) {
                 const start = targetDoc.positionAt(ref.position);
@@ -530,23 +539,19 @@ connection.onReferences(async (params): Promise<Location[]> => {
     // Search in current file
     addLocationsFromTree(tree, params.textDocument.uri);
 
-    // If we have a program, search in sibling files too
-    if (program && symbol.scopeId === 0) { // Only for global symbols
-        const currentModule = program.getModule(filePath);
-        if (currentModule) {
-            // Get sibling modules - use Program's logic via siblings
-            const allModules = program.getAllModules();
+    // If we have a program, search in all modules for references
+    if (program) {
+        const allModules = program.getAllModules();
 
-            for (const module of allModules) {
-                if (module.filePath === filePath) {
-                    continue; // Already searched
-                }
-
-                // Search in all other modules - Program already handles sibling relationships
-                // during binding, so if a symbol is accessible, references might exist
-                const moduleUri = URI.file(module.filePath).toString();
-                addLocationsFromTree(module.tree, moduleUri);
+        for (const module of allModules) {
+            if (module.filePath === filePath) {
+                continue; // Already searched current file
             }
+
+            // Search in all other modules for references to this symbol
+            // The symbol might be imported/accessible via sibling imports
+            const moduleUri = URI.file(module.filePath).toString();
+            addLocationsFromTree(module.tree, moduleUri);
         }
     }
 
@@ -655,32 +660,40 @@ connection.onRenameRequest(async (params): Promise<{ changes: { [uri: string]: T
     // Helper to add edits from a tree
     const addEditsFromTree = (targetTree: SyntaxTree, targetUri: string) => {
         const targetDoc = documents.get(targetUri);
+        const targetFilePath = uriToPath(targetUri);
+        const targetSymbolTable = targetTree.getSymbolTable();
         const edits: TextEdit[] = [];
+        
+        // Look up the symbol by its unique ID in this tree
+        const targetSymbol = targetSymbolTable.getById(symbol!.id);
+        
+        if (!targetSymbol) {
+            return; // Symbol not visible in this file
+        }
 
-        // Add edit for declaration if in this file
-        const symbolFilePath = symbol!.modulePath || filePath;
-        if (symbolFilePath === uriToPath(targetUri)) {
+        // Add edit for declaration if in this file (not imported)
+        if (!targetSymbol.modulePath || targetSymbol.modulePath === targetFilePath) {
             if (targetDoc) {
-                const start = targetDoc.positionAt(symbol!.position);
-                const end = targetDoc.positionAt(symbol!.position + symbol!.length);
+                const start = targetDoc.positionAt(targetSymbol.position);
+                const end = targetDoc.positionAt(targetSymbol.position + targetSymbol.length);
                 edits.push({
                     range: { start, end },
                     newText: params.newName
                 });
             } else {
-                const pos = targetTree.getLineAndColumn(symbol!.position);
+                const pos = targetTree.getLineAndColumn(targetSymbol.position);
                 edits.push({
                     range: {
                         start: { line: pos.line, character: pos.column },
-                        end: { line: pos.line, character: pos.column + symbol!.length }
+                        end: { line: pos.line, character: pos.column + targetSymbol.length }
                     },
                     newText: params.newName
                 });
             }
         }
 
-        // Add edits for all references in this file
-        const references = targetTree.findReferences(symbol!);
+        // Add edits for all references in this file to the target symbol
+        const references = targetTree.findReferences(targetSymbol);
         for (const ref of references) {
             if (targetDoc) {
                 const start = targetDoc.positionAt(ref.position);
@@ -709,20 +722,18 @@ connection.onRenameRequest(async (params): Promise<{ changes: { [uri: string]: T
     // Rename in current file
     addEditsFromTree(tree, params.textDocument.uri);
 
-    // If we have a program, rename in sibling files too
-    if (program && symbol.scopeId === 0) { // Only for global symbols
-        const currentModule = program.getModule(filePath);
-        if (currentModule) {
-            const allModules = program.getAllModules();
+    // If we have a program, rename in all modules
+    if (program) {
+        const allModules = program.getAllModules();
 
-            for (const module of allModules) {
-                if (module.filePath === filePath) {
-                    continue; // Already handled
-                }
-
-                const moduleUri = URI.file(module.filePath).toString();
-                addEditsFromTree(module.tree, moduleUri);
+        for (const module of allModules) {
+            if (module.filePath === filePath) {
+                continue; // Already handled current file
             }
+
+            // Rename in all other modules that might reference this symbol
+            const moduleUri = URI.file(module.filePath).toString();
+            addEditsFromTree(module.tree, moduleUri);
         }
     }
 

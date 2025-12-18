@@ -28,6 +28,8 @@ export enum SymbolKind {
  * Represents a symbol (declaration) in the program.
  */
 export interface Symbol {
+    /** Unique identifier for this symbol across the entire program (format: filePath:scopeId:kind:name) */
+    id: string;
     /** The name of the symbol */
     name: string;
     /** The kind of symbol */
@@ -120,6 +122,13 @@ export class SymbolTable {
      */
     getByKind(kind: SymbolKind): Symbol[] {
         return this.allSymbols.filter(s => s.kind === kind);
+    }
+
+    /**
+     * Looks up a symbol by its unique ID.
+     */
+    getById(id: string): Symbol | undefined {
+        return this.allSymbols.find(s => s.id === id);
     }
 
     /**

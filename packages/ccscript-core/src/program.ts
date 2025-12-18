@@ -183,7 +183,7 @@ export class Program {
             // Get sibling modules (same directory) for implicit imports
             const siblingModules = this.getSiblingModules(normalizedPath);
 
-            const tree = SyntaxTree.parse(content, moduleResolver, siblingModules);
+            const tree = SyntaxTree.parse(content, normalizedPath, moduleResolver, siblingModules);
             const name = this.getModuleName(normalizedPath);
 
             // Check for name collision

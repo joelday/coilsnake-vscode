@@ -60,11 +60,13 @@ export class Binder {
     private references = new Map<RedNode, Symbol>();
     private diagnostics: SemanticDiagnostic[] = [];
     private types = new Map<RedNode, Type>();
+    private filePath: string;
 
-    constructor(moduleResolver?: ModuleResolver, siblingModules?: Module[]) {
+    constructor(filePath: string, moduleResolver?: ModuleResolver, siblingModules?: Module[]) {
         this.currentScope = this.scopes.getGlobalScope();
         this.moduleResolver = moduleResolver;
         this.siblingModules = siblingModules;
+        this.filePath = filePath;
     }
 
     /**
@@ -73,11 +75,12 @@ export class Binder {
      * - Pass 1: Collect all module-level declarations (and import sibling modules)
      * - Pass 2: Bind references and expressions
      * @param root The root node to bind
+     * @param filePath Absolute path to the source file
      * @param moduleResolver Optional function to resolve imported modules
      * @param siblingModules Optional array of modules in same directory (implicitly imported)
      */
-    static bind(root: RedNode, moduleResolver?: ModuleResolver, siblingModules?: Module[]): BindingResult {
-        const binder = new Binder(moduleResolver, siblingModules);
+    static bind(root: RedNode, filePath: string, moduleResolver?: ModuleResolver, siblingModules?: Module[]): BindingResult {
+        const binder = new Binder(filePath, moduleResolver, siblingModules);
 
         // Pass 1: Collect all module-level declarations (enables forward references)
         binder.collectDeclarations(root);
@@ -145,7 +148,11 @@ export class Binder {
         }
 
         const span = identifierToken.span;
+        // Generate unique ID: filePath:scopeId:kind:name
+        const id = `${this.filePath}:${this.currentScope.id}:${kind}:${identifierToken.text}`;
+        
         return {
+            id,
             name: identifierToken.text,
             kind,
             type,
@@ -244,11 +251,13 @@ export class Binder {
                 }
 
                 // Create an imported symbol in the current scope with module path tracking
+                // Keep the original symbol's ID so references can be matched across files
                 const importedSymbol: Symbol = {
                     ...symbol,
                     scopeId: this.currentScope.id,
                     isUsed: false, // Reset usage tracking
                     modulePath: siblingModule.filePath, // Track source module
+                    // id remains the same as the original symbol for cross-file matching
                 };
 
                 this.symbols.add(importedSymbol);
@@ -325,7 +334,9 @@ export class Binder {
 
         // Create a module symbol to track the import
         const span = pathNode.span;
+        const id = `${this.filePath}:${this.currentScope.id}:${SymbolKind.Module}:${moduleName}`;
         const moduleSymbol: Symbol = {
+            id,
             name: moduleName,
             kind: SymbolKind.Module,
             type: Types.unknown,
@@ -590,7 +601,9 @@ export class Binder {
                     // Create parameter symbol using helper
                     // Note: parameters are special - they're simple identifiers not declaration nodes
                     const span = child.span;
+                    const id = `${this.filePath}:${this.currentScope.id}:${SymbolKind.Parameter}:${child.text}`;
                     const paramSymbol: Symbol = {
+                        id,
                         name: child.text,
                         kind: SymbolKind.Parameter,
                         type: Types.unknown, // Parameters don't have explicit types
