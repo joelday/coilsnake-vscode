@@ -96,7 +96,7 @@ export enum SyntaxKind {
 
     // String content types
     StringLiteralContent,      // Text content node (reused in both simple and template strings)
-    
+
     // String template parts
     StringTemplateExpression,  // {expr} part within template string
     TemplateSpan,

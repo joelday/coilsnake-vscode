@@ -11,9 +11,10 @@ import { Parser } from './parser';
 import { createRedTree, RedSourceFile, RedNode, RedToken, isRedToken } from './redNode';
 import { SyntaxKind } from './syntax/syntaxKind';
 import { GreenSourceFile, Diagnostic } from './syntax/types';
-import { Binder, BindingResult, SemanticDiagnostic } from './semantic/binder';
+import { Binder, BindingResult, SemanticDiagnostic, ModuleResolver } from './semantic/binder';
 import { Symbol, SymbolTable } from './semantic/symbol';
 import { Type } from './semantic/types';
+import type { Module } from './program';
 
 /**
  * Represents a parsed CCScript source file with full syntax information
@@ -22,27 +23,37 @@ export class SyntaxTree {
     private readonly scanner: Scanner;
     private readonly parser: Parser;
     private readonly greenRoot: GreenSourceFile;
+    private readonly moduleResolver?: ModuleResolver;
+    private readonly siblingModules?: Module[];
     private redRootCache?: RedSourceFile;
     private diagnosticsCache?: readonly Diagnostic[];
     private bindingCache?: BindingResult;
+    private isBinding = false; // Prevent re-entry during sibling imports
 
     private constructor(
         public readonly source: string,
         scanner: Scanner,
-        parser: Parser
+        parser: Parser,
+        moduleResolver?: ModuleResolver,
+        siblingModules?: Module[]
     ) {
         this.scanner = scanner;
         this.parser = parser;
         this.greenRoot = parser.parseSourceFile();
+        this.moduleResolver = moduleResolver;
+        this.siblingModules = siblingModules;
     }
 
     /**
      * Parse source code into a syntax tree
+     * @param source The source code to parse
+     * @param moduleResolver Optional function to resolve imported modules
+     * @param siblingModules Optional array of modules in the same directory (implicitly imported)
      */
-    static parse(source: string): SyntaxTree {
+    static parse(source: string, moduleResolver?: ModuleResolver, siblingModules?: Module[]): SyntaxTree {
         const scanner = new Scanner(source);
         const parser = new Parser(source);
-        return new SyntaxTree(source, scanner, parser);
+        return new SyntaxTree(source, scanner, parser, moduleResolver, siblingModules);
     }
 
     /**
@@ -80,7 +91,28 @@ export class SyntaxTree {
      */
     private getBinding(): BindingResult {
         if (!this.bindingCache) {
-            this.bindingCache = Binder.bind(this.getRoot());
+            // Prevent infinite recursion during sibling imports
+            if (this.isBinding) {
+                console.log('[CCScript:SyntaxTree] Already binding, returning empty result');
+                return {
+                    symbols: new SymbolTable(),
+                    // eslint-disable-next-line @typescript-eslint/no-require-imports -- need to fix why this is a circular dependency in the first place
+                    scopes: new (require('./semantic/scope').ScopeManager)(),
+                    nodeScopes: new Map(),
+                    references: new Map(),
+                    diagnostics: [],
+                    types: new Map()
+                };
+            }
+
+            this.isBinding = true;
+            console.log(`[CCScript:SyntaxTree] Running semantic binding (${this.siblingModules?.length ?? 0} siblings)`);
+            try {
+                this.bindingCache = Binder.bind(this.getRoot(), this.moduleResolver, this.siblingModules);
+                console.log('[CCScript:SyntaxTree] Binding complete');
+            } finally {
+                this.isBinding = false;
+            }
         }
         return this.bindingCache;
     }
@@ -110,10 +142,29 @@ export class SyntaxTree {
     }
 
     /**
-     * Get the symbol at a specific position
+     * Get the scope manager
      */
-    getSymbolAt(position: number): Symbol | undefined {
-        return this.getSymbolTable().getSymbolAt(position);
+    getScopeManager(): import('./semantic/scope').ScopeManager {
+        return this.getBinding().scopes;
+    }
+
+    /**
+     * Clear the semantic binding cache.
+     * Call this to force re-binding, useful when sibling modules change in LSP context.
+     */
+    invalidateBinding(): void {
+        console.log('[CCScript:SyntaxTree] Invalidating binding cache');
+        this.bindingCache = undefined;
+        this.isBinding = false;
+    }
+
+    /**
+     * Get the symbol at a specific position
+     * @param position The position to query
+     * @param filePath Optional file path to filter imported symbols
+     */
+    getSymbolAt(position: number, filePath?: string): Symbol | undefined {
+        return this.getSymbolTable().getSymbolAt(position, filePath);
     }
 
     /**
@@ -136,6 +187,30 @@ export class SyntaxTree {
     getScopeAt(position: number): number | undefined {
         const node = this.getNodeAtPosition(position);
         return this.getBinding().nodeScopes.get(node.position);
+    }
+
+    /**
+     * Get all symbols visible at a specific position.
+     * Filters by scope visibility. Includes imported symbols from sibling modules.
+     */
+    getVisibleSymbolsAt(position: number): Symbol[] {
+        const node = this.getNodeAtPosition(position);
+        const scopeId = this.getBinding().nodeScopes.get(node.position);
+
+        if (scopeId === undefined) {
+            // Fallback to global scope if no scope info
+            const globalScope = this.getScopeManager().getGlobalScope();
+            const visibleScopes = this.getScopeManager().getVisibleScopes(globalScope);
+            return this.getSymbolTable().getVisibleSymbols(visibleScopes);
+        }
+
+        const scope = this.getScopeManager().getScope(scopeId);
+        if (!scope) {
+            return [];
+        }
+
+        const visibleScopes = this.getScopeManager().getVisibleScopes(scope);
+        return this.getSymbolTable().getVisibleSymbols(visibleScopes);
     }
 
     /**

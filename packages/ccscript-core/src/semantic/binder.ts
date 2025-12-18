@@ -3,11 +3,12 @@
  * Walks the AST, builds symbol tables, and resolves identifiers.
  */
 
-import { RedNode, RedToken } from '../redNode';
+import { RedNode, RedToken, isRedToken } from '../redNode';
 import { SyntaxKind } from '../syntax/syntaxKind';
 import { Symbol, SymbolKind, SymbolTable } from './symbol';
 import { Scope, ScopeKind, ScopeManager } from './scope';
 import { Type, Types } from './types';
+import type { Module } from '../program';
 
 /**
  * Diagnostic message from semantic analysis.
@@ -22,6 +23,11 @@ export interface SemanticDiagnostic {
     /** Severity level */
     severity: 'error' | 'warning' | 'info';
 }
+
+/**
+ * Function to resolve imported modules
+ */
+export type ModuleResolver = (moduleName: string) => Module | undefined;
 
 /**
  * Result of binding analysis.
@@ -49,19 +55,37 @@ export class Binder {
     private scopes = new ScopeManager();
     private currentScope: Scope;
     private nodeScopes = new Map<number, number>();
+    private moduleResolver?: ModuleResolver;
+    private siblingModules?: Module[];
     private references = new Map<RedNode, Symbol>();
     private diagnostics: SemanticDiagnostic[] = [];
     private types = new Map<RedNode, Type>();
 
-    constructor() {
+    constructor(moduleResolver?: ModuleResolver, siblingModules?: Module[]) {
         this.currentScope = this.scopes.getGlobalScope();
+        this.moduleResolver = moduleResolver;
+        this.siblingModules = siblingModules;
     }
 
     /**
      * Binds a syntax tree and returns the binding result.
+     * Uses two-pass binding to support forward references:
+     * - Pass 1: Collect all module-level declarations (and import sibling modules)
+     * - Pass 2: Bind references and expressions
+     * @param root The root node to bind
+     * @param moduleResolver Optional function to resolve imported modules
+     * @param siblingModules Optional array of modules in same directory (implicitly imported)
      */
-    static bind(root: RedNode): BindingResult {
-        const binder = new Binder();
+    static bind(root: RedNode, moduleResolver?: ModuleResolver, siblingModules?: Module[]): BindingResult {
+        const binder = new Binder(moduleResolver, siblingModules);
+
+        // Pass 1: Collect all module-level declarations (enables forward references)
+        binder.collectDeclarations(root);
+
+        // Pass 2: Import sibling modules (after collecting our own declarations to avoid conflicts)
+        binder.importSiblingModules();
+
+        // Pass 3: Bind all references and expressions
         binder.bindNode(root);
 
         return {
@@ -78,25 +102,26 @@ export class Binder {
      * Adds a diagnostic message.
      */
     private addDiagnostic(node: RedNode, message: string, severity: 'error' | 'warning' | 'info' = 'error'): void {
-        // For diagnostics, we need the position of the actual token text, not including leading trivia
-        let position = node.position;
-        let length = 1;
+        let position: number;
+        let length: number;
 
         if (node instanceof RedToken) {
-            // Calculate leading trivia width to skip past it
-            const leadingTriviaWidth = node.getLeadingTrivia().reduce((sum, t) => sum + t.width, 0);
-            position = node.position + leadingTriviaWidth;
-            length = node.text.length;
+            // Token: use its span (excludes trivia)
+            const span = node.span;
+            position = span.start;
+            length = span.length;
         } else {
-            // For non-token nodes, find the first meaningful token
-            const children = node.getChildren();
-            for (const child of children) {
-                if (child instanceof RedToken) {
-                    const leadingTriviaWidth = child.getLeadingTrivia().reduce((sum, t) => sum + t.width, 0);
-                    position = child.position + leadingTriviaWidth;
-                    length = child.text.length;
-                    break;
-                }
+            // Try to get identifier token for better diagnostic positioning
+            const identifierToken = node.getIdentifierToken();
+            if (identifierToken) {
+                const span = identifierToken.span;
+                position = span.start;
+                length = span.length;
+            } else {
+                // Fallback: use node's span
+                const span = node.span;
+                position = span.start;
+                length = Math.max(1, span.length);
             }
         }
 
@@ -109,10 +134,279 @@ export class Binder {
     }
 
     /**
+     * Creates a symbol from a declaration node.
+     * Extracts the identifier token and uses it for authoritative positioning.
+     */
+    private createSymbol(node: RedNode, kind: SymbolKind, type: Type, parameters?: Symbol[]): Symbol | null {
+        const identifierToken = node.getIdentifierToken();
+        if (!identifierToken) {
+            this.addDiagnostic(node, `${kind} declaration missing identifier`);
+            return null;
+        }
+
+        const span = identifierToken.span;
+        return {
+            name: identifierToken.text,
+            kind,
+            type,
+            declaration: node,
+            identifierNode: identifierToken,
+            position: span.start,
+            length: span.length,
+            scopeId: this.currentScope.id,
+            isUsed: false,
+            parameters,
+        };
+    }
+
+    /**
+     * Helper to record symbol with duplicate checking.
+     * Returns the created symbol or null if there was an error.
+     */
+    private recordSymbol(node: RedNode, kind: SymbolKind, type: Type, parameters?: Symbol[], checkDuplicates = true): Symbol | null {
+        const symbol = this.createSymbol(node, kind, type, parameters);
+        if (!symbol) {
+            return null;
+        }
+
+        // Check for duplicate declarations in current scope
+        if (checkDuplicates) {
+            const existing = this.symbols.lookup(symbol.name, [this.currentScope.id]);
+            if (existing) {
+                this.addDiagnostic(node, `Duplicate declaration of '${symbol.name}'`);
+                return null;
+            }
+        }
+
+        this.symbols.add(symbol);
+        return symbol;
+    }
+
+    /**
      * Records the scope for a node.
      */
     private recordNodeScope(node: RedNode): void {
         this.nodeScopes.set(node.position, this.currentScope.id);
+    }
+
+    /**
+     * Import symbols from sibling modules (files in same directory).
+     * In CCScript, files compiled together can reference each other without explicit imports.
+     * Called after collectDeclarations() so local symbols take precedence.
+     */
+    private importSiblingModules(): void {
+        console.log('[CCScript:Binder] Pass 2: Importing sibling modules');
+        if (!this.siblingModules || this.siblingModules.length === 0) {
+            console.log('[CCScript:Binder]   No siblings to import');
+            return;
+        }
+
+        console.log(`[CCScript:Binder]   Found ${this.siblingModules.length} sibling(s)`);
+
+        // Track imported symbol names to prevent duplicates
+        const importedNames = new Set<string>();
+
+        // Track symbols already declared in this file (don't import conflicts)
+        const localSymbols = new Set<string>();
+        for (const symbol of this.symbols.getAllSymbols()) {
+            if (symbol.scopeId === this.currentScope.id) {
+                localSymbols.add(symbol.name);
+            }
+        }
+
+        for (const siblingModule of this.siblingModules) {
+            console.log(`[CCScript:Binder]   Importing from: ${siblingModule.name}`);
+            // Import all module-level symbols from the sibling
+            const siblingSymbols = siblingModule.tree.getSymbolTable();
+            const siblingScopes = siblingModule.tree.getScopeManager();
+
+            let importedCount = 0;
+            for (const symbol of siblingSymbols.getAllSymbols()) {
+                // Only import module-level declarations (skip nested scopes)
+                // Skip Module and Parameter symbols
+                if (symbol.kind === SymbolKind.Module || symbol.kind === SymbolKind.Parameter) {
+                    continue;
+                }
+
+                const symbolScope = siblingScopes.getScope(symbol.scopeId);
+                if (symbolScope?.kind !== ScopeKind.Global) {
+                    continue;
+                }
+
+                // Skip if already declared locally (don't override local declarations)
+                if (localSymbols.has(symbol.name)) {
+                    continue;
+                }
+
+                // Skip if already imported (prevents exponential duplication)
+                if (importedNames.has(symbol.name)) {
+                    continue;
+                }
+
+                // Create an imported symbol in the current scope with module path tracking
+                const importedSymbol: Symbol = {
+                    ...symbol,
+                    scopeId: this.currentScope.id,
+                    isUsed: false, // Reset usage tracking
+                    modulePath: siblingModule.filePath, // Track source module
+                };
+
+                this.symbols.add(importedSymbol);
+                importedNames.add(symbol.name);
+                importedCount++;
+            }
+            console.log(`[CCScript:Binder]     Imported ${importedCount} symbol(s)`);
+        }
+        console.log('[CCScript:Binder]   Sibling import complete');
+    }
+
+    /**
+     * First pass: Collect all module-level declarations.
+     * This allows forward references within the same module.
+     */
+    private collectDeclarations(node: RedNode): void {
+        switch (node.kind) {
+            case SyntaxKind.SourceFile:
+                // Collect all top-level declarations
+                for (const child of node.getChildren()) {
+                    if (!isRedToken(child)) {
+                        this.collectDeclarations(child);
+                    }
+                }
+                break;
+
+            case SyntaxKind.ImportStatement:
+                this.collectImportDeclaration(node);
+                break;
+
+            case SyntaxKind.ConstantDeclaration:
+                // Only collect at module level (global scope)
+                if (this.currentScope.kind === ScopeKind.Global) {
+                    this.collectConstantDeclaration(node);
+                }
+                break;
+
+            case SyntaxKind.CommandDeclaration:
+                this.collectCommandDeclaration(node);
+                break;
+
+            case SyntaxKind.LabelDeclaration:
+                this.collectLabelDeclaration(node);
+                break;
+
+            // Don't descend into blocks - only module-level declarations
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Collect import declaration (pass 1)
+     * Resolves the module and imports all its symbols into current scope.
+     */
+    private collectImportDeclaration(node: RedNode): void {
+        const pathNode = node.findChildByKind(SyntaxKind.Identifier) || node.findChildByKind(SyntaxKind.StringLiteral);
+        if (!pathNode || !isRedToken(pathNode)) {
+            this.addDiagnostic(node, 'Import declaration missing module path');
+            return;
+        }
+
+        let moduleName = pathNode.text;
+
+        // Remove quotes from string literals
+        if (pathNode.kind === SyntaxKind.StringLiteral) {
+            moduleName = moduleName.slice(1, -1);
+        }
+
+        // Remove .ccs extension if present
+        if (moduleName.endsWith('.ccs')) {
+            moduleName = moduleName.slice(0, -4);
+        }
+
+        // Create a module symbol to track the import
+        const span = pathNode.span;
+        const moduleSymbol: Symbol = {
+            name: moduleName,
+            kind: SymbolKind.Module,
+            type: Types.unknown,
+            declaration: node,
+            identifierNode: pathNode,
+            position: span.start,
+            length: span.length,
+            scopeId: this.currentScope.id,
+            isUsed: false,
+        };
+
+        this.symbols.add(moduleSymbol);
+
+        // If we have a module resolver, import symbols from the module
+        if (this.moduleResolver) {
+            const importedModule = this.moduleResolver(moduleName);
+
+            if (!importedModule) {
+                this.addDiagnostic(pathNode, `Cannot resolve module '${moduleName}'`, 'error');
+                return;
+            }
+
+            // Get the imported module's symbols
+            const importedSymbols = importedModule.tree.getSymbolTable();
+            const importedScopes = importedModule.tree.getScopeManager();
+
+            // Import all module-level symbols (constants, commands, labels)
+            // Exclude Module symbols (transitive imports) and Parameters (internal to commands)
+            for (const symbol of importedSymbols.getAllSymbols()) {
+                // Only import module-level declarations
+                if (symbol.kind === SymbolKind.Module || symbol.kind === SymbolKind.Parameter) {
+                    continue;
+                }
+
+                // Check if symbol is at module level (global scope)
+                const symbolScope = importedScopes.getScope(symbol.scopeId);
+                if (symbolScope?.kind !== ScopeKind.Global) {
+                    continue;
+                }
+
+                // Create an imported symbol in the current scope
+                // We keep the original declaration but set scopeId to current scope
+                const importedSymbol: Symbol = {
+                    ...symbol,
+                    scopeId: this.currentScope.id,
+                    isUsed: false, // Reset usage tracking
+                };
+
+                this.symbols.add(importedSymbol);
+            }
+        }
+    }
+
+    /**
+     * Collect constant declaration (pass 1)
+     */
+    private collectConstantDeclaration(node: RedNode): void {
+        this.recordSymbol(node, SymbolKind.Constant, Types.unknown);
+    }
+
+    /**
+     * Collect command declaration (pass 1)
+     */
+    private collectCommandDeclaration(node: RedNode): void {
+        // Count parameters for the symbol
+        const parameterList = node.findChildByKind(SyntaxKind.ParameterList);
+        const paramCount = parameterList
+            ? parameterList.getChildren().filter(c => c.kind === SyntaxKind.Identifier).length
+            : 0;
+
+        // Create placeholder parameter array for pass 1 (will be filled in pass 2)
+        const parameters: Symbol[] = new Array(paramCount);
+
+        this.recordSymbol(node, SymbolKind.Command, Types.void, parameters, false);
+    }
+
+    /**
+     * Collect label declaration (pass 1)
+     */
+    private collectLabelDeclaration(node: RedNode): void {
+        this.recordSymbol(node, SymbolKind.Label, Types.void);
     }
 
     /**
@@ -146,6 +440,9 @@ export class Binder {
             case SyntaxKind.BlockStatement:
                 this.bindBlockStatement(node);
                 break;
+            case SyntaxKind.ImportStatement:
+                this.bindImportStatement(node);
+                break;
             case SyntaxKind.ConstantDeclaration:
                 this.bindConstantDeclaration(node);
                 break;
@@ -160,6 +457,9 @@ export class Binder {
                 break;
             case SyntaxKind.IdentifierExpression:
                 this.bindIdentifierExpression(node);
+                break;
+            case SyntaxKind.QualifiedNameExpression:
+                this.bindQualifiedNameExpression(node);
                 break;
             case SyntaxKind.CallExpression:
                 this.bindCallExpression(node);
@@ -194,7 +494,7 @@ export class Binder {
      */
     private bindChildren(node: RedNode): void {
         for (const child of node.getChildren()) {
-            if (!this.isToken(child)) {
+            if (!isRedToken(child)) {
                 this.bindNode(child);
             }
         }
@@ -208,6 +508,14 @@ export class Binder {
     }
 
     /**
+     * Binds an import statement (pass 2).
+     * Symbol already created in pass 1, nothing to do here.
+     */
+    private bindImportStatement(_node: RedNode): void {
+        // Import symbols already created in pass 1
+    }
+
+    /**
      * Binds a block statement.
      */
     private bindBlockStatement(node: RedNode): void {
@@ -217,100 +525,85 @@ export class Binder {
     }
 
     /**
-     * Binds a constant declaration.
+     * Binds a constant declaration (pass 2).
+     * For module-level: Symbol exists from pass 1, just infer and update type.
+     * For nested: Create symbol now (wasn't in pass 1).
      */
     private bindConstantDeclaration(node: RedNode): void {
-        const nameNode = this.findChild(node, SyntaxKind.Identifier);
-        if (!nameNode) {
+        const name = node.getIdentifierName();
+        if (!name) {
             return;
         }
 
-        const name = this.getTokenText(nameNode);
-
-        // Bind the value expression first to infer type
+        // Bind the value expression to infer type
         const valueNode = this.findChildExpression(node);
         if (valueNode) {
             this.bindNode(valueNode);
         }
 
-        // Infer type from value
         const type = valueNode ? (this.types.get(valueNode) || Types.unknown) : Types.unknown;
 
-        // Check for duplicate declarations in current scope
-        const existing = this.symbols.lookup(name, this.currentScope.id, new Set([this.currentScope.id]));
-        if (existing) {
-            this.addDiagnostic(nameNode, `Constant '${name}' is already declared in this scope`);
+        // Check if symbol already exists from pass 1 (module-level)
+        let symbol = this.symbols.lookup(name, [this.currentScope.id]);
+
+        if (symbol) {
+            // Module-level constant, update type
+            symbol.type = type;
+        } else {
+            // Nested constant (in command or block), create symbol now
+            const newSymbol = this.recordSymbol(node, SymbolKind.Constant, type);
+            if (newSymbol) {
+                symbol = newSymbol;
+            }
         }
-
-        const symbol: Symbol = {
-            name,
-            kind: SymbolKind.Constant,
-            type,
-            declaration: node,
-            position: nameNode.position,
-            scopeId: this.currentScope.id,
-            isUsed: false,
-        };
-
-        this.symbols.add(symbol);
     }
 
     /**
-     * Binds a command declaration.
+     * Binds a command declaration (pass 2).
+     * Symbol already exists from pass 1, now bind parameters and body.
      */
     private bindCommandDeclaration(node: RedNode): void {
-        const nameNode = this.findChild(node, SyntaxKind.Identifier);
-        if (!nameNode) {
+        const name = node.getIdentifierName();
+        if (!name) {
             return;
         }
 
-        const name = this.getTokenText(nameNode);
-
-        // Create symbol for command
-        const symbol: Symbol = {
-            name,
-            kind: SymbolKind.Command,
-            type: Types.void,
-            declaration: node,
-            position: nameNode.position,
-            scopeId: this.currentScope.id,
-            isUsed: false,
-            parameters: [],
-        };
-
-        this.symbols.add(symbol);
+        // Get the existing symbol from pass 1
+        const symbol = this.symbols.lookup(name, [this.currentScope.id]);
+        if (!symbol) {
+            return;
+        }
 
         // Enter command scope
         this.enterScope(ScopeKind.Command);
 
-        // Bind parameters - they are stored as Identifier tokens in the node's children
-        const children = node.getChildren();
-        let inParamList = false;
+        // Clear placeholder parameters from pass 1 and populate with actual symbols
+        symbol.parameters = [];
 
-        for (const child of children) {
-            if (child.kind === SyntaxKind.OpenParenToken) {
-                inParamList = true;
-                continue;
-            }
-            if (child.kind === SyntaxKind.CloseParenToken) {
-                inParamList = false;
-                continue;
-            }
-
-            // Identifiers inside parens are parameters
-            if (inParamList && child.kind === SyntaxKind.Identifier) {
-                const paramName = this.getTokenText(child);
-                const paramSymbol: Symbol = {
-                    name: paramName,
-                    kind: SymbolKind.Parameter,
-                    type: Types.unknown, // Parameters don't have explicit types
-                    declaration: child,
-                    position: child.position,
-                    scopeId: this.currentScope.id,
-                    isUsed: false,
-                };
-                this.symbols.add(paramSymbol);
-                symbol.parameters!.push(paramSymbol);
+        // Bind parameters - they are stored in a ParameterList node
+        const parameterList = node.findChildByKind(SyntaxKind.ParameterList);
+        if (parameterList) {
+            // Get the parameter tokens from the ParameterList's children
+            const paramChildren = parameterList.getChildren();
+            for (const child of paramChildren) {
+                if (child.kind === SyntaxKind.Identifier && isRedToken(child)) {
+                    // Create parameter symbol using helper
+                    // Note: parameters are special - they're simple identifiers not declaration nodes
+                    const span = child.span;
+                    const paramSymbol: Symbol = {
+                        name: child.text,
+                        kind: SymbolKind.Parameter,
+                        type: Types.unknown, // Parameters don't have explicit types
+                        declaration: child,
+                        identifierNode: child,
+                        position: span.start,
+                        length: span.length,
+                        scopeId: this.currentScope.id,
+                        isUsed: false,
+                    };
+                    this.symbols.add(paramSymbol);
+                    symbol.parameters!.push(paramSymbol);
+                }
             }
         }
 
@@ -321,27 +614,26 @@ export class Binder {
     }
 
     /**
-     * Binds a label declaration.
+     * Binds a label declaration (pass 2).
+     * Symbol already created in pass 1, nothing to do here.
      */
     private bindLabelDeclaration(node: RedNode): void {
-        const nameNode = this.findChild(node, SyntaxKind.Identifier);
-        if (!nameNode) {
+        // Labels can be in any scope (global, command, or block)
+        // Only module-level labels were collected in pass 1, so we need to handle nested ones here
+        const name = node.getIdentifierName();
+        if (!name) {
             return;
         }
 
-        const name = this.getTokenText(nameNode);
+        // Check if this label was already collected in pass 1 (module-level)
+        const existing = this.symbols.lookup(name, [this.currentScope.id]);
+        if (existing && existing.declaration === node) {
+            // Already collected in pass 1, nothing to do
+            return;
+        }
 
-        const symbol: Symbol = {
-            name,
-            kind: SymbolKind.Label,
-            type: Types.void,
-            declaration: node,
-            position: nameNode.position,
-            scopeId: this.currentScope.id,
-            isUsed: false,
-        };
-
-        this.symbols.add(symbol);
+        // This is a nested label (inside a command or block), create it now
+        this.recordSymbol(node, SymbolKind.Label, Types.void, [], false);
     }
 
     /**
@@ -356,16 +648,14 @@ export class Binder {
      * Binds an identifier expression (reference).
      */
     private bindIdentifierExpression(node: RedNode): void {
-        const nameToken = this.findChild(node, SyntaxKind.Identifier);
-        if (!nameToken) {
+        const name = node.getIdentifierName();
+        if (!name) {
             return;
         }
 
-        const name = this.getTokenText(nameToken);
-
-        // Resolve the identifier
-        const visibleScopes = this.scopes.getVisibleScopes(this.currentScope);
-        const symbol = this.symbols.lookup(name, this.currentScope.id, visibleScopes);
+        // Resolve the identifier (search from innermost to outermost scope)
+        const scopeOrder = this.scopes.getVisibleScopeIds(this.currentScope);
+        const symbol = this.symbols.lookup(name, scopeOrder);
 
         if (symbol) {
             this.references.set(node, symbol);
@@ -378,30 +668,105 @@ export class Binder {
     }
 
     /**
+     * Binds a qualified name expression (module.member).
+     */
+    private bindQualifiedNameExpression(node: RedNode): void {
+        // For qualified names like std.print, we need to:
+        // 1. Check if the left part (std) is a known module
+        // 2. Resolve the right part (print) in that module's scope
+
+        const children = node.getChildren();
+        const leftToken = children.find(c => c.kind === SyntaxKind.Identifier);
+        const rightToken = children.filter(c => c.kind === SyntaxKind.Identifier)[1];
+
+        if (!leftToken || !rightToken) {
+            // Malformed qualified name
+            this.types.set(node, Types.unknown);
+            return;
+        }
+
+        const moduleName = isRedToken(leftToken) ? leftToken.text : '';
+        const memberName = isRedToken(rightToken) ? rightToken.text : '';
+
+        // Check if module exists (search from innermost to outermost scope)
+        const scopeOrder = this.scopes.getVisibleScopeIds(this.currentScope);
+        const moduleSymbol = this.symbols.lookup(moduleName, scopeOrder);
+
+        if (!moduleSymbol) {
+            this.addDiagnostic(node, `Unknown module '${moduleName}'`);
+            this.types.set(node, Types.unknown);
+            return;
+        }
+
+        if (moduleSymbol.kind !== SymbolKind.Module) {
+            this.addDiagnostic(node, `'${moduleName}' is not a module`);
+            this.types.set(node, Types.unknown);
+            return;
+        }
+
+        moduleSymbol.isUsed = true;
+
+        // Resolve the member in the module
+        if (this.moduleResolver) {
+            const module = this.moduleResolver(moduleName);
+            if (module) {
+                // Get the symbol table from the module
+                const moduleSymbols = module.tree.getSymbolTable();
+                const moduleScopes = module.tree.getScopeManager();
+                const globalScope = moduleScopes.getGlobalScope();
+                const globalScopeOrder = moduleScopes.getVisibleScopeIds(globalScope);
+
+                // Look up the member in the module's global scope
+                const memberSymbol = moduleSymbols.lookup(memberName, globalScopeOrder);
+
+                if (memberSymbol) {
+                    // Found the symbol - set up reference and type
+                    memberSymbol.isUsed = true;
+                    this.references.set(node, memberSymbol);
+                    this.types.set(node, memberSymbol.type);
+                } else {
+                    this.addDiagnostic(node, `'${moduleName}' has no member '${memberName}'`);
+                    this.types.set(node, Types.unknown);
+                }
+            } else {
+                // Module resolver couldn't find the module
+                this.addDiagnostic(node, `Cannot resolve module '${moduleName}'`);
+                this.types.set(node, Types.unknown);
+            }
+        } else {
+            // No module resolver - just assume it's valid (for backwards compatibility with tests)
+            this.types.set(node, Types.void);
+        }
+    }
+
+    /**
      * Binds a call expression.
      */
     private bindCallExpression(node: RedNode): void {
         // Find the target expression (IdentifierExpression or QualifiedNameExpression)
         const children = node.getChildren();
+
         const targetNode = children.find(c =>
             c.kind === SyntaxKind.IdentifierExpression ||
             c.kind === SyntaxKind.QualifiedNameExpression
         );
 
+        let commandSymbol: Symbol | undefined;
+
         if (targetNode) {
             // If it's an identifier expression, get the identifier name
             if (targetNode.kind === SyntaxKind.IdentifierExpression) {
-                const idToken = this.findChild(targetNode, SyntaxKind.Identifier);
-                if (idToken) {
-                    const name = this.getTokenText(idToken);
-                    const visibleScopes = this.scopes.getVisibleScopes(this.currentScope);
-                    const symbol = this.symbols.lookup(name, this.currentScope.id, visibleScopes);
+                const name = targetNode.getIdentifierName();
+                if (name) {
+                    const scopeOrder = this.scopes.getVisibleScopeIds(this.currentScope);
+                    const symbol = this.symbols.lookup(name, scopeOrder);
 
                     if (symbol) {
                         if (symbol.kind !== SymbolKind.Command) {
                             this.addDiagnostic(targetNode, `'${name}' is not a command`);
                         } else {
                             symbol.isUsed = true;
+                            commandSymbol = symbol;
                         }
                         this.types.set(node, symbol.type);
                         this.references.set(targetNode, symbol);
@@ -417,10 +782,35 @@ export class Binder {
             }
         }
 
-        // Bind arguments
-        for (const child of children) {
-            if (!this.isToken(child) && child !== targetNode) {
-                this.bindNode(child);
+        // Find the argument list
+        const argumentList = children.find(c => c.kind === SyntaxKind.ArgumentList);
+        let argumentNodes: RedNode[] = [];
+
+        if (argumentList) {
+            // Get the actual argument expressions from the ArgumentList node
+            const argListChildren = argumentList.getChildren();
+            argumentNodes = argListChildren.filter(c =>
+                !isRedToken(c) &&
+                c.kind !== SyntaxKind.OpenParenToken &&
+                c.kind !== SyntaxKind.CloseParenToken &&
+                c.kind !== SyntaxKind.CommaToken
+            );
+
+            // Bind all arguments
+            for (const arg of argumentNodes) {
+                this.bindNode(arg);
+            }
+        }
+
+        // Validate argument count
+        if (commandSymbol && commandSymbol.parameters) {
+            const expectedCount = commandSymbol.parameters.length;
+            const actualCount = argumentNodes.length;
+
+            if (actualCount < expectedCount) {
+                this.addDiagnostic(node, `Too few arguments to command '${commandSymbol.name}': expected ${expectedCount}, got ${actualCount}`);
+            } else if (actualCount > expectedCount) {
+                this.addDiagnostic(node, `Too many arguments to command '${commandSymbol.name}': expected ${expectedCount}, got ${actualCount}`);
             }
         }
 
@@ -459,7 +849,7 @@ export class Binder {
      * Binds a binary expression.
      */
     private bindBinaryExpression(node: RedNode): void {
-        const children = node.getChildren().filter(c => !this.isToken(c));
+        const children = node.getChildren().filter(c => !isRedToken(c));
 
         if (children.length >= 2) {
             const left = children[0];
@@ -494,7 +884,7 @@ export class Binder {
      * Binds a unary expression.
      */
     private bindUnaryExpression(node: RedNode): void {
-        const children = node.getChildren().filter(c => !this.isToken(c));
+        const children = node.getChildren().filter(c => !isRedToken(c));
 
         if (children.length > 0) {
             const operand = children[0];
@@ -540,13 +930,6 @@ export class Binder {
     }
 
     /**
-     * Finds the first child of a specific kind.
-     */
-    private findChild(node: RedNode, kind: SyntaxKind): RedNode | undefined {
-        return node.getChildren().find(c => c.kind === kind);
-    }
-
-    /**
      * Finds the first child that is an expression.
      */
     private findChildExpression(node: RedNode): RedNode | undefined {
@@ -567,22 +950,5 @@ export class Binder {
             node.kind === SyntaxKind.FlagExpression ||
             node.kind === SyntaxKind.ArrayAccessExpression ||
             node.kind === SyntaxKind.IfStatement;
-    }
-
-    /**
-     * Checks if a node is a token.
-     */
-    private isToken(node: RedNode): boolean {
-        return 'text' in node.green;
-    }
-
-    /**
-     * Gets the text of a token node.
-     */
-    private getTokenText(node: RedNode): string {
-        if ('text' in node.green) {
-            return (node.green as { text: string }).text;
-        }
-        return '';
     }
 }

@@ -18,3 +18,7 @@ export * from './src/syntax/types';
 
 // Semantic Analysis
 export * from './src/semantic';
+
+// File System & Multi-File Compilation
+export { FileSystem, NodeFileSystem, MemoryFileSystem, AggregatedFileSystem, defaultFileSystem } from './src/fileSystem';
+export { Program, Module } from './src/program';

@@ -90,6 +90,15 @@ export function activate(context: vscode.ExtensionContext) {
         }
     };
 
+    // Get standard library path from configuration
+    const config = vscode.workspace.getConfiguration('ccscript');
+    let stdLibPath = config.get<string>('stdLibPath');
+
+    // Resolve ${workspaceFolder} variable
+    if (stdLibPath && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        stdLibPath = stdLibPath.replace('${workspaceFolder}', vscode.workspace.workspaceFolders[0].uri.fsPath);
+    }
+
     // Options to control the language client
     const clientOptions: LanguageClientOptions = {
         // Register the server for CCScript documents
@@ -97,6 +106,9 @@ export function activate(context: vscode.ExtensionContext) {
         synchronize: {
             // Notify the server about file changes to '.ccs files contained in the workspace
             fileEvents: vscode.workspace.createFileSystemWatcher('**/*.ccs')
+        },
+        initializationOptions: {
+            stdLibPath: stdLibPath || undefined
         }
     };
 

@@ -293,6 +293,72 @@ export class MemoryFileSystem implements FileSystem {
 }
 
 /**
+ * Aggregated file system that layers multiple file systems.
+ * Checks file systems in order, using the first one that has the file.
+ * 
+ * Typical usage in LSP:
+ * - Primary: Open document manager (in-memory edits)
+ * - Fallback: Real file system (saved files)
+ */
+export class AggregatedFileSystem implements FileSystem {
+    constructor(
+        private primary: FileSystem,
+        private fallback: FileSystem
+    ) { }
+
+    async readFile(filePath: string): Promise<string> {
+        if (await this.primary.exists(filePath)) {
+            return this.primary.readFile(filePath);
+        }
+        return this.fallback.readFile(filePath);
+    }
+
+    readFileSync(filePath: string): string {
+        if (this.primary.existsSync(filePath)) {
+            return this.primary.readFileSync(filePath);
+        }
+        return this.fallback.readFileSync(filePath);
+    }
+
+    async exists(filePath: string): Promise<boolean> {
+        return await this.primary.exists(filePath) || await this.fallback.exists(filePath);
+    }
+
+    existsSync(filePath: string): boolean {
+        return this.primary.existsSync(filePath) || this.fallback.existsSync(filePath);
+    }
+
+    // Delegate path operations to primary (doesn't matter which)
+    resolve(...paths: string[]): string {
+        return this.primary.resolve(...paths);
+    }
+
+    dirname(filePath: string): string {
+        return this.primary.dirname(filePath);
+    }
+
+    join(...paths: string[]): string {
+        return this.primary.join(...paths);
+    }
+
+    basename(filePath: string, ext?: string): string {
+        return this.primary.basename(filePath, ext);
+    }
+
+    normalize(filePath: string): string {
+        return this.primary.normalize(filePath);
+    }
+
+    isAbsolute(filePath: string): boolean {
+        return this.primary.isAbsolute(filePath);
+    }
+
+    relative(from: string, to: string): string {
+        return this.primary.relative(from, to);
+    }
+}
+
+/**
  * Default file system instance (uses Node.js fs)
  */
 export const defaultFileSystem: FileSystem = new NodeFileSystem();

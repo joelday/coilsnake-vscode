@@ -65,6 +65,38 @@ export interface ImportDiagnostic extends Diagnostic {
 /**
  * Program manages multiple source files and their dependencies.
  * Entry point for multi-file CCScript compilation and analysis.
+ * 
+ * ## Sibling File Imports
+ * In CCScript, files in the same directory implicitly share a namespace.
+ * Symbols from sibling files are available without explicit imports.
+ * 
+ * ### For Batch Compilation:
+ * Load all files in order - each file will automatically see previously loaded siblings.
+ * 
+ * ### For LSP/Language Server:
+ * When a document is opened:
+ * 1. Use workspace.findFiles() to discover all .ccs files in the same directory
+ * 2. Call loadModule() for each file in the directory
+ * 3. This ensures all siblings are loaded before semantic analysis
+ * 
+ * When a file is saved/changed:
+ * 1. Call reloadModule(path) - this automatically invalidates all siblings
+ * 2. Next semantic query on any sibling will re-bind with updated symbols
+ * 3. No manual invalidation needed - happens automatically!
+ * 
+ * @example
+ * ```typescript
+ * // LSP: When opening a document
+ * const directory = path.dirname(documentUri);
+ * const siblingFiles = await workspace.findFiles(`${directory}/*.ccs`);
+ * for (const file of siblingFiles) {
+ *   await program.loadModule(file.fsPath);
+ * }
+ * 
+ * // LSP: When a document is saved
+ * await program.reloadModule(documentUri.fsPath);
+ * // All siblings are automatically invalidated and will re-bind on next use
+ * ```
  */
 export class Program {
     private readonly options: Required<ProgramOptions>;
@@ -79,19 +111,47 @@ export class Program {
             includeStdLibs: options.includeStdLibs ?? true,
             stdLibPaths: options.stdLibPaths ?? {},
         };
+
+        // Auto-load standard libraries if enabled
+        if (this.options.includeStdLibs) {
+            this.loadStandardLibraries().catch(err => {
+                console.error('[CCScript:Program] Failed to load standard libraries:', err);
+            });
+        }
+    }
+
+    /**
+     * Load standard library files (std.ccs and stdarg.ccs)
+     */
+    private async loadStandardLibraries(): Promise<void> {
+        const stdPaths = this.options.stdLibPaths;
+
+        if (stdPaths.std) {
+            console.log(`[CCScript:Program] Loading std.ccs from: ${stdPaths.std}`);
+            await this.loadModule(stdPaths.std);
+        }
+
+        if (stdPaths.stdarg) {
+            console.log(`[CCScript:Program] Loading stdarg.ccs from: ${stdPaths.stdarg}`);
+            await this.loadModule(stdPaths.stdarg);
+        }
     }
 
     /**
      * Load a module from a file path.
      * Recursively loads all imported modules.
      * @param filePath Absolute path to the module file
+     * @param reload If true, re-parse even if already loaded (for LSP file changes)
      * @returns The loaded module, or null if loading failed
      */
-    async loadModule(filePath: string): Promise<Module | null> {
+    async loadModule(filePath: string, reload = false): Promise<Module | null> {
         const normalizedPath = this.options.fileSystem.normalize(filePath);
 
-        // Check if already loaded
-        if (this.modules.has(normalizedPath)) {
+        console.log(`[CCScript:Program] ${reload ? 'Reloading' : 'Loading'} module: ${normalizedPath}`);
+
+        // Check if already loaded (unless reload requested)
+        if (this.modules.has(normalizedPath) && !reload) {
+            console.log('[CCScript:Program] Module already loaded, returning cached');
             return this.modules.get(normalizedPath)!;
         }
 
@@ -114,7 +174,16 @@ export class Program {
                 return null;
             }
 
-            const tree = SyntaxTree.parse(content);
+            // Create a module resolver that can access already-loaded modules
+            // Note: Files in the same directory are implicitly imported in CCScript
+            const moduleResolver = (moduleName: string) => {
+                return this.getModuleByName(moduleName);
+            };
+
+            // Get sibling modules (same directory) for implicit imports
+            const siblingModules = this.getSiblingModules(normalizedPath);
+
+            const tree = SyntaxTree.parse(content, moduleResolver, siblingModules);
             const name = this.getModuleName(normalizedPath);
 
             // Check for name collision
@@ -147,6 +216,19 @@ export class Program {
 
             // Process imports recursively
             await this.processImports(module);
+
+            // If this was a reload, invalidate all sibling modules
+            // so they pick up any symbol changes on next semantic query
+            if (reload) {
+                const dir = this.options.fileSystem.dirname(normalizedPath);
+                for (const sibling of this.modules.values()) {
+                    if (sibling === module) continue;
+                    const siblingDir = this.options.fileSystem.dirname(sibling.filePath);
+                    if (siblingDir === dir) {
+                        sibling.tree.invalidateBinding();
+                    }
+                }
+            }
 
             return module;
         } finally {
@@ -200,6 +282,71 @@ export class Program {
      */
     getDiagnostics(): readonly ImportDiagnostic[] {
         return this.diagnostics;
+    }
+
+    /**
+     * Reload a module when its file changes (e.g., on save in LSP).
+     * Automatically invalidates all sibling modules to pick up symbol changes.
+     * @param filePath Absolute path to the changed file
+     * @returns The reloaded module, or null if reload failed
+     */
+    async reloadModule(filePath: string): Promise<Module | null> {
+        console.log('[CCScript:Program] ═══ reloadModule called ═══');
+        const result = await this.loadModule(filePath, true);
+        console.log('[CCScript:Program] ═══ reloadModule finished ═══');
+        return result;
+    }
+
+    /**
+     * Discover and load all .ccs files in the same directory as the given file.
+     * This is useful for LSP contexts where files may be opened in any order.
+     * @param filePath Absolute path to a file whose siblings should be loaded
+     * @returns Array of loaded sibling modules (excluding the file itself)
+     */
+    async loadSiblingFiles(filePath: string): Promise<Module[]> {
+        const normalizedPath = this.options.fileSystem.normalize(filePath);
+        const dir = this.options.fileSystem.dirname(normalizedPath);
+
+        // TODO: Add fileSystem.readdir() method to list files in directory
+        // For now, this is a placeholder that documents the intended behavior
+        // The LSP can call loadModule() for each .ccs file it discovers via workspace.findFiles()
+
+        const siblings: Module[] = [];
+        for (const module of this.modules.values()) {
+            const moduleDir = this.options.fileSystem.dirname(module.filePath);
+            if (moduleDir === dir && module.filePath !== normalizedPath) {
+                siblings.push(module);
+            }
+        }
+
+        return siblings;
+    }
+
+    /**
+     * Invalidate the semantic cache for a module and optionally its siblings.
+     * This forces re-binding on next semantic query, useful when sibling files change.
+     * @param filePath Path to the module to invalidate
+     * @param invalidateSiblings If true, also invalidate all modules in same directory
+     */
+    invalidateModule(filePath: string, invalidateSiblings = false): void {
+        const normalizedPath = this.options.fileSystem.normalize(filePath);
+        const module = this.modules.get(normalizedPath);
+
+        if (!module) {
+            return;
+        }
+
+        module.tree.invalidateBinding();
+
+        if (invalidateSiblings) {
+            const dir = this.options.fileSystem.dirname(normalizedPath);
+            for (const sibling of this.modules.values()) {
+                const siblingDir = this.options.fileSystem.dirname(sibling.filePath);
+                if (siblingDir === dir && sibling.filePath !== normalizedPath) {
+                    sibling.tree.invalidateBinding();
+                }
+            }
+        }
     }
 
     /**
@@ -382,6 +529,58 @@ export class Program {
     private getModuleName(filePath: string): string {
         const basename = this.options.fileSystem.basename(filePath, '.ccs');
         return basename;
+    }
+
+    /**
+     * Get all modules in the same directory as the given file path,
+     * plus standard library modules which are available to all files.
+     * These are implicitly imported in CCScript.
+     */
+    private getSiblingModules(filePath: string): Module[] {
+        const dir = this.options.fileSystem.dirname(filePath);
+        const siblings: Module[] = [];
+
+        console.log(`[CCScript:Program] Looking for siblings of ${filePath}`);
+        console.log(`[CCScript:Program] Directory: ${dir}`);
+        console.log(`[CCScript:Program] Total loaded modules: ${this.modules.size}`);
+
+        // Determine stdlib paths (if configured)
+        const stdLibPaths = new Set<string>();
+        if (this.options.includeStdLibs && this.options.stdLibPaths) {
+            if (this.options.stdLibPaths.std) {
+                stdLibPaths.add(this.options.fileSystem.normalize(this.options.stdLibPaths.std));
+            }
+            if (this.options.stdLibPaths.stdarg) {
+                stdLibPaths.add(this.options.fileSystem.normalize(this.options.stdLibPaths.stdarg));
+            }
+        }
+
+        for (const module of this.modules.values()) {
+            // Skip self
+            if (module.filePath === filePath) {
+                continue;
+            }
+
+            // Check if this is a stdlib module (always included as sibling)
+            const normalizedPath = this.options.fileSystem.normalize(module.filePath);
+            if (stdLibPaths.has(normalizedPath)) {
+                console.log(`[CCScript:Program]   ✓ Standard library: ${module.name}`);
+                siblings.push(module);
+                continue;
+            }
+
+            // Check if in same directory
+            const moduleDir = this.options.fileSystem.dirname(module.filePath);
+            if (moduleDir === dir) {
+                console.log(`[CCScript:Program]   ✓ Found sibling: ${module.name} (${module.filePath})`);
+                siblings.push(module);
+            } else {
+                console.log(`[CCScript:Program]   ✗ Different dir: ${module.name} (${moduleDir})`);
+            }
+        }
+
+        console.log(`[CCScript:Program] Total siblings found: ${siblings.length}`);
+        return siblings;
     }
 
     /**

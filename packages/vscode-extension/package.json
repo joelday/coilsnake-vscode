@@ -35,6 +35,16 @@
                 "configuration": "./language-configuration.json"
             }
         ],
+        "configuration": {
+            "title": "CCScript",
+            "properties": {
+                "ccscript.stdLibPath": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Path to the CCScript standard library directory containing `std.ccs` and `stdarg.ccs`. If not set, standard library support will be disabled.\n\nExample: `/path/to/ccscript13/lib`"
+                }
+            }
+        },
         "views": {
             "explorer": [
                 {

@@ -348,6 +348,44 @@ export class RedNode implements IRedNode {
         }
         return null;
     }
+
+    /**
+     * Find the first child of a specific kind
+     */
+    findChildByKind(kind: SyntaxKind): RedNode | null {
+        const children = this.getChildren();
+        return children.find(c => c.kind === kind) ?? null;
+    }
+
+    /**
+     * Find all children of a specific kind
+     */
+    findChildrenByKind(kind: SyntaxKind): RedNode[] {
+        const children = this.getChildren();
+        return children.filter(c => c.kind === kind);
+    }
+
+    /**
+     * Get the identifier token for this declaration/reference node.
+     * Searches for the first Identifier token in the node's children.
+     * This provides an authoritative reference for the name token.
+     */
+    getIdentifierToken(): RedToken | null {
+        const identifier = this.findChildByKind(SyntaxKind.Identifier);
+        if (identifier && isRedToken(identifier)) {
+            return identifier;
+        }
+        return null;
+    }
+
+    /**
+     * Get the name of this node if it has an identifier.
+     * Returns the text of the identifier token, or null if not found.
+     */
+    getIdentifierName(): string | null {
+        const token = this.getIdentifierToken();
+        return token?.text ?? null;
+    }
 }
 
 /**
