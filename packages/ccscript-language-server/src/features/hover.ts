@@ -1,6 +1,6 @@
 import { Hover, HoverParams, MarkupKind } from 'vscode-languageserver/node';
 import { RedNode, Symbol, SymbolKind, SyntaxKind, isRedToken } from 'ccscript-core';
-import { controlCodeGroupAt, controlCodePatterns, decodeControlCodes } from '../controlCodes';
+import { controlCodeDecoder, controlCodeGroupAt, formatCall, formatNumber } from '../controlCodes';
 import {
     constantsByValue,
     entryForArgument,
@@ -89,7 +89,7 @@ async function hoverControlCode(workspace: Workspace, project: ProjectData | und
     if (!group) {
         return null;
     }
-    const codes = decodeControlCodes(group.bytes, controlCodePatterns(workspace));
+    const codes = controlCodeDecoder(workspace).decode(group.bytes);
     const endOf = (index: number) => group.offsets[index] + 2;
     // The code under the cursor (on the brackets, the first or last code)
     const code = codes.find(c => offset < endOf(c.start + c.length - 1)) ?? codes[codes.length - 1];
@@ -110,10 +110,7 @@ async function hoverControlCode(workspace: Workspace, project: ProjectData | und
 
     const { command } = best.pattern;
     const parameters = getParameterNames(command);
-    const format = (value: number) => value >= 0x10000 ? formatHex(value) : String(value);
-    const call = parameters.length > 0
-        ? `${command.name}(${parameters.map(p => format(best.arguments.get(p) ?? 0)).join(', ')})`
-        : command.name;
+    const call = formatCall(best, (_, value) => formatNumber(value));
     const parts = [`\`\`\`ccscript\n${call}\n\`\`\``];
 
     // What the arguments refer to

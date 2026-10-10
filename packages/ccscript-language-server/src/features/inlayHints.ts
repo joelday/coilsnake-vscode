@@ -7,7 +7,9 @@ import {
     entryForArgument,
     numericValue,
 } from '../gameData';
-import { DOMAIN_TITLES, domainOfTable, tableTitle } from '../projectData';
+import { controlCodeDecoder, controlCodeGroupsIn, formatCall, formatNumber } from '../controlCodes';
+import { DOMAIN_TITLES, domainOfParameter, domainOfTable, tableTitle } from '../projectData';
+import { labelTextResolver } from '../gameData';
 import { Analysis, Workspace, pathToUri } from '../workspace';
 
 const LITERALS = new Set([SyntaxKind.NumericLiteralExpression, SyntaxKind.StringLiteralExpression, SyntaxKind.TemplateStringExpression]);
@@ -88,6 +90,59 @@ export async function provideInlayHints(workspace: Workspace, analysis: Analysis
                     kind: InlayHintKind.Type,
                     paddingLeft: true,
                     tooltip: `Same value as ${names.join(', ')}`,
+                });
+            }
+        }
+    }
+
+    // Raw control codes in strings: the commands they encode, e.g. "[1C 02 03]" name(Jeff)
+    if (workspace.inlayHintsEnabled('controlCodes')) {
+        const decoder = controlCodeDecoder(workspace);
+        const describeLabel = labelTextResolver(workspace);
+        for (const token of tree.getTokens()) {
+            if (token.kind !== SyntaxKind.StringLiteral || !token.text.includes('[') || !inRange(token) ||
+                token.parent?.kind === SyntaxKind.ImportStatement) {
+                continue;
+            }
+            const command = token.getAncestorOfKind(SyntaxKind.CommandDeclaration);
+            for (const group of controlCodeGroupsIn(tree.source, token.span.start, token.span.start + token.span.length)) {
+                const codes = decoder.decode(group.bytes);
+                // Not on a command's own definition (command next "[03]")
+                if (command && codes.some(c => c.matches[0]?.pattern.command.declaration.span.start === command.span.start)) {
+                    continue;
+                }
+
+                const labels: string[] = [];
+                const details: string[] = [];
+                for (const code of codes) {
+                    const bytes = group.bytes.slice(code.start, code.start + code.length)
+                        .map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+                    const best = code.matches[0];
+                    if (!best) {
+                        if (labels[labels.length - 1] !== '…') labels.push('…');
+                        details.push(`- \`${bytes}\` · unknown`);
+                        continue;
+                    }
+                    // Arguments that name game data are shown by name
+                    const names = new Map<string, string>();
+                    for (const [parameter, value] of best.arguments) {
+                        const domain = domainOfParameter(parameter);
+                        if (domain && value !== 0 && project) {
+                            const entry = await project.entry(domain, value, describeLabel);
+                            if (entry?.name) names.set(parameter, entry.name);
+                        }
+                    }
+                    labels.push(formatCall(best, (parameter, value) => names.get(parameter) ?? formatNumber(value)));
+                    details.push(`- \`${bytes}\` · \`${formatCall(best, (_, value) => formatNumber(value))}\``);
+                }
+                if (labels.every(l => l === '…')) continue;
+
+                hints.push({
+                    position: document.positionAt(group.close + 1),
+                    label: truncate(labels.join(' '), 60),
+                    paddingLeft: true,
+                    paddingRight: true,
+                    tooltip: { kind: MarkupKind.Markdown, value: details.join('\n') },
                 });
             }
         }

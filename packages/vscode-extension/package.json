@@ -57,6 +57,11 @@
                     "type": "boolean",
                     "default": true,
                     "markdownDescription": "Show which CoilSnake project table entries (items, NPCs, enemies...) use a label's text."
+                },
+                "ccscript.inlayHints.controlCodes": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Show the commands that raw control codes in strings encode, e.g. `\"[1C 02 03]\"` → `name(Jeff)`."
                 }
             }
         },

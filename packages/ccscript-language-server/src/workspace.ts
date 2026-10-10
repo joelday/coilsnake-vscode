@@ -32,6 +32,8 @@ export interface InlayHintSettings {
     values?: boolean;
     /** Which project table entries use a label's text */
     tableReferences?: boolean;
+    /** The commands raw control codes in strings encode */
+    controlCodes?: boolean;
 }
 
 export interface Settings {

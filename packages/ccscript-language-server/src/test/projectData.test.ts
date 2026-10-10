@@ -140,7 +140,7 @@ describe('Inlay hints', () => {
     it('shows which table entries use a label\'s text', async () => {
         await startProject();
         await client.open('/project/ccscript/data_02.ccs');
-        const hints = await inlayHints('/project/ccscript/data_02.ccs');
+        const hints = (await inlayHints('/project/ccscript/data_02.ccs')).filter(h => h.label.startsWith('←'));
         expect(hints.map(h => h.label)).toEqual(['← Item 1 Franklin badge', '← NPC 5']);
         expect(hints[0]).toMatchObject({ line: 0, character: 'l_0xc53711:'.length });
     });
