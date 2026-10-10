@@ -4,7 +4,15 @@ module.exports = {
     testEnvironment: 'node',
     testMatch: ['**/src/**/*.test.ts'],
     transform: {
-        '^.+\\.ts$': ['ts-jest', { tsconfig: { module: 'commonjs', esModuleInterop: true, strict: true } }],
+        '^.+\\.ts$': ['ts-jest', { tsconfig: {
+            // node16 resolution reads packages' "exports" (vscode-languageserver 10 only has types
+            // there) and still compiles to CommonJS for Jest
+            module: 'node16',
+            moduleResolution: 'node16',
+            esModuleInterop: true,
+            strict: true,
+            types: ['jest', 'node'],
+        } }],
     },
     // Test against the core sources, so they don't need building first
     moduleNameMapper: {

@@ -213,6 +213,18 @@ describe('Semantic Analysis Integration', () => {
             }, '/game/main.ccs')).toEqual(["Duplicate declaration of 'MAX'"]);
         });
 
+        it('should accept any expression as an operand of not/and/or', async () => {
+            expect(await bind({
+                '/game/main.ccs': `
+                    command check(n) "[0E {byte n}]"
+                    command main() {
+                        if not check(1) { "a" }
+                        if check(1) and not check(2) or check(3) { "b" }
+                    }
+                `,
+            }, '/game/main.ccs')).toEqual([]);
+        });
+
         it('should not make imports transitive', async () => {
             expect(await bind({
                 '/game/c/deep.ccs': 'command deep() { }',

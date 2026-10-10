@@ -80,6 +80,8 @@ export class Workspace {
     private readonly diskFileSystem: FileSystem;
     private readonly validationDelay: number;
     private readonly pendingSyncs = new Map<string, { text: string; promise: Promise<void> }>();
+    /** CoilSnake projects whose build files have been loaded, by project root */
+    private builds = new Map<string, Promise<void>>();
     private readonly textDocuments = new WeakMap<SyntaxTree, TextDocument>();
     private validationTimer: ReturnType<typeof setTimeout> | undefined;
     private hasConfigurationCapability = false;
@@ -96,6 +98,7 @@ export class Workspace {
         this.validationDelay = options.validationDelay ?? 150;
         this.projects = new ProjectCatalog(this.diskFileSystem);
         this.program = this.createProgram();
+        this.builds = new Map();
     }
 
     initialize(params: InitializeParams): void {
@@ -105,6 +108,7 @@ export class Workspace {
         this.hasConfigurationCapability = !!params.capabilities.workspace?.configuration;
         this.supportsInlayHintRefresh = !!params.capabilities.workspace?.inlayHint?.refreshSupport;
         this.program = this.createProgram();
+        this.builds = new Map();
     }
 
     /**
@@ -163,6 +167,7 @@ export class Workspace {
         }
 
         const filePath = this.fileSystem.normalize(uriToPath(uri));
+        await this.loadBuild(filePath);
         for (let attempt = 0; attempt < 3; attempt++) {
             const text = document.getText();
             const pending = this.pendingSyncs.get(filePath);
@@ -181,6 +186,29 @@ export class Workspace {
             }
         }
         return undefined;
+    }
+
+    /**
+     * Load what a CoilSnake build of the file's project compiles: every .ccs file directly in
+     * its ccscript directory, and what they import. Then `module.member` references resolve,
+     * or not, as they would in a build. (Once per project.)
+     */
+    private loadBuild(filePath: string): Promise<void> {
+        return (async () => {
+            const project = await this.projectFor(filePath);
+            if (!project) return;
+            let loading = this.builds.get(project.root);
+            if (!loading) {
+                loading = (async () => {
+                    const ccscript = this.fileSystem.join(project.root, 'ccscript');
+                    const roots = (await this.diskFileSystem.readDirectory(ccscript))
+                        .filter(f => f.toLowerCase().endsWith('.ccs'));
+                    await this.program.loadModules(roots);
+                })().catch(error => this.log(`Failed to load the project at ${project.root}: ${error}`));
+                this.builds.set(project.root, loading);
+            }
+            await loading;
+        })();
     }
 
     /**
@@ -303,6 +331,7 @@ export class Workspace {
 
         this.warnedAboutStdLib = false;
         this.program = this.createProgram();
+        this.builds = new Map();
         for (const document of this.documents.all()) {
             await this.program.loadModule(uriToPath(document.uri));
         }

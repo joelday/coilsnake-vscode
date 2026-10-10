@@ -24,6 +24,11 @@ import { startServer } from '../languageServer';
 
 export const STD_LIB = '/lib';
 
+/** A diagnostic's message text (LSP allows plain text or markup) */
+export function messageText(diagnostic: Diagnostic): string {
+    return typeof diagnostic.message === 'string' ? diagnostic.message : diagnostic.message.value;
+}
+
 export function uri(path: string): string {
     return URI.file(path).toString();
 }

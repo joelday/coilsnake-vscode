@@ -5,17 +5,18 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import {
+    Diagnostic,
     FileChangeType,
     Hover,
     Position,
     Range,
 } from 'vscode-languageserver-protocol';
-import { TestClient, positionOf } from './testClient';
+import { TestClient, messageText, positionOf } from './testClient';
 
 let client: TestClient;
 afterEach(() => client?.dispose());
 
-const messages = (diagnostics: { message: string }[]) => diagnostics.map(d => d.message);
+const messages = (diagnostics: Diagnostic[]) => diagnostics.map(messageText);
 
 describe('Editing', () => {
     it('answers requests against the latest edit, without waiting for diagnostics', async () => {

@@ -93,6 +93,25 @@ async function inlayHints(path = MAIN_PATH): Promise<{ line: number; character: 
     return hints.map(h => ({ line: h.position.line, character: h.position.character, label: h.label as string }));
 }
 
+describe('Loading the build', () => {
+    it('loads what a CoilSnake build compiles, so qualified references resolve as they would', async () => {
+        client = await TestClient.start({
+            files: {
+                '/project/Project.snake': '',
+                '/project/ccscript/main.ccs': 'import "shops/ShopMain.ccs"\n',
+                '/project/ccscript/shops/ShopMain.ccs': 'l_shop:\n    "Welcome!" next\n',
+                '/project/ccscript/data/data_05.ccs': 'intro: call(ShopMain.l_shop) call(Unbuilt.l_x)\n',
+                '/project/ccscript/unused/Unbuilt.ccs': 'l_x:\n',
+            },
+            stdLib: STD,
+        });
+        await client.open('/project/ccscript/data/data_05.ccs');
+        const diagnostics = await client.waitForDiagnostics('/project/ccscript/data/data_05.ccs');
+        // ShopMain is part of the build; Unbuilt isn't (nothing imports it), so a build wouldn't find it
+        expect(diagnostics.map(d => d.message)).toEqual(["Unknown module 'Unbuilt'"]);
+    });
+});
+
 describe('Reading project files', () => {
     it('reads block and inline table entries', () => {
         const table = parseTable('/t.yml', "0:\n  Name: 'It''s'\n  Cost: 3\n0x02: {X: 1, EBME_Comment: Onett}\n");

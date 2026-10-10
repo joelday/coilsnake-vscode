@@ -124,20 +124,20 @@
     },
     "dependencies": {
         "ccscript-language-server": "^1.0.0",
-        "vscode-languageclient": "^9.0.1"
+        "vscode-languageclient": "^10.1.2"
     },
     "devDependencies": {
-        "@eslint/js": "^9.13.0",
-        "@types/node": "^22",
-        "@types/vscode": "^1.100.0",
+        "@eslint/js": "^10.0.1",
+        "@types/node": "^22.20.5",
+        "@types/vscode": "~1.100.0",
         "@types/webpack": "^5.28.5",
-        "@vscode/vsce": "^3.2.1",
-        "eslint": "^9.13.0",
-        "ts-loader": "^9.5.1",
-        "typescript": "^5.9.2",
-        "typescript-eslint": "^8.39.0",
-        "webpack": "^5.97.1",
-        "webpack-cli": "^5.1.4"
+        "@vscode/vsce": "^4.0.0",
+        "eslint": "^10.12.0",
+        "ts-loader": "^9.6.2",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.71.1",
+        "webpack": "^5.111.1",
+        "webpack-cli": "^7.2.3"
     },
     "bugs": {
         "url": "https://github.com/joelday/coilsnake-vscode/issues",

@@ -4,6 +4,7 @@
 
 import { SyntaxTree } from './syntaxTree';
 import { SyntaxKind } from './syntax/syntaxKind';
+import { DiagnosticSeverity } from './syntax/types';
 import { RedToken } from './redNode';
 
 describe('SyntaxTree', () => {
@@ -332,6 +333,24 @@ describe('SyntaxTree', () => {
         ])('should place every token at its source position: %j', source => {
             const tree = SyntaxTree.parse(source);
             expect(tree.getRoot().fullWidth).toBe(source.length);
+            for (const token of tree.getTokens()) {
+                expect(source.substr(token.span.start, token.text.length)).toBe(token.text);
+            }
+        });
+    });
+
+    describe('Template expression leftovers', () => {
+        it('ignores text after the expression with a warning, as the compiler does', () => {
+            const source = 'define s = "{name(1)...} and {byte rows)}"';
+            const tree = SyntaxTree.parse(source);
+            const diagnostics = tree.getDiagnostics();
+            expect(diagnostics.map(d => [d.severity, d.message])).toEqual([
+                [DiagnosticSeverity.Warning, "In template expression: Ignored by the compiler: '...' after the expression"],
+                [DiagnosticSeverity.Warning, "In template expression: Ignored by the compiler: ')' after the expression"],
+            ]);
+            expect(source.slice(diagnostics[0].span.start, diagnostics[0].span.start + 1)).toBe('.');
+            // The expressions are still there, and positions still line up
+            expect(tree.findNodesOfKind(SyntaxKind.StringTemplateExpression)).toHaveLength(2);
             for (const token of tree.getTokens()) {
                 expect(source.substr(token.span.start, token.text.length)).toBe(token.text);
             }

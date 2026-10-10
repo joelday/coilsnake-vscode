@@ -487,17 +487,14 @@ export class Binder {
         const type = valueNode ? (this.types.get(valueNode) || Types.unknown) : Types.unknown;
 
         // Check if symbol already exists from pass 1 (module-level)
-        let symbol = this.symbols.lookup(name, [this.currentScope.id]);
+        const symbol = this.symbols.lookup(name, [this.currentScope.id]);
 
         if (symbol) {
             // Module-level constant, update type
             symbol.type = type;
         } else {
             // Nested constant (in command or block), create symbol now
-            const newSymbol = this.recordSymbol(node, SymbolKind.Constant, type);
-            if (newSymbol) {
-                symbol = newSymbol;
-            }
+            this.recordSymbol(node, SymbolKind.Constant, type);
         }
     }
 
@@ -769,21 +766,11 @@ export class Binder {
             this.bindNode(left);
             this.bindNode(right);
 
-            const leftType = this.types.get(left) || Types.unknown;
-            const rightType = this.types.get(right) || Types.unknown;
-
             // Determine operator
             const operatorToken = node.getChildren().find(c => c.kind === SyntaxKind.AndKeyword || c.kind === SyntaxKind.OrKeyword);
 
             if (operatorToken) {
-                // For boolean operators, operands should be flags
-                if (leftType.kind !== Types.flag.kind && leftType.kind !== Types.unknown.kind) {
-                    this.addDiagnostic(left, `Expected flag type, got ${leftType.name}`);
-                }
-                if (rightType.kind !== Types.flag.kind && rightType.kind !== Types.unknown.kind) {
-                    this.addDiagnostic(right, `Expected flag type, got ${rightType.name}`);
-                }
-
+                // (The compiler accepts any expressions as operands, e.g. `not check_something()`)
                 this.types.set(node, Types.flag);
             } else {
                 this.types.set(node, Types.unknown);
@@ -806,10 +793,7 @@ export class Binder {
             // Check for 'not' operator
             const notToken = node.getChildren().find(c => c.kind === SyntaxKind.NotKeyword);
             if (notToken) {
-                // not operator requires flag type
-                if (operandType.kind !== Types.flag.kind && operandType.kind !== Types.unknown.kind) {
-                    this.addDiagnostic(operand, `Expected flag type, got ${operandType.name}`);
-                }
+                // (The compiler accepts any expression, e.g. `not check_something()`)
                 this.types.set(node, Types.flag);
             } else {
                 this.types.set(node, operandType);

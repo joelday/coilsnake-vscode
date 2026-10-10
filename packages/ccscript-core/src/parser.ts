@@ -51,7 +51,7 @@ export class Parser {
     private pos = 0;
     private readonly diagnostics: Diagnostic[] = [];
 
-    constructor(source: string) {
+    constructor(private readonly source: string) {
         const scanner = new Scanner(source);
         this.tokens = scanner.scanTokens();
         this.diagnostics.push(...scanner.getDiagnostics());
@@ -67,15 +67,17 @@ export class Parser {
     private readonly tokenStarts: number[];
 
     /**
-     * Parse an expression that must make up the whole source (e.g. inside a string template).
-     * Returns null if anything is left over.
+     * Parse the expression in a string template (`{expr}`). Like the compiler, only one
+     * expression is read; anything after it is ignored, with a warning since it's
+     * usually a mistake.
      */
-    parseStandaloneExpression(): GreenExpression | null {
+    parseTemplateExpression(): GreenExpression | null {
         const expression = this.parseExpression();
-        if (!this.isAtEnd()) {
+        if (expression && !this.isAtEnd()) {
             const current = this.current()!;
-            this.addDiagnostic(current, DiagnosticSeverity.Error, `Unexpected token: ${current.text}`);
-            return null;
+            const ignored = this.source.slice(this.getTokenTextStart(this.pos)).trim();
+            this.addDiagnostic(current, DiagnosticSeverity.Warning,
+                `Ignored by the compiler: '${ignored}' after the expression`);
         }
         return expression;
     }
@@ -951,7 +953,7 @@ export class Parser {
                     if (exprText.length > 0) {
                         // Parse the expression
                         const tempParser = new Parser(exprText);
-                        const expression = tempParser.parseStandaloneExpression();
+                        const expression = tempParser.parseTemplateExpression();
                         const exprDiagnostics = tempParser.getDiagnostics();
 
                         // Forward any diagnostics from the embedded parser, mapped into this file

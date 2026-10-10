@@ -146,11 +146,12 @@ export function provideCodeActions(workspace: Workspace, analysis: Analysis, par
         if (diagnostic.source !== 'ccscript') {
             continue;
         }
+        const message = typeof diagnostic.message === 'string' ? diagnostic.message : diagnostic.message.value;
         if (diagnostic.code === DiagnosticCodes.undefinedName) {
-            const name = diagnostic.message.match(/'([^']+)'/)?.[1];
+            const name = message.match(/'([^']+)'/)?.[1];
             if (name) actions.push(...fixUndefinedName(workspace, analysis, diagnostic, name));
         } else if (diagnostic.code === DiagnosticCodes.unknownMember) {
-            const match = diagnostic.message.match(/^'([^']+)' has no member '([^']+)'/);
+            const match = message.match(/^'([^']+)' has no member '([^']+)'/);
             if (match) actions.push(...fixUnknownMember(workspace, analysis, diagnostic, match[1], match[2]));
         }
     }
