@@ -39,6 +39,11 @@ export interface BindingContext {
     sharedSymbols: SymbolTable;
     /** Imported symbols from explicit imports (other directories) */
     importedSymbols: SymbolTable;
+    /**
+     * Resolves `module.member` qualifiers to that module's top-level declarations.
+     * Like the compiler, any loaded module can be referenced this way, imported or not.
+     */
+    resolveModule?: (moduleName: string) => SymbolTable | undefined;
 }
 
 /**
@@ -63,7 +68,7 @@ export interface BindingResult {
  * Binds symbols and resolves references in a CCScript AST.
  */
 export class Binder {
-    private symbols = new SymbolTable();
+    private readonly symbols: SymbolTable;
     private scopes = new ScopeManager();
     private currentScope: Scope;
     private nodeScopes = new Map<number, number>();
@@ -75,20 +80,15 @@ export class Binder {
     private constructor(context: BindingContext) {
         this.currentScope = this.scopes.getGlobalScope();
         this.context = context;
-        
-        // Import shared symbols from same directory
-        for (const symbol of context.sharedSymbols.getAllSymbols()) {
-            // Don't import if it's from this file (we'll collect our own declarations)
-            const symbolFilePath = symbol.id?.split(':')[0] || '';
-            if (symbolFilePath && symbolFilePath !== context.filePath) {
-                this.symbols.add(symbol);
-            }
-        }
-        
-        // Import symbols from explicit imports (other directories)
-        for (const symbol of context.importedSymbols.getAllSymbols()) {
-            this.symbols.add(symbol);
-        }
+
+        // See through to imported and same-directory symbols without copying them.
+        // Explicit imports take priority over shared ones; this file's own symbols win over both.
+        // (The shared table also holds this file's declarations from phase 1; those are skipped
+        // so they're only seen once, as this file's own.)
+        this.symbols = new SymbolTable([
+            { table: context.importedSymbols },
+            { table: context.sharedSymbols, filter: s => s.modulePath !== context.filePath },
+        ]);
     }
 
     /**
@@ -226,6 +226,7 @@ export class Binder {
             scopeId: this.currentScope.id,
             isUsed: false,
             parameters,
+            modulePath: this.context.filePath,
         };
     }
 
@@ -239,9 +240,11 @@ export class Binder {
             return null;
         }
 
-        // Check for duplicate declarations in current scope
+        // Check for duplicate declarations in current scope. Only this file's own declarations
+        // count: like the compiler, a module's definitions silently shadow imported ones.
         if (checkDuplicates) {
-            const existing = this.symbols.lookup(symbol.name, [this.currentScope.id]);
+            const existing = this.symbols.getOwn(symbol.name)
+                .some(s => s.scopeId === this.currentScope.id);
             if (existing) {
                 this.addDiagnostic(node, `Duplicate declaration of '${symbol.name}'`);
                 return null;
@@ -339,6 +342,7 @@ export class Binder {
             length: span.length,
             scopeId: this.currentScope.id,
             isUsed: false,
+            modulePath: this.context.filePath,
         };
 
         this.symbols.add(moduleSymbol);
@@ -488,6 +492,15 @@ export class Binder {
      */
     private bindBlockStatement(node: RedNode): void {
         this.enterScope(ScopeKind.Block);
+
+        // Like the compiler, declare a block's labels before binding its statements,
+        // so they can be jumped to ahead of their definition
+        for (const child of node.getChildren()) {
+            if (child.kind === SyntaxKind.LabelDeclaration) {
+                this.recordSymbol(child, SymbolKind.Label, Types.void);
+            }
+        }
+
         this.bindChildren(node);
         this.exitScope();
     }
@@ -545,9 +558,6 @@ export class Binder {
         // Enter command scope
         this.enterScope(ScopeKind.Command);
 
-        // FIRST: Collect all labels in this command's scope for forward references
-        this.collectLabelsInCommand(node);
-
         // Clear placeholder parameters from pass 1 and populate with actual symbols
         symbol.parameters = [];
 
@@ -573,6 +583,7 @@ export class Binder {
                         length: span.length,
                         scopeId: this.currentScope.id,
                         isUsed: false,
+                        modulePath: this.context.filePath,
                     };
                     this.symbols.add(paramSymbol);
                     symbol.parameters!.push(paramSymbol);
@@ -584,30 +595,6 @@ export class Binder {
         this.bindChildren(node);
 
         this.exitScope();
-    }
-
-    /**
-     * Collect all labels within a command for forward references.
-     * Must be called after entering the command's scope.
-     */
-    private collectLabelsInCommand(node: RedNode): void {
-        for (const child of node.getChildren()) {
-            if (isRedToken(child)) continue;
-
-            if (child.kind === SyntaxKind.LabelDeclaration) {
-                // Create the label symbol in the current (command) scope
-                this.recordSymbol(child, SymbolKind.Label, Types.void, [], false);
-            } else if (child.kind === SyntaxKind.BlockStatement) {
-                // Recursively collect labels in nested blocks
-                this.collectLabelsInCommand(child);
-            } else if (child.kind === SyntaxKind.IfStatement) {
-                // Also search in if statements
-                this.collectLabelsInCommand(child);
-            } else {
-                // Continue searching in other statement types
-                this.collectLabelsInCommand(child);
-            }
-        }
     }
 
     /**
@@ -671,28 +658,24 @@ export class Binder {
         const moduleName = isRedToken(leftToken) ? leftToken.text : '';
         const memberName = isRedToken(rightToken) ? rightToken.text : '';
 
-        // Check if module exists (search from innermost to outermost scope)
+        // Mark a matching import as used
         const scopeOrder = this.scopes.getVisibleScopeIds(this.currentScope);
-        const moduleSymbol = this.symbols.lookup(moduleName, scopeOrder);
+        const importSymbol = this.symbols.lookup(moduleName, scopeOrder, SymbolKind.Module);
+        if (importSymbol) {
+            importSymbol.isUsed = true;
+        }
 
-        if (!moduleSymbol) {
+        const moduleDeclarations = this.context.resolveModule?.(moduleName);
+        if (!moduleDeclarations) {
             this.addDiagnostic(node, `Unknown module '${moduleName}'`);
             this.types.set(node, Types.unknown);
             return;
         }
 
-        if (moduleSymbol.kind !== SymbolKind.Module) {
-            this.addDiagnostic(node, `'${moduleName}' is not a module`);
-            this.types.set(node, Types.unknown);
-            return;
-        }
+        // Resolve the member among that module's own top-level declarations
+        const globalScopeId = this.scopes.getGlobalScope().id;
+        const memberSymbol = moduleDeclarations.lookup(memberName, [globalScopeId]);
 
-        moduleSymbol.isUsed = true;
-
-        // Try to find the member in our imported symbols
-        // (Program should have imported all symbols from the module)
-        const memberSymbol = this.symbols.lookup(memberName, scopeOrder);
-        
         if (memberSymbol) {
             memberSymbol.isUsed = true;
             this.references.set(node, memberSymbol);

@@ -7,7 +7,7 @@
  * - Process each module's imports recursively
  * - Search paths: (1) same dir as importing file, (2) project root, (3) lib directories
  * - Auto-include std.ccs and stdarg.ccs unless disabled
- * - Detect circular imports
+ * - Allow circular imports (each module is loaded once)
  * - Load modules on-demand
  */
 
@@ -17,8 +17,7 @@ import { RedToken } from './redNode';
 import { SyntaxKind } from './syntax/syntaxKind';
 import { Diagnostic, DiagnosticSeverity } from './syntax/types';
 import { Binder, BindingResult, BindingContext } from './semantic/binder';
-import { SymbolTable } from './semantic/symbol';
-import { ScopeKind } from './semantic/scope';
+import { SymbolTable, SymbolKind } from './semantic/symbol';
 
 /**
  * Modules in same directory form a compilation group.
@@ -74,6 +73,11 @@ export interface ProgramOptions {
         std?: string;
         stdarg?: string;
     };
+    /**
+     * Load every .ccs file in a module's directory the first time that directory is seen,
+     * since files in the same directory share a namespace (default: true)
+     */
+    loadSiblings?: boolean;
     /** Receives diagnostic trace messages (silent by default) */
     log?: (message: string) => void;
 }
@@ -95,32 +99,22 @@ export interface ImportDiagnostic extends Diagnostic {
  * ## Sibling File Imports
  * In CCScript, files in the same directory implicitly share a namespace.
  * Symbols from sibling files are available without explicit imports.
+ * The first time a directory is seen, all of its .ccs files are loaded
+ * (disable with `loadSiblings: false` and call loadSiblingFiles() instead).
  *
- * ### For Batch Compilation:
- * Load all files in order - each file will automatically see previously loaded siblings.
- *
- * ### For LSP/Language Server:
- * When a document is opened:
- * 1. Use workspace.findFiles() to discover all .ccs files in the same directory
- * 2. Call loadModule() for each file in the directory
- * 3. This ensures all siblings are loaded before semantic analysis
- *
- * When a file is saved/changed:
- * 1. Call reloadModule(path) - this rebinds its compilation group and dependent groups
- * 2. Each module's `binding` is updated immediately; no manual invalidation needed
+ * ## Binding
+ * Loading only parses. When a public load call finishes, every compilation group it
+ * touched, plus groups that depend on them, is rebound in dependency order, so each
+ * module's `binding` is current when loadModule()/reloadModule() resolves.
  *
  * @example
  * ```typescript
- * // LSP: When opening a document
- * const directory = path.dirname(documentUri);
- * const siblingFiles = await workspace.findFiles(`${directory}/*.ccs`);
- * for (const file of siblingFiles) {
- *   await program.loadModule(file.fsPath);
- * }
+ * // LSP: When opening a document (its directory's siblings load automatically)
+ * await program.loadModule(documentUri.fsPath);
  *
- * // LSP: When a document is saved
+ * // LSP: When a document changes
  * await program.reloadModule(documentUri.fsPath);
- * // All siblings and dependent groups have been rebound
+ * // Its group and dependent groups have been rebound
  * ```
  */
 export class Program {
@@ -129,6 +123,17 @@ export class Program {
     private readonly modulesByName = new Map<string, Module>();
     private readonly groups = new Map<string, CompilationGroup>();  // Key: directory path
     private diagnostics: ImportDiagnostic[] = [];
+    /** Groups with modules added or changed since they were last bound */
+    private readonly dirtyGroups = new Set<CompilationGroup>();
+    /** Module names each group referenced as `module.member` in its last binding */
+    private readonly qualifiedReferences = new Map<CompilationGroup, Set<string>>();
+    /** Import symbol tables keyed by dependency paths, for the current and previous bind pass */
+    private importedSymbolsCache = new Map<string, { trees: SyntaxTree[]; table: SymbolTable }>();
+    private previousImportedSymbolsCache = new Map<string, { trees: SyntaxTree[]; table: SymbolTable }>();
+    /** Top-level declarations per parsed tree (collected once per parse) */
+    private readonly declarationCache = new WeakMap<SyntaxTree, SymbolTable>();
+    /** Loads that have started but not yet registered their module */
+    private readonly inFlightLoads = new Map<string, Promise<Module | null>>();
     /** Resolves once the auto-included standard libraries have finished loading */
     private stdLibsLoaded: Promise<void> = Promise.resolve();
 
@@ -137,6 +142,7 @@ export class Program {
             ...options,
             libPaths: options.libPaths ?? [],
             includeStdLibs: options.includeStdLibs ?? true,
+            loadSiblings: options.loadSiblings ?? true,
             stdLibPaths: options.stdLibPaths ?? {},
             log: options.log ?? (() => {}),
         };
@@ -166,119 +172,144 @@ export class Program {
 
     /**
      * Load a module from a file path.
-     * Recursively loads all imported modules.
-     * Uses compilation groups for directory-based namespace sharing.
+     * Recursively loads all imported modules (and, unless disabled, its directory's siblings),
+     * then binds every affected compilation group before returning.
      * @param filePath Absolute path to the module file
      * @param reload If true, re-parse even if already loaded (for LSP file changes)
      * @returns The loaded module, or null if loading failed
      */
     async loadModule(filePath: string, reload = false): Promise<Module | null> {
+        const module = await this.load(filePath, reload);
+        this.bindDirtyGroups();
+        return module;
+    }
+
+    /**
+     * Load a module without binding. Binding is deferred to the outermost public call.
+     */
+    private load(filePath: string, reload: boolean): Promise<Module | null> {
         const normalizedPath = this.options.fileSystem.normalize(filePath);
 
-        this.log(`${reload ? 'Reloading' : 'Loading'} module: ${normalizedPath}`);
+        if (!reload) {
+            const loaded = this.modules.get(normalizedPath);
+            if (loaded) {
+                return Promise.resolve(loaded);
+            }
 
-        // Check if already loaded (unless reload requested)
-        if (this.modules.has(normalizedPath) && !reload) {
-            return this.modules.get(normalizedPath)!;
+            // Share an in-flight load (e.g. two documents importing the same file concurrently)
+            const inFlight = this.inFlightLoads.get(normalizedPath);
+            if (inFlight) {
+                return inFlight;
+            }
         }
 
-        // Add to loading stack for cycle detection
-        this.loadingStack.add(normalizedPath);
+        const promise = this.loadUncached(normalizedPath, reload);
+        this.inFlightLoads.set(normalizedPath, promise);
+        const clear = () => {
+            if (this.inFlightLoads.get(normalizedPath) === promise) {
+                this.inFlightLoads.delete(normalizedPath);
+            }
+        };
+        promise.then(clear, clear);
+        return promise;
+    }
+
+    private async loadUncached(normalizedPath: string, reload: boolean): Promise<Module | null> {
+        this.log(`${reload ? 'Reloading' : 'Loading'} module: ${normalizedPath}`);
 
         // Drop import diagnostics from any previous load of this file
         this.diagnostics = this.diagnostics.filter(d => d.filePath !== normalizedPath);
 
+        // Check if file exists
+        if (!await this.options.fileSystem.exists(normalizedPath)) {
+            this.addDiagnostic(normalizedPath, '', `Module not found: ${normalizedPath}`, DiagnosticSeverity.Error);
+            return null;
+        }
+
+        // Read and parse the file
+        let content: string;
         try {
-            // Check if file exists
-            if (!await this.options.fileSystem.exists(normalizedPath)) {
-                this.addDiagnostic(normalizedPath, '', `Module not found: ${filePath}`, DiagnosticSeverity.Error);
-                return null;
+            content = await this.options.fileSystem.readFile(normalizedPath);
+        } catch (error) {
+            this.addDiagnostic(normalizedPath, '', `Failed to read module: ${error}`, DiagnosticSeverity.Error);
+            return null;
+        }
+
+        // Parse syntax only (semantic analysis happens per group in bindDirtyGroups)
+        const tree = SyntaxTree.parse(content, normalizedPath);
+        const name = this.getModuleName(normalizedPath);
+
+        // Check for name collision
+        const existingModule = this.modulesByName.get(name);
+        if (existingModule && existingModule.filePath !== normalizedPath) {
+            this.addDiagnostic(
+                normalizedPath,
+                '',
+                `Module name collision: '${name}' already loaded from ${existingModule.filePath}`,
+                DiagnosticSeverity.Error
+            );
+            return null;
+        }
+
+        // Create module (without dependencies or binding yet)
+        const module: Module = {
+            filePath: normalizedPath,
+            name,
+            tree,
+            imports: this.extractImports(tree),
+            dependencies: [],
+            binding: undefined,
+            group: undefined,
+        };
+
+        // Register module before processing imports, so import cycles terminate at the cache.
+        // (Cycles are legal: the compiler loads each module once and includes it wherever imported.)
+        this.modules.set(normalizedPath, module);
+        this.modulesByName.set(name, module);
+
+        // Add to compilation group
+        const dir = this.options.fileSystem.dirname(normalizedPath);
+        const isNewGroup = !this.groups.has(dir);
+        const group = this.getOrCreateGroup(dir);
+        const existingIndex = group.modules.findIndex(m => m.filePath === normalizedPath);
+        if (existingIndex >= 0) {
+            group.modules[existingIndex] = module;
+        } else {
+            group.modules.push(module);
+        }
+        (module as { group?: CompilationGroup }).group = group;
+
+        // Rebind groups that refer to this module by name (`name.member`)
+        for (const [referencingGroup, names] of this.qualifiedReferences) {
+            if (names.has(name)) {
+                this.dirtyGroups.add(referencingGroup);
             }
+        }
 
-            // Read and parse the file
-            let content: string;
-            try {
-                content = await this.options.fileSystem.readFile(normalizedPath);
-            } catch (error) {
-                this.addDiagnostic(normalizedPath, '', `Failed to read module: ${error}`, DiagnosticSeverity.Error);
-                return null;
-            }
-
-            // Parse syntax only (no semantic analysis yet)
-            const tree = SyntaxTree.parse(content, normalizedPath);
-            const name = this.getModuleName(normalizedPath);
-
-            // Check for name collision
-            const existingModule = this.modulesByName.get(name);
-            if (existingModule && existingModule.filePath !== normalizedPath) {
-                this.addDiagnostic(
-                    normalizedPath,
-                    '',
-                    `Module name collision: '${name}' already loaded from ${existingModule.filePath}`,
-                    DiagnosticSeverity.Error
-                );
-                return null;
-            }
-
-            // Extract import statements
-            const imports = this.extractImports(tree);
-
-            // Create module (without dependencies or binding yet)
-            const module: Module = {
-                filePath: normalizedPath,
-                name,
-                tree,
-                imports,
-                dependencies: [],
-                binding: undefined,
-                group: undefined,
-            };
-
-            // Register module
-            this.modules.set(normalizedPath, module);
-            this.modulesByName.set(name, module);
-
-            // Add to compilation group
-            const dir = this.options.fileSystem.dirname(normalizedPath);
-            const group = this.getOrCreateGroup(dir);
-            const existingIndex = group.modules.findIndex(m => m.filePath === normalizedPath);
-            if (existingIndex >= 0) {
-                group.modules[existingIndex] = module;
-            } else {
-                group.modules.push(module);
-            }
-
-            // Point importers of a reloaded module at the new instance
-            if (reload) {
-                for (const other of this.modules.values()) {
-                    const deps = other.dependencies as Module[];
-                    const index = deps.findIndex(d => d.filePath === normalizedPath);
-                    if (index >= 0) {
-                        deps[index] = module;
-                    }
+        // Point importers of a reloaded module at the new instance
+        if (reload) {
+            for (const other of this.modules.values()) {
+                const deps = other.dependencies as Module[];
+                const index = deps.findIndex(d => d.filePath === normalizedPath);
+                if (index >= 0) {
+                    deps[index] = module;
                 }
             }
-            (module as { group?: CompilationGroup }).group = group;
-
-            // Process imports recursively (loads dependencies from OTHER directories)
-            await this.processImports(module);
-
-            // Update group dependencies
-            this.updateGroupDependencies(group);
-
-            // If this was a reload, rebind the entire group and dependents
-            if (reload) {
-                this.rebindGroupAndDependents(group);
-            } else {
-                // Try to bind the group if all dependencies are ready
-                this.bindGroupIfReady(group);
-            }
-
-            return module;
-        } finally {
-            // Remove from loading stack when done
-            this.loadingStack.delete(normalizedPath);
         }
+
+        // Process imports recursively
+        await this.processImports(module);
+
+        // Pull in the rest of the directory so sibling symbols resolve
+        if (isNewGroup && this.options.loadSiblings) {
+            await this.loadGroupSiblings(group);
+        }
+
+        // Mark after imports are processed, so a concurrent bind pass can't consume
+        // the mark while this module's dependencies are still incomplete
+        this.dirtyGroups.add(group);
+
+        return module;
     }
 
     /**
@@ -340,33 +371,25 @@ export class Program {
         group.sharedDeclarations.clear();
 
         for (const module of group.modules) {
-            const declarations = Binder.collectDeclarations(module.tree.getRoot(), module.filePath);
-
-            // Merge into shared table
-            group.sharedDeclarations.merge(declarations);
+            group.sharedDeclarations.merge(this.getDeclarations(module));
         }
 
         // PHASE 2: Bind each module against shared declarations + dependencies
+        const referencedModules = new Set<string>();
+        this.qualifiedReferences.set(group, referencedModules);
         for (const module of group.modules) {
-            // Get symbols from explicit dependencies (other directories)
-            const importedSymbols = new SymbolTable();
-            for (const dep of module.dependencies) {
-                if (dep.binding) {
-                    // Import only global-scope symbols from dependencies
-                    for (const symbol of dep.binding.symbols.getAllSymbols()) {
-                        const scope = dep.binding.scopes.getScope(symbol.scopeId);
-                        if (scope?.kind === ScopeKind.Global) {
-                            importedSymbols.add(symbol);
-                        }
-                    }
-                }
-            }
+            const importedSymbols = this.getImportedSymbols(module);
 
             // Create binding context
             const context: BindingContext = {
                 filePath: module.filePath,
                 sharedSymbols: group.sharedDeclarations,
-                importedSymbols
+                importedSymbols,
+                resolveModule: name => {
+                    referencedModules.add(name);
+                    const target = this.modulesByName.get(name);
+                    return target && this.getDeclarations(target);
+                },
             };
 
             // Bind this module
@@ -375,42 +398,108 @@ export class Program {
             // Store binding result on module (cast to writable)
             (module as { binding?: BindingResult }).binding = binding;
 
-            this.log(`  ${module.name}: ${binding.symbols.getAllSymbols().length} total symbols, ${binding.diagnostics.length} diagnostics`);
+            this.log(`  ${module.name}: ${binding.diagnostics.length} diagnostics`);
         }
     }
 
     /**
-     * Check if all dependencies for a group are ready, and bind if so.
+     * Bind every dirty group, plus the groups that (transitively) depend on them,
+     * with dependencies bound before their dependents.
      */
-    private bindGroupIfReady(group: CompilationGroup): void {
-        // Check if all modules in group have their dependencies loaded and bound
-        for (const module of group.modules) {
-            for (const dep of module.dependencies) {
-                if (!dep.binding) {
-                    this.log(`Group not ready: ${module.name} depends on unbound ${dep.name}`);
-                    return;  // Not ready yet
+    private bindDirtyGroups(): void {
+        if (this.dirtyGroups.size === 0) {
+            return;
+        }
+
+        const pending = new Set<CompilationGroup>();
+        const addWithDependents = (group: CompilationGroup) => {
+            if (pending.has(group)) return;
+            pending.add(group);
+            for (const dependent of group.dependents) {
+                addWithDependents(dependent);
+            }
+        };
+        for (const group of this.dirtyGroups) {
+            this.updateGroupDependencies(group);
+        }
+        for (const group of this.dirtyGroups) {
+            addWithDependents(group);
+        }
+        this.dirtyGroups.clear();
+
+        // Keep only import tables that this pass uses
+        this.previousImportedSymbolsCache = this.importedSymbolsCache;
+        this.importedSymbolsCache = new Map();
+
+        // Topological order: dependencies first
+        const ordered: CompilationGroup[] = [];
+        const visited = new Set<CompilationGroup>();
+        const visit = (group: CompilationGroup) => {
+            if (visited.has(group)) return;
+            visited.add(group);
+            for (const dep of group.dependsOn) {
+                if (pending.has(dep)) visit(dep);
+            }
+            ordered.push(group);
+        };
+        for (const group of pending) {
+            visit(group);
+        }
+
+        const bound = new Set<CompilationGroup>();
+        const boundTooEarly: CompilationGroup[] = [];
+        for (const group of ordered) {
+            if ([...group.dependsOn].some(dep => pending.has(dep) && !bound.has(dep))) {
+                boundTooEarly.push(group);
+            }
+            this.bindGroup(group);
+            bound.add(group);
+        }
+
+        // Groups in a cycle were bound before one of their dependencies; bind them again
+        for (const group of boundTooEarly) {
+            this.bindGroup(group);
+        }
+    }
+
+    /**
+     * Symbols a module sees through its imports. Like the compiler's Module::Include, this is
+     * only each imported module's own top-level declarations (imports aren't transitive), with
+     * later imports taking priority (std libs are implicitly imported first).
+     *
+     * Tables are shared between modules with the same imports (e.g. a directory of files that all
+     * import the same few modules) and kept only while some binding pass still uses them.
+     */
+    private getImportedSymbols(module: Module): SymbolTable {
+        const key = module.dependencies.map(dep => dep.filePath).join('\n');
+        const cached = this.importedSymbolsCache.get(key) ?? this.previousImportedSymbolsCache.get(key);
+        if (cached && cached.trees.every((tree, i) => tree === module.dependencies[i].tree)) {
+            this.importedSymbolsCache.set(key, cached);
+            return cached.table;
+        }
+
+        const table = new SymbolTable();
+        for (const dep of module.dependencies) {
+            for (const symbol of this.getDeclarations(dep).getAllSymbols()) {
+                if (symbol.kind !== SymbolKind.Module) {
+                    table.add(symbol);
                 }
             }
         }
-
-        // All dependencies ready - bind the group
-        this.bindGroup(group);
+        this.importedSymbolsCache.set(key, { trees: module.dependencies.map(dep => dep.tree), table });
+        return table;
     }
 
     /**
-     * Rebind a group and all groups that depend on it.
+     * Get a module's top-level declarations, collected once per parse.
      */
-    private rebindGroupAndDependents(group: CompilationGroup): void {
-        this.log(`Rebinding group and dependents: ${group.directory}`);
-
-        // Rebind this group
-        this.bindGroup(group);
-
-        // Find and rebind dependent groups
-        for (const dependent of group.dependents) {
-            this.log(`  Rebinding dependent group: ${dependent.directory}`);
-            this.bindGroup(dependent);
+    private getDeclarations(module: Module): SymbolTable {
+        let declarations = this.declarationCache.get(module.tree);
+        if (!declarations) {
+            declarations = Binder.collectDeclarations(module.tree.getRoot(), module.filePath);
+            this.declarationCache.set(module.tree, declarations);
         }
+        return declarations;
     }
 
     /**
@@ -464,27 +553,38 @@ export class Program {
 
     /**
      * Discover and load all .ccs files in the same directory as the given file.
-     * This is useful for LSP contexts where files may be opened in any order.
+     * Happens automatically on first load unless `loadSiblings` is false.
      * @param filePath Absolute path to a file whose siblings should be loaded
      * @returns Array of loaded sibling modules (excluding the file itself)
      */
     async loadSiblingFiles(filePath: string): Promise<Module[]> {
         const normalizedPath = this.options.fileSystem.normalize(filePath);
-        const dir = this.options.fileSystem.dirname(normalizedPath);
+        const group = this.getOrCreateGroup(this.options.fileSystem.dirname(normalizedPath));
 
-        // TODO: Add fileSystem.readdir() method to list files in directory
-        // For now, this is a placeholder that documents the intended behavior
-        // The LSP can call loadModule() for each .ccs file it discovers via workspace.findFiles()
+        await this.loadGroupSiblings(group);
+        this.bindDirtyGroups();
 
-        const siblings: Module[] = [];
-        for (const module of this.modules.values()) {
-            const moduleDir = this.options.fileSystem.dirname(module.filePath);
-            if (moduleDir === dir && module.filePath !== normalizedPath) {
-                siblings.push(module);
-            }
+        return group.modules.filter(m => m.filePath !== normalizedPath);
+    }
+
+    /**
+     * Load every .ccs file in a group's directory (without binding).
+     */
+    private async loadGroupSiblings(group: CompilationGroup): Promise<void> {
+        const fs = this.options.fileSystem;
+        const files = (await fs.readDirectory(group.directory))
+            .map(f => fs.normalize(f))
+            .filter(f => f.toLowerCase().endsWith('.ccs') && !this.modules.has(f));
+
+        if (files.length === 0) {
+            return;
         }
 
-        return siblings;
+        this.log(`Loading ${files.length} sibling(s) in ${group.directory}`);
+        for (const file of files) {
+            await this.load(file, false);
+        }
+        this.dirtyGroups.add(group);
     }
 
     /**
@@ -502,7 +602,8 @@ export class Program {
         }
 
         if (invalidateDependents) {
-            this.rebindGroupAndDependents(module.group);
+            this.dirtyGroups.add(module.group);
+            this.bindDirtyGroups();
         } else {
             this.bindGroup(module.group);
         }
@@ -575,11 +676,14 @@ export class Program {
     private async processImports(module: Module): Promise<void> {
         const importPaths = [...module.imports];
 
-        // Auto-include standard libraries (except into the standard libraries themselves)
+        // Auto-include standard libraries, except into the standard library directories
+        // themselves (their files share a namespace, and waiting on them would deadlock)
+        const fs = this.options.fileSystem;
         const stdLibPaths = [this.options.stdLibPaths.stdarg, this.options.stdLibPaths.std]
             .filter((p): p is string => !!p)
-            .map(p => this.options.fileSystem.normalize(p));
-        if (this.options.includeStdLibs && !stdLibPaths.includes(module.filePath)) {
+            .map(p => fs.normalize(p));
+        const stdLibDirs = stdLibPaths.map(p => fs.dirname(p));
+        if (this.options.includeStdLibs && !stdLibDirs.includes(fs.dirname(module.filePath))) {
             // They're loaded asynchronously from the constructor; wait so they aren't
             // still on the loading stack (which would be misreported as a circular import)
             await this.stdLibsLoaded;
@@ -601,19 +705,8 @@ export class Program {
                 continue;
             }
 
-            // Check for circular import
-            if (this.hasCircularDependency(module.filePath, resolved)) {
-                this.addDiagnostic(
-                    module.filePath,
-                    importPath,
-                    `Circular import detected: ${importPath}`,
-                    DiagnosticSeverity.Error
-                );
-                continue;
-            }
-
             // Load the imported module
-            const importedModule = await this.loadModule(resolved);
+            const importedModule = await this.load(resolved, false);
             if (importedModule) {
                 dependencies.push(importedModule);
             }
@@ -665,26 +758,6 @@ export class Program {
         }
 
         return null;
-    }
-
-    // Track modules currently being loaded (for cycle detection)
-    private readonly loadingStack = new Set<string>();
-
-    /**
-     * Check if loading targetPath from currentPath would create a circular dependency
-     */
-    private hasCircularDependency(currentPath: string, targetPath: string): boolean {
-        const normalized = this.options.fileSystem.normalize(targetPath);
-        const current = this.options.fileSystem.normalize(currentPath);
-
-        // Direct self-import
-        if (normalized === current) {
-            return true;
-        }
-
-        // Check if target is currently being loaded (on the loading stack)
-        // This indicates a circular dependency
-        return this.loadingStack.has(normalized);
     }
 
     private log(message: string): void {

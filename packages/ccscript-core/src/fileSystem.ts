@@ -38,6 +38,12 @@ export interface FileSystem {
     existsSync(filePath: string): boolean;
 
     /**
+     * List the absolute paths of files directly inside a directory (not recursive).
+     * Returns an empty array if the directory doesn't exist.
+     */
+    readDirectory(dirPath: string): Promise<string[]>;
+
+    /**
      * Resolve path relative to base path
      */
     resolve(...paths: string[]): string;
@@ -100,6 +106,15 @@ export class NodeFileSystem implements FileSystem {
             return true;
         } catch {
             return false;
+        }
+    }
+
+    async readDirectory(dirPath: string): Promise<string[]> {
+        try {
+            const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+            return entries.filter(e => e.isFile()).map(e => path.join(dirPath, e.name));
+        } catch {
+            return [];
         }
     }
 
@@ -191,6 +206,11 @@ export class MemoryFileSystem implements FileSystem {
         return this.files.has(normalized);
     }
 
+    async readDirectory(dirPath: string): Promise<string[]> {
+        const dir = this.normalize(dirPath);
+        return this.getFiles().filter(f => this.dirname(f) === dir);
+    }
+
     resolve(...paths: string[]): string {
         // Simplified resolution for testing - just normalize
         if (paths.length === 0) return '/';
@@ -249,12 +269,18 @@ export class MemoryFileSystem implements FileSystem {
             normalized = '/' + normalized;
         }
 
-        // Remove trailing slash unless it's root
-        if (normalized.length > 1 && normalized.endsWith('/')) {
-            normalized = normalized.substring(0, normalized.length - 1);
+        // Resolve '.' and '..' segments
+        const segments: string[] = [];
+        for (const segment of normalized.split('/')) {
+            if (segment === '' || segment === '.') continue;
+            if (segment === '..') {
+                segments.pop();
+            } else {
+                segments.push(segment);
+            }
         }
 
-        return normalized;
+        return '/' + segments.join('/');
     }
 
     isAbsolute(filePath: string): boolean {
@@ -326,6 +352,14 @@ export class AggregatedFileSystem implements FileSystem {
 
     existsSync(filePath: string): boolean {
         return this.primary.existsSync(filePath) || this.fallback.existsSync(filePath);
+    }
+
+    async readDirectory(dirPath: string): Promise<string[]> {
+        const [primary, fallback] = await Promise.all([
+            this.primary.readDirectory(dirPath),
+            this.fallback.readDirectory(dirPath),
+        ]);
+        return [...new Set([...primary, ...fallback])];
     }
 
     // Delegate path operations to primary (doesn't matter which)

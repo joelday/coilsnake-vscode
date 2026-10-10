@@ -50,12 +50,24 @@ export interface Symbol {
     isUsed: boolean;
     /** For commands: list of parameter symbols */
     parameters?: Symbol[];
-    /** The module file path where this symbol was declared (for imported symbols) */
+    /** The file where this symbol was declared */
     modulePath?: string;
 }
 
 /**
+ * A read-only table consulted after a table's own symbols, optionally filtered.
+ */
+export interface SymbolTableLayer {
+    table: SymbolTable;
+    /** Only symbols passing this filter are visible through the layer */
+    filter?: (symbol: Symbol) => boolean;
+}
+
+/**
  * Symbol table for storing and looking up symbols.
+ *
+ * A table can see through to fallback layers (e.g. imported and shared symbols) without
+ * copying them. Lookups prefer the table's own symbols, then each layer in order.
  */
 export class SymbolTable {
     /** Map from symbol name to symbol */
@@ -66,6 +78,14 @@ export class SymbolTable {
 
     /** Set of symbol IDs to prevent duplicates */
     private symbolIds: Set<string> = new Set();
+
+    /** Scopes that this table's own symbols belong to (lets lookups skip tables quickly) */
+    private scopeIds: Set<number> = new Set();
+
+    /**
+     * @param layers Fallback tables, highest priority first
+     */
+    constructor(private readonly layers: readonly SymbolTableLayer[] = []) { }
 
     /**
      * Adds a symbol to the table.
@@ -79,6 +99,7 @@ export class SymbolTable {
 
         // Mark this ID as added
         this.symbolIds.add(symbol.id);
+        this.scopeIds.add(symbol.scopeId);
 
         const existing = this.symbols.get(symbol.name);
         if (existing) {
@@ -91,25 +112,49 @@ export class SymbolTable {
 
     /**
      * Looks up a symbol by name in a given scope.
-     * Searches scopes from innermost to outermost (proper shadowing).
+     * Searches scopes from innermost to outermost (proper shadowing). Within a scope, the
+     * table's own symbols win over its layers, and later declarations win over earlier ones.
      * @param name The symbol name to look up
      * @param scopeOrder Array of scope IDs from innermost to outermost
      * @param kind If provided, only symbols of this kind are considered
      */
     lookup(name: string, scopeOrder: number[], kind?: SymbolKind): Symbol | undefined {
-        const candidates = this.symbols.get(name);
-        if (!candidates) {
-            return undefined;
-        }
-
-        // Search each scope in order (innermost to outermost)
         for (const scopeId of scopeOrder) {
-            // Find the most recently declared symbol in this specific scope
+            const symbol = this.lookupInScope(name, scopeId, kind);
+            if (symbol) {
+                return symbol;
+            }
+        }
+        return undefined;
+    }
+
+    private lookupInScope(
+        name: string,
+        scopeId: number,
+        kind: SymbolKind | undefined,
+        filter?: (symbol: Symbol) => boolean
+    ): Symbol | undefined {
+        // Most recently declared own symbol first
+        const candidates = this.scopeIds.has(scopeId) ? this.symbols.get(name) : undefined;
+        if (candidates) {
             for (let i = candidates.length - 1; i >= 0; i--) {
                 const symbol = candidates[i];
-                if (symbol.scopeId === scopeId && (kind === undefined || symbol.kind === kind)) {
+                if (symbol.scopeId === scopeId &&
+                    (kind === undefined || symbol.kind === kind) &&
+                    (!filter || filter(symbol))) {
                     return symbol;
                 }
+            }
+        }
+
+        for (const layer of this.layers) {
+            const layerFilter = layer.filter;
+            const combined = filter && layerFilter
+                ? (symbol: Symbol) => filter(symbol) && layerFilter(symbol)
+                : filter ?? layerFilter;
+            const symbol = layer.table.lookupInScope(name, scopeId, kind, combined);
+            if (symbol) {
+                return symbol;
             }
         }
 
@@ -117,41 +162,60 @@ export class SymbolTable {
     }
 
     /**
-     * Gets all symbols with a given name.
+     * Gets the symbols with a given name added directly to this table (excluding layers).
      */
-    getAll(name: string): Symbol[] {
+    getOwn(name: string): readonly Symbol[] {
         return this.symbols.get(name) || [];
     }
 
     /**
-     * Gets all symbols in the table.
+     * Gets all symbols with a given name (layers first, then own, in declaration order).
+     */
+    getAll(name: string): Symbol[] {
+        if (this.layers.length === 0) {
+            return this.symbols.get(name) || [];
+        }
+        return this.dedupe([
+            ...this.layers.slice().reverse().flatMap(l => this.visible(l, l.table.getAll(name))),
+            ...(this.symbols.get(name) || []),
+        ]);
+    }
+
+    /**
+     * Gets all symbols in the table, including those visible through layers.
      */
     getAllSymbols(): Symbol[] {
-        return [...this.allSymbols];
+        if (this.layers.length === 0) {
+            return [...this.allSymbols];
+        }
+        return this.dedupe([
+            ...this.layers.slice().reverse().flatMap(l => this.visible(l, l.table.getAllSymbols())),
+            ...this.allSymbols,
+        ]);
     }
 
     /**
      * Gets symbols by kind.
      */
     getByKind(kind: SymbolKind): Symbol[] {
-        return this.allSymbols.filter(s => s.kind === kind);
+        return this.getAllSymbols().filter(s => s.kind === kind);
     }
 
     /**
      * Looks up a symbol by its unique ID.
      */
     getById(id: string): Symbol | undefined {
-        return this.allSymbols.find(s => s.id === id);
+        return this.getAllSymbols().find(s => s.id === id);
     }
 
     /**
      * Gets the symbol at a specific position.
-     * Only returns symbols declared in the current file (modulePath is undefined or matches).
+     * Only returns symbols declared in the given file (modulePath is undefined or matches).
      * Uses the authoritative identifier node position and length for precise matching.
      */
     getSymbolAt(position: number, filePath?: string): Symbol | undefined {
-        return this.allSymbols.find(s => {
-            // Skip imported symbols from other modules
+        return this.getAllSymbols().find(s => {
+            // Skip symbols from other modules
             if (s.modulePath && filePath && s.modulePath !== filePath) {
                 return false;
             }
@@ -165,33 +229,28 @@ export class SymbolTable {
 
     /**
      * Gets all symbols visible at a specific scope.
-     * Filters by visible scope IDs. Includes imported symbols (they're already in the table with the correct scope).
+     * Imported symbols have scopeId 0 (global), so they're visible everywhere.
      */
     getVisibleSymbols(visibleScopes: Set<number>): Symbol[] {
-        return this.allSymbols.filter(s => {
-            // Only include symbols in visible scopes
-            // Imported symbols are already in the table with scopeId: 0 (global), so they'll be visible
-            return visibleScopes.has(s.scopeId);
-        });
+        return this.getAllSymbols().filter(s => visibleScopes.has(s.scopeId));
     }
 
     /**
-     * Clears all symbols.
+     * Clears the table's own symbols (layers are unaffected).
      */
     clear(): void {
         this.symbols.clear();
         this.allSymbols = [];
         this.symbolIds.clear();
+        this.scopeIds.clear();
     }
 
     /**
-     * Creates a shallow copy of this symbol table.
+     * Creates a flattened shallow copy of this symbol table.
      */
     clone(): SymbolTable {
         const newTable = new SymbolTable();
-        for (const symbol of this.allSymbols) {
-            newTable.add(symbol);
-        }
+        newTable.merge(this);
         return newTable;
     }
 
@@ -203,5 +262,14 @@ export class SymbolTable {
         for (const symbol of other.getAllSymbols()) {
             this.add(symbol);
         }
+    }
+
+    private visible(layer: SymbolTableLayer, symbols: Symbol[]): Symbol[] {
+        return layer.filter ? symbols.filter(layer.filter) : symbols;
+    }
+
+    private dedupe(symbols: Symbol[]): Symbol[] {
+        const seen = new Set<string>();
+        return symbols.filter(s => !seen.has(s.id) && (seen.add(s.id), true));
     }
 }

@@ -238,10 +238,11 @@ describe('Program', () => {
         });
     });
 
-    describe('Circular import detection', () => {
-        it('should detect direct circular import', async () => {
-            fs.addFile('/project/a.ccs', 'import b');
-            fs.addFile('/project/b.ccs', 'import a');
+    describe('Circular imports', () => {
+        // The compiler loads each module once, so import cycles are legal
+        it('should load a direct cycle without errors', async () => {
+            fs.addFile('/project/a.ccs', 'import b\ncommand a() { b() }');
+            fs.addFile('/project/b.ccs', 'import a\ncommand b() { a() }');
 
             const program = new Program({
                 fileSystem: fs,
@@ -249,16 +250,19 @@ describe('Program', () => {
                 includeStdLibs: false,
             });
 
-            await program.loadModule('/project/a.ccs');
-            const diagnostics = program.getDiagnostics();
-            const circularErrors = diagnostics.filter(d => d.message.includes('Circular'));
-            expect(circularErrors.length).toBeGreaterThan(0);
+            const a = await program.loadModule('/project/a.ccs');
+            const b = program.getModule('/project/b.ccs')!;
+            expect(program.getDiagnostics()).toHaveLength(0);
+            expect(a!.dependencies).toEqual([b]);
+            expect(b.dependencies).toEqual([a]);
+            expect(a!.binding!.diagnostics).toHaveLength(0);
+            expect(b.binding!.diagnostics).toHaveLength(0);
         });
 
-        it('should detect indirect circular import', async () => {
-            fs.addFile('/project/a.ccs', 'import b');
-            fs.addFile('/project/b.ccs', 'import c');
-            fs.addFile('/project/c.ccs', 'import a');
+        it('should bind an indirect cycle across directories', async () => {
+            fs.addFile('/project/a/a.ccs', 'import "b/b.ccs"\ncommand a() { b() }');
+            fs.addFile('/project/b/b.ccs', 'import "c/c.ccs"\ncommand b() { c() }');
+            fs.addFile('/project/c/c.ccs', 'import "a/a.ccs"\ncommand c() { a() }');
 
             const program = new Program({
                 fileSystem: fs,
@@ -266,10 +270,11 @@ describe('Program', () => {
                 includeStdLibs: false,
             });
 
-            await program.loadModule('/project/a.ccs');
-            const diagnostics = program.getDiagnostics();
-            const circularErrors = diagnostics.filter(d => d.message.includes('Circular'));
-            expect(circularErrors.length).toBeGreaterThan(0);
+            await program.loadModule('/project/a/a.ccs');
+            expect(program.getDiagnostics()).toHaveLength(0);
+            for (const path of ['/project/a/a.ccs', '/project/b/b.ccs', '/project/c/c.ccs']) {
+                expect(program.getModule(path)!.binding!.diagnostics).toHaveLength(0);
+            }
         });
     });
 

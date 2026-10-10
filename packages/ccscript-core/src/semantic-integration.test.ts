@@ -146,6 +146,108 @@ describe('Semantic Analysis Integration', () => {
         });
     });
 
+    describe('Qualified Names', () => {
+        async function load(files: Record<string, string>, entry: string) {
+            const fs = new MemoryFileSystem();
+            for (const [path, content] of Object.entries(files)) {
+                fs.addFile(path, content);
+            }
+            const program = new Program({ fileSystem: fs, rootPath: '/game', includeStdLibs: false });
+            await program.loadModule(entry);
+            // Load the other file explicitly too, as the compiler would for a whole project
+            for (const path of Object.keys(files)) {
+                await program.loadModule(path);
+            }
+            return program.getModule(entry)!.binding!.diagnostics;
+        }
+
+        it('should resolve members of a loaded module that is not imported', async () => {
+            const diagnostics = await load({
+                '/game/a/main.ccs': 'command main() { util.helper() util.MAX }',
+                '/game/b/util.ccs': 'command helper() { }\ndefine MAX = 3',
+            }, '/game/a/main.ccs');
+
+            expect(diagnostics).toHaveLength(0);
+        });
+
+        it('should only resolve members declared in the named module', async () => {
+            const diagnostics = await load({
+                '/game/a/main.ccs': 'import "b/util.ccs"\nimport "b/other.ccs"\ncommand main() { util.elsewhere() }',
+                '/game/b/util.ccs': 'command helper() { }',
+                '/game/b/other.ccs': 'command elsewhere() { }',
+            }, '/game/a/main.ccs');
+
+            expect(diagnostics.map(d => d.message)).toEqual(["'util' has no member 'elsewhere'"]);
+        });
+
+        it('should report unknown modules', async () => {
+            const diagnostics = await load({
+                '/game/main.ccs': 'command main() { nowhere.thing() }',
+            }, '/game/main.ccs');
+
+            expect(diagnostics.map(d => d.message)).toEqual(["Unknown module 'nowhere'"]);
+        });
+    });
+
+    describe('Compiler Scoping Rules', () => {
+        async function bind(files: Record<string, string>, entry: string) {
+            const fs = new MemoryFileSystem();
+            for (const [path, content] of Object.entries(files)) {
+                fs.addFile(path, content);
+            }
+            const program = new Program({ fileSystem: fs, rootPath: '/game', includeStdLibs: false });
+            const module = await program.loadModule(entry);
+            return module!.binding!.diagnostics.map(d => d.message);
+        }
+
+        it('should let a module shadow imported declarations', async () => {
+            expect(await bind({
+                '/game/lib/util.ccs': 'define MAX = 1\ncommand helper() { }',
+                '/game/main.ccs': 'import "lib/util.ccs"\ndefine MAX = 2\ncommand helper() { MAX }',
+            }, '/game/main.ccs')).toEqual([]);
+        });
+
+        it('should still report duplicates within one file', async () => {
+            expect(await bind({
+                '/game/main.ccs': 'define MAX = 1\ndefine MAX = 2',
+            }, '/game/main.ccs')).toEqual(["Duplicate declaration of 'MAX'"]);
+        });
+
+        it('should not make imports transitive', async () => {
+            expect(await bind({
+                '/game/c/deep.ccs': 'command deep() { }',
+                '/game/b/middle.ccs': 'import "c/deep.ccs"\ncommand middle() { deep() }',
+                '/game/a/main.ccs': 'import "b/middle.ccs"\ncommand main() { middle() deep() }',
+            }, '/game/a/main.ccs')).toEqual(["Undefined command 'deep'"]);
+        });
+
+        it('should allow jumping forward to a label in a block expression', async () => {
+            expect(await bind({
+                '/game/main.ccs': `
+                    command wrap(body) "{body}"
+                    command goto(target) "[0A {long target}]"
+                    entry: wrap({
+                        goto(done)
+                        "skipped"
+                    done:
+                        "end"
+                    })
+                `,
+            }, '/game/main.ccs')).toEqual([]);
+        });
+
+        it('should scope block labels to their block', async () => {
+            expect(await bind({
+                '/game/main.ccs': `
+                    command wrap(body) "{body}"
+                    command goto(target) "[0A {long target}]"
+                    a: wrap({ inner: "x" })
+                    b: wrap({ goto(inner) })
+                `,
+            }, '/game/main.ccs')).toEqual(["Undefined identifier 'inner'"]);
+        });
+    });
+
     describe('Complex Real-World Scenarios', () => {
         it('should handle command definition with string template', async () => {
             const source = `

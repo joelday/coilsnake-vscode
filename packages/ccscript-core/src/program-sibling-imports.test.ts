@@ -284,4 +284,110 @@ describe('Program - Sibling Module Imports', () => {
         await program.reloadModule('/project/main.ccs');
         expect(program.getDiagnostics()).toHaveLength(0);
     });
+
+    it('should record which file each referenced symbol was declared in', async () => {
+        const fs = createFileSystem({
+            '/project/utils.ccs': 'command helper() { }',
+            '/project/main.ccs': 'define LOCAL = 1\ncommand main() { helper() LOCAL }',
+        });
+
+        const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
+        const main = await program.loadModule('/project/main.ccs');
+
+        const referenced = [...main!.binding!.references.values()];
+        expect(referenced.find(s => s.name === 'helper')!.modulePath).toBe('/project/utils.ccs');
+        expect(referenced.find(s => s.name === 'LOCAL')!.modulePath).toBe('/project/main.ccs');
+
+        // Position lookups in main.ccs must not return utils.ccs symbols at the same offset
+        const helper = referenced.find(s => s.name === 'helper')!;
+        expect(main!.binding!.symbols.getSymbolAt(helper.position, '/project/main.ccs')?.name).not.toBe('helper');
+    });
+
+    describe('sibling discovery', () => {
+        it('should resolve symbols from siblings that were never loaded explicitly', async () => {
+            const fs = createFileSystem({
+                '/project/helpers.ccs': 'command helper() { }\ndefine MAX = 10',
+                '/project/main.ccs': 'command main() { helper() MAX }',
+                '/other/unrelated.ccs': 'command unrelated() { }',
+            });
+
+            const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
+            const main = await program.loadModule('/project/main.ccs');
+
+            expect(main!.binding!.diagnostics).toHaveLength(0);
+            expect(program.getModule('/project/helpers.ccs')).toBeDefined();
+            expect(program.getModule('/other/unrelated.ccs')).toBeUndefined();
+        });
+
+        it('should not flag a sibling importing the opened file as circular', async () => {
+            const fs = createFileSystem({
+                '/project/main.ccs': 'command main() { }',
+                '/project/other.ccs': 'import main\ncommand other() { main() }',
+            });
+
+            const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
+            await program.loadModule('/project/main.ccs');
+
+            expect(program.getDiagnostics()).toHaveLength(0);
+            expect(program.getModule('/project/other.ccs')!.binding!.diagnostics).toHaveLength(0);
+        });
+
+        it('should bind siblings that import each other', async () => {
+            const fs = createFileSystem({
+                '/project/a.ccs': 'command a() { b() }',
+                '/project/b.ccs': 'import a\ncommand b() { a() }',
+                '/project/c.ccs': 'import b\ncommand c() { a() b() }',
+            });
+
+            const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
+            await program.loadModule('/project/a.ccs');
+
+            for (const name of ['a', 'b', 'c']) {
+                const module = program.getModule(`/project/${name}.ccs`)!;
+                expect(module.binding).toBeDefined();
+                expect(module.binding!.diagnostics).toHaveLength(0);
+            }
+        });
+
+        it('should load std lib directory siblings without waiting on themselves', async () => {
+            const fs = createFileSystem({
+                '/lib/std.ccs': 'command std_cmd() { }',
+                '/lib/stdarg.ccs': 'command stdarg_cmd() { }',
+                '/lib/extra.ccs': 'command extra() { std_cmd() }',
+                '/project/main.ccs': 'command main() { std_cmd() stdarg_cmd() }',
+            });
+
+            const program = new Program({
+                fileSystem: fs,
+                rootPath: '/project',
+                includeStdLibs: true,
+                stdLibPaths: { std: '/lib/std.ccs', stdarg: '/lib/stdarg.ccs' },
+            });
+            const main = await program.loadModule('/project/main.ccs');
+
+            expect(main!.binding!.diagnostics).toHaveLength(0);
+            expect(program.getModule('/lib/extra.ccs')!.binding!.diagnostics).toHaveLength(0);
+            expect(program.getDiagnostics()).toHaveLength(0);
+        });
+
+        it('should not discover siblings when disabled', async () => {
+            const fs = createFileSystem({
+                '/project/helpers.ccs': 'command helper() { }',
+                '/project/main.ccs': 'command main() { helper() }',
+            });
+
+            const program = new Program({
+                fileSystem: fs,
+                rootPath: '/project',
+                includeStdLibs: false,
+                loadSiblings: false,
+            });
+            await program.loadModule('/project/main.ccs');
+
+            expect(program.getModule('/project/helpers.ccs')).toBeUndefined();
+            const siblings = await program.loadSiblingFiles('/project/main.ccs');
+            expect(siblings.map(m => m.name)).toEqual(['helpers']);
+            expect(program.getModule('/project/main.ccs')!.binding!.diagnostics).toHaveLength(0);
+        });
+    });
 });

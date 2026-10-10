@@ -802,6 +802,7 @@ export class Parser {
      * "{itemname(86)} costs ${price}."
      */
     private parseStringLiteralWithTemplates(): GreenStringLiteralExpression | GreenTemplateStringExpression | null {
+        const stringTextStart = this.getTokenTextStart(this.pos);
         const stringToken = this.advance();
         const text = stringToken.text;
 
@@ -895,7 +896,11 @@ export class Parser {
 
                 if (depth === 0) {
                     // Extract and parse the expression text
-                    const exprText = content.slice(exprStart, exprEnd - 1).trim();
+                    const rawExprText = content.slice(exprStart, exprEnd - 1);
+                    const exprText = rawExprText.trim();
+                    // Absolute offset of exprText in the source (+1 for the opening quote)
+                    const exprOffset = stringTextStart + 1 + exprStart
+                        + (rawExprText.length - rawExprText.trimStart().length);
 
                     if (exprText.length > 0) {
                         // Parse the expression
@@ -903,11 +908,10 @@ export class Parser {
                         const expression = tempParser.parseExpression();
                         const exprDiagnostics = tempParser.getDiagnostics();
 
-                        // Forward any diagnostics from the embedded parser
+                        // Forward any diagnostics from the embedded parser, mapped into this file
                         exprDiagnostics.forEach(d => {
-                            // Just forward the diagnostic with adjusted message
                             this.diagnostics.push({
-                                span: d.span,
+                                span: { start: exprOffset + d.span.start, length: d.span.length },
                                 severity: d.severity,
                                 message: `In template expression: ${d.message}`,
                             });
@@ -1172,17 +1176,26 @@ export class Parser {
     }
 
     /**
+     * Offset of the token at `index`'s text (after its leading trivia) in the source.
+     */
+    private getTokenTextStart(index: number): number {
+        let position = 0;
+        for (let i = 0; i < index; i++) {
+            position += this.tokens[i].fullWidth;
+        }
+        return position + (this.tokens[index]?.leadingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0);
+    }
+
+    /**
      * Add diagnostic
      */
     private addDiagnostic(token: GreenToken, severity: DiagnosticSeverity, message: string): void {
-        // Approximate position from token - accumulate fullWidth of all previous tokens
+        // Position of the current token's text: fullWidth of all previous tokens plus leading trivia
         let position = 0;
         for (let i = 0; i < this.pos; i++) {
             position += this.tokens[i].fullWidth;
         }
-        // Add leading trivia width to get to the token text
-        const leadingWidth = token.leadingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0;
-        position += leadingWidth;
+        position += token.leadingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0;
 
         this.diagnostics.push({
             span: { start: position, length: token.text.length },

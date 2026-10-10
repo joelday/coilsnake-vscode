@@ -323,4 +323,19 @@ describe('SyntaxTree', () => {
             expect(constants.length).toBeGreaterThanOrEqual(2);
         });
     });
+
+    describe('Template expression diagnostics', () => {
+        it('should report embedded expression errors at their position in the file', () => {
+            const source = 'define a = 1\ndefine s = "text {  a + } more"';
+            const tree = SyntaxTree.parse(source);
+            const diagnostic = tree.getDiagnostics().find(d => d.message.startsWith('In template expression'));
+
+            expect(diagnostic).toBeDefined();
+            const { line } = tree.getLineAndColumn(diagnostic!.span.start);
+            expect(line).toBe(1);
+            // Within the braces, at or after the start of the expression
+            expect(diagnostic!.span.start).toBeGreaterThanOrEqual(source.indexOf('a +'));
+            expect(diagnostic!.span.start).toBeLessThanOrEqual(source.indexOf('} more'));
+        });
+    });
 });

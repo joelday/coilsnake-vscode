@@ -295,7 +295,7 @@ connection.onCompletion(async (params: TextDocumentPositionParams): Promise<Comp
                 docs.push(`- \`${param.name}\``);
             }
         }
-        if (symbol.modulePath) {
+        if (symbol.modulePath && symbol.modulePath !== filePath) {
             docs.push(`\n*From:* \`${symbol.modulePath}\``);
         }
 
@@ -413,7 +413,7 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
             content.push('', `*${kindName}* • Type: \`${refSymbol.type.name}\``);
 
             // Module info if imported
-            if (refSymbol.modulePath) {
+            if (refSymbol.modulePath && refSymbol.modulePath !== filePath) {
                 content.push('', `📦 Imported from \`${refSymbol.modulePath}\``);
             }
 
@@ -592,8 +592,8 @@ connection.onDefinition(async (params: TextDocumentPositionParams): Promise<Loca
             let targetUri = params.textDocument.uri;
             let targetDocument = document;
 
-            if (refSymbol.modulePath && program) {
-                // Symbol is from an imported module - need to get that document
+            if (refSymbol.modulePath && refSymbol.modulePath !== filePath && program) {
+                // Symbol is from another module - need to get that document
                 const module = program.getModule(refSymbol.modulePath);
                 if (module) {
                     targetUri = URI.file(module.filePath).toString();

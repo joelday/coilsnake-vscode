@@ -61,6 +61,13 @@ export class DocumentFileSystem implements FileSystem {
         return this.documents.get(uri) !== undefined;
     }
 
+    async readDirectory(dirPath: string): Promise<string[]> {
+        const dir = path.normalize(this.uriToPath(dirPath));
+        return this.documents.keys()
+            .map(uri => this.uriToPath(uri))
+            .filter(filePath => path.dirname(filePath) === dir);
+    }
+
     // Path operations delegate to Node.js path module
     resolve(...paths: string[]): string {
         return path.resolve(...paths);
