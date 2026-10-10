@@ -8,7 +8,7 @@ import {
 } from 'vscode-languageserver/node';
 import { Symbol, SymbolKind, SyntaxKind, isRedToken } from 'ccscript-core';
 import { labelTextResolver } from '../gameData';
-import { DOMAIN_TITLES, domainOfParameter } from '../projectData';
+import { DOMAIN_TITLES, Domain, domainOfParameter } from '../projectData';
 import { findCall } from './signatureHelp';
 import { describeSymbol, getDocComment, getParameterNames } from '../symbols';
 import { Analysis, Workspace } from '../workspace';
@@ -67,7 +67,63 @@ function cursorContext(analysis: Analysis, offset: number): 'comment' | 'string'
     return 'code';
 }
 
-function symbolItem(symbol: Symbol, analysis: Analysis, workspace: Workspace, options: CompletionOptions, sortGroup: number): CompletionItem {
+/** The argument the cursor is in: which command and parameter it's for */
+interface ArgumentContext {
+    command: Symbol;
+    parameter: string;
+    domain?: Domain;
+}
+
+function argumentContext(analysis: Analysis, offset: number): ArgumentContext | undefined {
+    const found = findCall(analysis, offset);
+    const command = found && analysis.binding.references.get(found.call.getChildren()[0]);
+    if (!found || !command || command.kind !== SymbolKind.Command) {
+        return undefined;
+    }
+    const index = found.argumentList.getChildren()
+        .filter(c => c.kind === SyntaxKind.CommaToken && c.span.start < offset).length;
+    const parameter = getParameterNames(command)[index];
+    return parameter === undefined ? undefined : { command, parameter, domain: domainOfParameter(parameter) };
+}
+
+/** Parameters that take a label (a text pointer or jump target) */
+const POINTER_PARAMETER = /^(target|label|ptr|pointer|address|addr|loc|location|text|jump|routine)$/i;
+
+/**
+ * How well a symbol fits an argument: 0 if its name matches the parameter, 1 if its kind
+ * suits it (labels for pointers, constants and parameters otherwise), 2 otherwise.
+ */
+function argumentFit(symbol: Symbol, argument: ArgumentContext): number {
+    const name = symbol.name.toLowerCase();
+    const parameter = argument.parameter.toLowerCase();
+    if (symbol.kind !== SymbolKind.Command && (name === parameter || (parameter.length > 2 && name.includes(parameter)))) {
+        return 0;
+    }
+    if (POINTER_PARAMETER.test(argument.parameter)) {
+        return symbol.kind === SymbolKind.Label ? 1 : 2;
+    }
+    return symbol.kind === SymbolKind.Constant || symbol.kind === SymbolKind.Parameter ? 1 : 2;
+}
+
+/** Keywords that can start an expression (the rest only make sense as statements) */
+const EXPRESSION_KEYWORDS = new Set(['if', 'menu', 'flag', 'not', 'byte', 'short', 'long', 'count', 'setcount', 'insertbin']);
+
+/**
+ * Whether a '(' already follows the word at the cursor, so a call snippet would double it.
+ */
+function parenthesisFollows(analysis: Analysis, offset: number): boolean {
+    const rest = analysis.tree.source.slice(offset, offset + 200);
+    return /^[A-Za-z0-9_]*\s*\(/.test(rest);
+}
+
+function symbolItem(
+    symbol: Symbol,
+    analysis: Analysis,
+    workspace: Workspace,
+    options: CompletionOptions,
+    sortText: string,
+    insertCall = true
+): CompletionItem {
     const declaringModule = symbol.modulePath ? workspace.program.getModule(symbol.modulePath) : undefined;
     const source = declaringModule?.tree.source;
     const docs = getDocComment(symbol, source);
@@ -79,7 +135,7 @@ function symbolItem(symbol: Symbol, analysis: Analysis, workspace: Workspace, op
         label: symbol.name,
         kind: completionKind(symbol.kind),
         detail: describeSymbol(symbol, source),
-        sortText: `${sortGroup}${symbol.name}`,
+        sortText,
         documentation: docs || fromElsewhere ? {
             kind: MarkupKind.Markdown,
             value: [docs, fromElsewhere].filter(Boolean).join('\n\n'),
@@ -87,7 +143,7 @@ function symbolItem(symbol: Symbol, analysis: Analysis, workspace: Workspace, op
     };
 
     const parameters = symbol.kind === SymbolKind.Command ? getParameterNames(symbol) : [];
-    if (parameters.length > 0 && options.snippetSupport) {
+    if (parameters.length > 0 && options.snippetSupport && insertCall) {
         item.insertText = `${symbol.name}(${parameters.map((p, i) => `\${${i + 1}:${p}}`).join(', ')})`;
         item.insertTextFormat = InsertTextFormat.Snippet;
     }
@@ -133,12 +189,15 @@ export async function provideCompletion(
 
     // An argument that refers to game data (an item, character...): offer the project's entries,
     // by name, inserting their number
-    const dataItems = await gameDataCompletions(workspace, analysis, offset);
+    const argument = argumentContext(analysis, offset);
+    const dataItems = argument ? await gameDataCompletions(workspace, analysis, argument) : [];
     const triggeredByPunctuation = params.context?.triggerKind === CompletionTriggerKind.TriggerCharacter &&
         (params.context.triggerCharacter === '(' || params.context.triggerCharacter === ',');
     if (triggeredByPunctuation) {
         return dataItems;
     }
+
+    const insertCall = !parenthesisFollows(analysis, offset);
 
     // `module.member`
     const linePrefix = document.getText({ start: { line: params.position.line, character: 0 }, end: params.position });
@@ -150,7 +209,7 @@ export async function provideCompletion(
         }
         return program.getModuleDeclarations(target).getAllSymbols()
             .filter(s => s.scopeId === 0 && s.kind !== SymbolKind.Module)
-            .map(s => symbolItem(s, analysis, workspace, options, 0));
+            .map(s => symbolItem(s, analysis, workspace, options, `0${s.name}`, insertCall));
     }
 
     // Symbols visible at the cursor
@@ -169,8 +228,23 @@ export async function provideCompletion(
             continue; // Modules are offered below; inner/own declarations shadow outer ones
         }
         seen.add(symbol.name);
+        // Locals, then this file's declarations, then imported ones
         const group = symbol.scopeId !== 0 ? 0 : symbol.modulePath === filePath ? 1 : 2;
-        items.push(symbolItem(symbol, analysis, workspace, options, group));
+        if (!argument) {
+            items.push(symbolItem(symbol, analysis, workspace, options, `${group}${symbol.name}`, insertCall));
+            continue;
+        }
+
+        // In an argument: what fits the parameter first (game data sorts between 'a' and 'c')
+        const fit = argumentFit(symbol, argument);
+        const item = symbolItem(symbol, analysis, workspace, options, `${'acd'[fit]}${group}${symbol.name}`, insertCall);
+        if (fit < 2) {
+            item.labelDetails = { description: `for ${argument.parameter}` };
+        }
+        if (fit === 0) {
+            item.preselect = true;
+        }
+        items.push(item);
     }
 
     for (const module of program.getAllModules()) {
@@ -182,27 +256,20 @@ export async function provideCompletion(
             label: module.name,
             kind: CompletionItemKind.Module,
             detail: fs.relative(fs.dirname(filePath), module.filePath).replace(/\\/g, '/'),
-            sortText: `3${module.name}`,
+            sortText: `${argument ? 'e' : '3'}${module.name}`,
         });
     }
 
     for (const keyword of KEYWORDS) {
-        items.push({ label: keyword, kind: CompletionItemKind.Keyword, sortText: `4${keyword}` });
+        if (argument && !EXPRESSION_KEYWORDS.has(keyword)) continue;
+        items.push({ label: keyword, kind: CompletionItemKind.Keyword, sortText: `${argument ? 'f' : '4'}${keyword}` });
     }
 
     return [...dataItems, ...items];
 }
 
-async function gameDataCompletions(workspace: Workspace, analysis: Analysis, offset: number): Promise<CompletionItem[]> {
-    const found = findCall(analysis, offset);
-    const command = found && analysis.binding.references.get(found.call.getChildren()[0]);
-    if (!found || !command || command.kind !== SymbolKind.Command) {
-        return [];
-    }
-    const index = found.argumentList.getChildren()
-        .filter(c => c.kind === SyntaxKind.CommaToken && c.span.start < offset).length;
-    const parameter = getParameterNames(command)[index];
-    const domain = parameter && domainOfParameter(parameter);
+async function gameDataCompletions(workspace: Workspace, analysis: Analysis, argument: ArgumentContext): Promise<CompletionItem[]> {
+    const domain = argument.domain;
     const project = domain ? await workspace.projectFor(analysis.filePath) : undefined;
     if (!domain || !project) {
         return [];
@@ -217,6 +284,7 @@ async function gameDataCompletions(workspace: Workspace, analysis: Analysis, off
             detail: `${title} ${entry.id}`,
             insertText: String(entry.id),
             filterText: `${entry.name} ${entry.id}`,
-            sortText: `!${String(entry.id).padStart(6, '0')}`,
+            sortText: `b${String(entry.id).padStart(6, '0')}`,
+            labelDetails: { description: `for ${argument.parameter}` },
         }));
 }

@@ -95,6 +95,43 @@ describe('Completion', () => {
         expect(items.find(i => i.label === 'next')!.insertText).toBeUndefined();
     });
 
+    it('ranks what fits the parameter being filled first', async () => {
+        const main = `import "lib/text.ccs"
+define MEMBER_COUNT = 4
+define LIMIT = 9
+
+command greet(member, times) {
+    party_name(|)
+}
+
+intro:
+    "Hi"
+`;
+        const items = await complete(main);
+        const sorted = [...items].sort((a, b) => a.sortText!.localeCompare(b.sortText!));
+        // Names matching the parameter, then constants and parameters, then the rest
+        expect(sorted.slice(0, 2).map(i => i.label).sort()).toEqual(['MEMBER_COUNT', 'member']);
+        expect(sorted.find(i => i.label === 'member')!.preselect).toBe(true);
+        expect(sorted.slice(2, 5).map(i => i.label).sort()).toEqual(['LIMIT', 'MAX_LEVEL', 'times']);
+        expect(sorted[0].labelDetails?.description).toBe('for member');
+        // Only keywords that can start an expression
+        const keywords = items.filter(i => i.kind === 14).map(i => i.label);
+        expect(keywords).toContain('flag');
+        expect(keywords).not.toContain('command');
+    });
+
+    it('ranks labels first for pointer parameters', async () => {
+        const items = await complete(MAIN.replace('goto(start)', 'goto(|)'));
+        const sorted = [...items].sort((a, b) => a.sortText!.localeCompare(b.sortText!));
+        expect(sorted.slice(0, 2).map(i => i.label).sort()).toEqual(['intro', 'start']);
+        expect(sorted[0].labelDetails?.description).toBe('for target');
+    });
+
+    it('doesn\'t insert a call snippet where a parenthesis already follows', async () => {
+        const items = await complete(MAIN.replace('party_name(who)', 'party_na|(who)'));
+        expect(items.find(i => i.label === 'party_name')!.insertText).toBeUndefined();
+    });
+
     it('offers a module\'s members after a dot', async () => {
         const items = await complete(MAIN.replace('text.give(3, 1)', 'text.|'));
         expect(items.map(i => i.label).sort()).toEqual(['MAX_LEVEL', 'give', 'party_name']);
