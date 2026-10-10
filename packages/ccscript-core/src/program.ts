@@ -190,7 +190,11 @@ export class Program {
             }
         }
 
-        const promise = this.loadUncached(normalizedPath, reload);
+        // Reloads of a file run one after another, so an older read can't land last
+        const previous = this.inFlightLoads.get(normalizedPath);
+        const promise = previous
+            ? previous.catch(() => null).then(() => this.loadUncached(normalizedPath, reload))
+            : this.loadUncached(normalizedPath, reload);
         this.inFlightLoads.set(normalizedPath, promise);
         const clear = () => {
             if (this.inFlightLoads.get(normalizedPath) === promise) {
@@ -428,6 +432,40 @@ export class Program {
      */
     async reloadModule(filePath: string): Promise<Module | null> {
         return this.loadModule(filePath, true);
+    }
+
+    /**
+     * Remove a module (e.g. its file was deleted). Modules that imported it are reloaded,
+     * so they report the now-unresolvable import.
+     */
+    async removeModule(filePath: string): Promise<void> {
+        const normalizedPath = this.options.fileSystem.normalize(filePath);
+        const module = this.modules.get(normalizedPath);
+        if (!module) {
+            return;
+        }
+
+        this.modules.delete(normalizedPath);
+        if (this.modulesByName.get(module.name) === module) {
+            this.modulesByName.delete(module.name);
+        }
+        this.diagnostics = this.diagnostics.filter(d => d.filePath !== normalizedPath);
+        this.qualifiedReferences.delete(normalizedPath);
+        this.dirtyModules.delete(normalizedPath);
+
+        for (const [referencingPath, names] of this.qualifiedReferences) {
+            if (names.has(module.name)) {
+                this.dirtyModules.add(referencingPath);
+            }
+        }
+
+        const importers = this.getAllModules()
+            .filter(m => m.dependencies.some(d => d.filePath === normalizedPath));
+        for (const importer of importers) {
+            await this.load(importer.filePath, true);
+        }
+
+        this.bindDirtyModules();
     }
 
     /**

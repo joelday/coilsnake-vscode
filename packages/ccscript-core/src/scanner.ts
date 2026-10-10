@@ -40,6 +40,10 @@ export class Scanner {
         while (this.pos < this.text.length) {
             const token = this.scanToken();
             tokens.push(token);
+            if (token.kind === SyntaxKind.EndOfFileToken) {
+                // Only trivia was left (e.g. a trailing comment)
+                return tokens;
+            }
         }
 
         // Add end of file token with any trailing trivia
@@ -199,9 +203,11 @@ export class Scanner {
             } else if (ch === '/' && this.peek(1) === '*') {
                 // Multi-line comment
                 this.pos += 2;
-                while (this.pos < this.text.length - 1) {
+                let terminated = false;
+                while (this.pos < this.text.length) {
                     if (this.text[this.pos] === '*' && this.text[this.pos + 1] === '/') {
                         this.pos += 2;
+                        terminated = true;
                         break;
                     }
                     this.pos++;
@@ -212,7 +218,7 @@ export class Scanner {
                     text,
                     width: text.length
                 });
-                if (!text.endsWith('*/')) {
+                if (!terminated) {
                     this.addDiagnostic(start, text.length, DiagnosticSeverity.Error,
                         'Unterminated multi-line comment');
                 }

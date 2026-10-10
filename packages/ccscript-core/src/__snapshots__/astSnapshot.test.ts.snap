@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`AST Snapshots should match AST snapshot for 01-literals.ccs 1`] = `
-"SourceFile [0..228) fullWidth=228
+"SourceFile [0..229) fullWidth=229
   ConstantDeclaration [0..45) fullWidth=45
     DefineKeyword [0..39) fullWidth=39 text="define"
       LeadingTrivia [0..32) fullWidth=32
@@ -17,98 +17,100 @@ exports[`AST Snapshots should match AST snapshot for 01-literals.ccs 1`] = `
         WhitespaceTrivia width=1 " "
     NumericLiteralExpression [44..45) fullWidth=1
       NumericLiteral [44..45) fullWidth=1 text="3"
-  ExpressionStatement [45..51) fullWidth=6
-    NumericLiteralExpression [45..51) fullWidth=6
-      NumericLiteral [45..51) fullWidth=6 text="14159"
-        TrailingTrivia [50..51) fullWidth=1
+  ErrorStatement [45..46) fullWidth=1
+    DotToken [45..46) fullWidth=1 text="."
+  ExpressionStatement [46..52) fullWidth=6
+    NumericLiteralExpression [46..52) fullWidth=6
+      NumericLiteral [46..52) fullWidth=6 text="14159"
+        TrailingTrivia [51..52) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ConstantDeclaration [51..71) fullWidth=20
-    DefineKeyword [51..58) fullWidth=7 text="define"
-      TrailingTrivia [57..58) fullWidth=1
+  ConstantDeclaration [52..72) fullWidth=20
+    DefineKeyword [52..59) fullWidth=7 text="define"
+      TrailingTrivia [58..59) fullWidth=1
         WhitespaceTrivia width=1 " "
-    Identifier [58..65) fullWidth=7 text="MAX_HP"
-      TrailingTrivia [64..65) fullWidth=1
+    Identifier [59..66) fullWidth=7 text="MAX_HP"
+      TrailingTrivia [65..66) fullWidth=1
         WhitespaceTrivia width=1 " "
-    EqualsToken [65..67) fullWidth=2 text="="
-      TrailingTrivia [66..67) fullWidth=1
+    EqualsToken [66..68) fullWidth=2 text="="
+      TrailingTrivia [67..68) fullWidth=1
         WhitespaceTrivia width=1 " "
-    NumericLiteralExpression [67..71) fullWidth=4
-      NumericLiteral [67..71) fullWidth=4 text="999"
-        TrailingTrivia [70..71) fullWidth=1
+    NumericLiteralExpression [68..72) fullWidth=4
+      NumericLiteral [68..72) fullWidth=4 text="999"
+        TrailingTrivia [71..72) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ConstantDeclaration [71..103) fullWidth=32
-    DefineKeyword [71..78) fullWidth=7 text="define"
-      TrailingTrivia [77..78) fullWidth=1
+  ConstantDeclaration [72..104) fullWidth=32
+    DefineKeyword [72..79) fullWidth=7 text="define"
+      TrailingTrivia [78..79) fullWidth=1
         WhitespaceTrivia width=1 " "
-    Identifier [78..88) fullWidth=10 text="GAME_NAME"
-      TrailingTrivia [87..88) fullWidth=1
+    Identifier [79..89) fullWidth=10 text="GAME_NAME"
+      TrailingTrivia [88..89) fullWidth=1
         WhitespaceTrivia width=1 " "
-    EqualsToken [88..90) fullWidth=2 text="="
-      TrailingTrivia [89..90) fullWidth=1
+    EqualsToken [89..91) fullWidth=2 text="="
+      TrailingTrivia [90..91) fullWidth=1
         WhitespaceTrivia width=1 " "
-    StringLiteralExpression [90..103) fullWidth=13
-      StringLiteral [90..91) fullWidth=1 text="""
-      StringLiteralContent [91..101) fullWidth=10
-        StringLiteral [91..101) fullWidth=10 text="EarthBound"
-      StringLiteral [101..103) fullWidth=2 text="""
-        TrailingTrivia [102..103) fullWidth=1
+    StringLiteralExpression [91..104) fullWidth=13
+      StringLiteral [91..92) fullWidth=1 text="""
+      StringLiteralContent [92..102) fullWidth=10
+        StringLiteral [92..102) fullWidth=10 text="EarthBound"
+      StringLiteral [102..104) fullWidth=2 text="""
+        TrailingTrivia [103..104) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ConstantDeclaration [103..125) fullWidth=22
-    DefineKeyword [103..110) fullWidth=7 text="define"
-      TrailingTrivia [109..110) fullWidth=1
+  ConstantDeclaration [104..126) fullWidth=22
+    DefineKeyword [104..111) fullWidth=7 text="define"
+      TrailingTrivia [110..111) fullWidth=1
         WhitespaceTrivia width=1 " "
-    Identifier [110..121) fullWidth=11 text="DEBUG_MODE"
-      TrailingTrivia [120..121) fullWidth=1
+    Identifier [111..122) fullWidth=11 text="DEBUG_MODE"
+      TrailingTrivia [121..122) fullWidth=1
         WhitespaceTrivia width=1 " "
-    EqualsToken [121..123) fullWidth=2 text="="
-      TrailingTrivia [122..123) fullWidth=1
+    EqualsToken [122..124) fullWidth=2 text="="
+      TrailingTrivia [123..124) fullWidth=1
         WhitespaceTrivia width=1 " "
-    NumericLiteralExpression [123..125) fullWidth=2
-      NumericLiteral [123..125) fullWidth=2 text="1"
-        TrailingTrivia [124..125) fullWidth=1
+    NumericLiteralExpression [124..126) fullWidth=2
+      NumericLiteral [124..126) fullWidth=2 text="1"
+        TrailingTrivia [125..126) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  LabelDeclaration [125..149) fullWidth=24
-    Identifier [125..147) fullWidth=22 text="start"
-      LeadingTrivia [125..142) fullWidth=17
+  LabelDeclaration [126..150) fullWidth=24
+    Identifier [126..148) fullWidth=22 text="start"
+      LeadingTrivia [126..143) fullWidth=17
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=15 "// Simple label"
         NewLineTrivia width=1 "\\n"
-    ColonToken [147..149) fullWidth=2 text=":"
-      TrailingTrivia [148..149) fullWidth=1
+    ColonToken [148..150) fullWidth=2 text=":"
+      TrailingTrivia [149..150) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  ExpressionStatement [149..201) fullWidth=52
-    NumericLiteralExpression [149..201) fullWidth=52
-      NumericLiteral [149..201) fullWidth=52 text="42"
-        LeadingTrivia [149..198) fullWidth=49
+  ExpressionStatement [150..202) fullWidth=52
+    NumericLiteralExpression [150..202) fullWidth=52
+      NumericLiteral [150..202) fullWidth=52 text="42"
+        LeadingTrivia [150..199) fullWidth=49
           NewLineTrivia width=1 "\\n"
           SingleLineCommentTrivia width=47 "// Expression statements with all literal types"
           NewLineTrivia width=1 "\\n"
-        TrailingTrivia [200..201) fullWidth=1
+        TrailingTrivia [201..202) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ExpressionStatement [201..208) fullWidth=7
-    NumericLiteralExpression [201..208) fullWidth=7
-      HexLiteral [201..208) fullWidth=7 text="0x1A2B"
-        TrailingTrivia [207..208) fullWidth=1
+  ExpressionStatement [202..209) fullWidth=7
+    NumericLiteralExpression [202..209) fullWidth=7
+      HexLiteral [202..209) fullWidth=7 text="0x1A2B"
+        TrailingTrivia [208..209) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ExpressionStatement [208..224) fullWidth=16
-    StringLiteralExpression [208..224) fullWidth=16
-      StringLiteral [208..209) fullWidth=1 text="""
-      StringLiteralContent [209..222) fullWidth=13
-        StringLiteral [209..222) fullWidth=13 text="Hello, world!"
-      StringLiteral [222..224) fullWidth=2 text="""
-        TrailingTrivia [223..224) fullWidth=1
+  ExpressionStatement [209..225) fullWidth=16
+    StringLiteralExpression [209..225) fullWidth=16
+      StringLiteral [209..210) fullWidth=1 text="""
+      StringLiteralContent [210..223) fullWidth=13
+        StringLiteral [210..223) fullWidth=13 text="Hello, world!"
+      StringLiteral [223..225) fullWidth=2 text="""
+        TrailingTrivia [224..225) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ExpressionStatement [224..226) fullWidth=2
-    NumericLiteralExpression [224..226) fullWidth=2
-      NumericLiteral [224..226) fullWidth=2 text="1"
-        TrailingTrivia [225..226) fullWidth=1
+  ExpressionStatement [225..227) fullWidth=2
+    NumericLiteralExpression [225..227) fullWidth=2
+      NumericLiteral [225..227) fullWidth=2 text="1"
+        TrailingTrivia [226..227) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ExpressionStatement [226..228) fullWidth=2
-    NumericLiteralExpression [226..228) fullWidth=2
-      NumericLiteral [226..228) fullWidth=2 text="0"
-        TrailingTrivia [227..228) fullWidth=1
+  ExpressionStatement [227..229) fullWidth=2
+    NumericLiteralExpression [227..229) fullWidth=2
+      NumericLiteral [227..229) fullWidth=2 text="0"
+        TrailingTrivia [228..229) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  EndOfFileToken [228..228) fullWidth=0 text=""
+  EndOfFileToken [229..229) fullWidth=0 text=""
 "
 `;
 
@@ -774,7 +776,7 @@ exports[`AST Snapshots should match AST snapshot for 03-strings.ccs 1`] = `
 `;
 
 exports[`AST Snapshots should match AST snapshot for 04-conditionals.ccs 1`] = `
-"SourceFile [0..435) fullWidth=435
+"SourceFile [0..438) fullWidth=438
   IfStatement [0..46) fullWidth=46
     IfKeyword [0..20) fullWidth=20 text="if"
       LeadingTrivia [0..17) fullWidth=17
@@ -964,7 +966,7 @@ exports[`AST Snapshots should match AST snapshot for 04-conditionals.ccs 1`] = `
       CloseBraceToken [236..238) fullWidth=2 text="}"
         TrailingTrivia [237..238) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  IfStatement [238..327) fullWidth=89
+  IfStatement [238..330) fullWidth=92
     IfKeyword [238..272) fullWidth=34 text="if"
       LeadingTrivia [238..269) fullWidth=31
         NewLineTrivia width=1 "\\n"
@@ -972,150 +974,155 @@ exports[`AST Snapshots should match AST snapshot for 04-conditionals.ccs 1`] = `
         NewLineTrivia width=1 "\\n"
       TrailingTrivia [271..272) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BinaryExpression [272..299) fullWidth=27
-      BinaryExpression [272..289) fullWidth=17
-        FlagExpression [272..279) fullWidth=7
-          FlagKeyword [272..277) fullWidth=5 text="flag"
-            TrailingTrivia [276..277) fullWidth=1
-              WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [277..279) fullWidth=2
-            NumericLiteral [277..279) fullWidth=2 text="7"
-              TrailingTrivia [278..279) fullWidth=1
+    BinaryExpression [272..302) fullWidth=30
+      ParenthesizedExpression [272..292) fullWidth=20
+        OpenParenToken [272..273) fullWidth=1 text="("
+        BinaryExpression [273..290) fullWidth=17
+          FlagExpression [273..280) fullWidth=7
+            FlagKeyword [273..278) fullWidth=5 text="flag"
+              TrailingTrivia [277..278) fullWidth=1
                 WhitespaceTrivia width=1 " "
-        AndKeyword [279..283) fullWidth=4 text="and"
-          TrailingTrivia [282..283) fullWidth=1
-            WhitespaceTrivia width=1 " "
-        FlagExpression [283..289) fullWidth=6
-          FlagKeyword [283..288) fullWidth=5 text="flag"
-            TrailingTrivia [287..288) fullWidth=1
+            NumericLiteralExpression [278..280) fullWidth=2
+              NumericLiteral [278..280) fullWidth=2 text="7"
+                TrailingTrivia [279..280) fullWidth=1
+                  WhitespaceTrivia width=1 " "
+          AndKeyword [280..284) fullWidth=4 text="and"
+            TrailingTrivia [283..284) fullWidth=1
               WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [288..289) fullWidth=1
-            NumericLiteral [288..289) fullWidth=1 text="8"
-      OrKeyword [289..292) fullWidth=3 text="or"
-        TrailingTrivia [291..292) fullWidth=1
+          FlagExpression [284..290) fullWidth=6
+            FlagKeyword [284..289) fullWidth=5 text="flag"
+              TrailingTrivia [288..289) fullWidth=1
+                WhitespaceTrivia width=1 " "
+            NumericLiteralExpression [289..290) fullWidth=1
+              NumericLiteral [289..290) fullWidth=1 text="8"
+        CloseParenToken [290..292) fullWidth=2 text=")"
+          TrailingTrivia [291..292) fullWidth=1
+            WhitespaceTrivia width=1 " "
+      OrKeyword [292..295) fullWidth=3 text="or"
+        TrailingTrivia [294..295) fullWidth=1
           WhitespaceTrivia width=1 " "
-      FlagExpression [292..299) fullWidth=7
-        FlagKeyword [292..297) fullWidth=5 text="flag"
-          TrailingTrivia [296..297) fullWidth=1
+      FlagExpression [295..302) fullWidth=7
+        FlagKeyword [295..300) fullWidth=5 text="flag"
+          TrailingTrivia [299..300) fullWidth=1
             WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [297..299) fullWidth=2
-          NumericLiteral [297..299) fullWidth=2 text="9"
-            TrailingTrivia [298..299) fullWidth=1
+        NumericLiteralExpression [300..302) fullWidth=2
+          NumericLiteral [300..302) fullWidth=2 text="9"
+            TrailingTrivia [301..302) fullWidth=1
               WhitespaceTrivia width=1 " "
-    BlockStatement [299..327) fullWidth=28
-      OpenBraceToken [299..301) fullWidth=2 text="{"
-        TrailingTrivia [300..301) fullWidth=1
+    BlockStatement [302..330) fullWidth=28
+      OpenBraceToken [302..304) fullWidth=2 text="{"
+        TrailingTrivia [303..304) fullWidth=1
           NewLineTrivia width=1 "\\n"
-      ExpressionStatement [301..310) fullWidth=9
-        IdentifierExpression [301..310) fullWidth=9
-          Identifier [301..310) fullWidth=9 text="call"
-            LeadingTrivia [301..305) fullWidth=4
+      ExpressionStatement [304..313) fullWidth=9
+        IdentifierExpression [304..313) fullWidth=9
+          Identifier [304..313) fullWidth=9 text="call"
+            LeadingTrivia [304..308) fullWidth=4
               WhitespaceTrivia width=4 "    "
-            TrailingTrivia [309..310) fullWidth=1
+            TrailingTrivia [312..313) fullWidth=1
               WhitespaceTrivia width=1 " "
-      ExpressionStatement [310..325) fullWidth=15
-        IdentifierExpression [310..325) fullWidth=15
-          Identifier [310..325) fullWidth=15 text="common_routine"
-            TrailingTrivia [324..325) fullWidth=1
+      ExpressionStatement [313..328) fullWidth=15
+        IdentifierExpression [313..328) fullWidth=15
+          Identifier [313..328) fullWidth=15 text="common_routine"
+            TrailingTrivia [327..328) fullWidth=1
               NewLineTrivia width=1 "\\n"
-      CloseBraceToken [325..327) fullWidth=2 text="}"
-        TrailingTrivia [326..327) fullWidth=1
+      CloseBraceToken [328..330) fullWidth=2 text="}"
+        TrailingTrivia [329..330) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  IfStatement [327..368) fullWidth=41
-    IfKeyword [327..352) fullWidth=25 text="if"
-      LeadingTrivia [327..349) fullWidth=22
+  IfStatement [330..371) fullWidth=41
+    IfKeyword [330..355) fullWidth=25 text="if"
+      LeadingTrivia [330..352) fullWidth=22
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=20 "// If without braces"
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [351..352) fullWidth=1
+      TrailingTrivia [354..355) fullWidth=1
         WhitespaceTrivia width=1 " "
-    FlagExpression [352..360) fullWidth=8
-      FlagKeyword [352..357) fullWidth=5 text="flag"
-        TrailingTrivia [356..357) fullWidth=1
+    FlagExpression [355..363) fullWidth=8
+      FlagKeyword [355..360) fullWidth=5 text="flag"
+        TrailingTrivia [359..360) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [357..360) fullWidth=3
-        NumericLiteral [357..360) fullWidth=3 text="10"
-          TrailingTrivia [359..360) fullWidth=1
+      NumericLiteralExpression [360..363) fullWidth=3
+        NumericLiteral [360..363) fullWidth=3 text="10"
+          TrailingTrivia [362..363) fullWidth=1
             NewLineTrivia width=1 "\\n"
-    ExpressionStatement [360..368) fullWidth=8
-      IdentifierExpression [360..368) fullWidth=8
-        Identifier [360..368) fullWidth=8 text="set"
-          LeadingTrivia [360..364) fullWidth=4
+    ExpressionStatement [363..371) fullWidth=8
+      IdentifierExpression [363..371) fullWidth=8
+        Identifier [363..371) fullWidth=8 text="set"
+          LeadingTrivia [363..367) fullWidth=4
             WhitespaceTrivia width=4 "    "
-          TrailingTrivia [367..368) fullWidth=1
+          TrailingTrivia [370..371) fullWidth=1
             WhitespaceTrivia width=1 " "
-  ExpressionStatement [368..376) fullWidth=8
-    FlagExpression [368..376) fullWidth=8
-      FlagKeyword [368..373) fullWidth=5 text="flag"
-        TrailingTrivia [372..373) fullWidth=1
+  ExpressionStatement [371..379) fullWidth=8
+    FlagExpression [371..379) fullWidth=8
+      FlagKeyword [371..376) fullWidth=5 text="flag"
+        TrailingTrivia [375..376) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [373..376) fullWidth=3
-        NumericLiteral [373..376) fullWidth=3 text="11"
-          TrailingTrivia [375..376) fullWidth=1
+      NumericLiteralExpression [376..379) fullWidth=3
+        NumericLiteral [376..379) fullWidth=3 text="11"
+          TrailingTrivia [378..379) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  IfStatement [376..396) fullWidth=20
-    IfKeyword [376..380) fullWidth=4 text="if"
-      LeadingTrivia [376..377) fullWidth=1
+  IfStatement [379..399) fullWidth=20
+    IfKeyword [379..383) fullWidth=4 text="if"
+      LeadingTrivia [379..380) fullWidth=1
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [379..380) fullWidth=1
+      TrailingTrivia [382..383) fullWidth=1
         WhitespaceTrivia width=1 " "
-    FlagExpression [380..388) fullWidth=8
-      FlagKeyword [380..385) fullWidth=5 text="flag"
-        TrailingTrivia [384..385) fullWidth=1
+    FlagExpression [383..391) fullWidth=8
+      FlagKeyword [383..388) fullWidth=5 text="flag"
+        TrailingTrivia [387..388) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [385..388) fullWidth=3
-        NumericLiteral [385..388) fullWidth=3 text="12"
-          TrailingTrivia [387..388) fullWidth=1
+      NumericLiteralExpression [388..391) fullWidth=3
+        NumericLiteral [388..391) fullWidth=3 text="12"
+          TrailingTrivia [390..391) fullWidth=1
             NewLineTrivia width=1 "\\n"
-    ExpressionStatement [388..396) fullWidth=8
-      IdentifierExpression [388..396) fullWidth=8
-        Identifier [388..396) fullWidth=8 text="set"
-          LeadingTrivia [388..392) fullWidth=4
+    ExpressionStatement [391..399) fullWidth=8
+      IdentifierExpression [391..399) fullWidth=8
+        Identifier [391..399) fullWidth=8 text="set"
+          LeadingTrivia [391..395) fullWidth=4
             WhitespaceTrivia width=4 "    "
-          TrailingTrivia [395..396) fullWidth=1
+          TrailingTrivia [398..399) fullWidth=1
             WhitespaceTrivia width=1 " "
-  ExpressionStatement [396..404) fullWidth=8
-    FlagExpression [396..404) fullWidth=8
-      FlagKeyword [396..401) fullWidth=5 text="flag"
-        TrailingTrivia [400..401) fullWidth=1
+  ExpressionStatement [399..407) fullWidth=8
+    FlagExpression [399..407) fullWidth=8
+      FlagKeyword [399..404) fullWidth=5 text="flag"
+        TrailingTrivia [403..404) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [401..404) fullWidth=3
-        NumericLiteral [401..404) fullWidth=3 text="13"
-          TrailingTrivia [403..404) fullWidth=1
+      NumericLiteralExpression [404..407) fullWidth=3
+        NumericLiteral [404..407) fullWidth=3 text="13"
+          TrailingTrivia [406..407) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  ErrorStatement [404..409) fullWidth=5
-    ElseKeyword [404..409) fullWidth=5 text="else"
-      TrailingTrivia [408..409) fullWidth=1
+  ErrorStatement [407..412) fullWidth=5
+    ElseKeyword [407..412) fullWidth=5 text="else"
+      TrailingTrivia [411..412) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  ExpressionStatement [409..419) fullWidth=10
-    IdentifierExpression [409..419) fullWidth=10
-      Identifier [409..419) fullWidth=10 text="unset"
-        LeadingTrivia [409..413) fullWidth=4
+  ExpressionStatement [412..422) fullWidth=10
+    IdentifierExpression [412..422) fullWidth=10
+      Identifier [412..422) fullWidth=10 text="unset"
+        LeadingTrivia [412..416) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [418..419) fullWidth=1
+        TrailingTrivia [421..422) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [419..427) fullWidth=8
-    FlagExpression [419..427) fullWidth=8
-      FlagKeyword [419..424) fullWidth=5 text="flag"
-        TrailingTrivia [423..424) fullWidth=1
+  ExpressionStatement [422..430) fullWidth=8
+    FlagExpression [422..430) fullWidth=8
+      FlagKeyword [422..427) fullWidth=5 text="flag"
+        TrailingTrivia [426..427) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [424..427) fullWidth=3
-        NumericLiteral [424..427) fullWidth=3 text="13"
-          TrailingTrivia [426..427) fullWidth=1
+      NumericLiteralExpression [427..430) fullWidth=3
+        NumericLiteral [427..430) fullWidth=3 text="13"
+          TrailingTrivia [429..430) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  LabelDeclaration [427..435) fullWidth=8
-    Identifier [427..433) fullWidth=6 text="start"
-      LeadingTrivia [427..428) fullWidth=1
+  LabelDeclaration [430..438) fullWidth=8
+    Identifier [430..436) fullWidth=6 text="start"
+      LeadingTrivia [430..431) fullWidth=1
         NewLineTrivia width=1 "\\n"
-    ColonToken [433..435) fullWidth=2 text=":"
-      TrailingTrivia [434..435) fullWidth=1
+    ColonToken [436..438) fullWidth=2 text=":"
+      TrailingTrivia [437..438) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  EndOfFileToken [435..435) fullWidth=0 text=""
+  EndOfFileToken [438..438) fullWidth=0 text=""
 "
 `;
 
 exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
-"SourceFile [0..700) fullWidth=700
+"SourceFile [0..706) fullWidth=706
   MenuStatement [0..83) fullWidth=83
     MenuKeyword [0..39) fullWidth=39 text="menu"
       LeadingTrivia [0..34) fullWidth=34
@@ -1196,374 +1203,386 @@ exports[`AST Snapshots should match AST snapshot for 05-menus.ccs 1`] = `
       Identifier [116..121) fullWidth=5 text="opt3"
         TrailingTrivia [120..121) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  MenuStatement [121..196) fullWidth=75
-    MenuKeyword [121..164) fullWidth=43 text="menu"
-      LeadingTrivia [121..159) fullWidth=38
+  ErrorStatement [121..123) fullWidth=2
+    CloseBraceToken [121..123) fullWidth=2 text="}"
+      TrailingTrivia [122..123) fullWidth=1
+        NewLineTrivia width=1 "\\n"
+  MenuStatement [123..198) fullWidth=75
+    MenuKeyword [123..166) fullWidth=43 text="menu"
+      LeadingTrivia [123..161) fullWidth=38
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=36 "// Menu without column specification"
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [163..164) fullWidth=1
-        WhitespaceTrivia width=1 " "
-    OpenBraceToken [164..166) fullWidth=2 text="{"
       TrailingTrivia [165..166) fullWidth=1
-        NewLineTrivia width=1 "\\n"
-    MenuOption [166..181) fullWidth=15
-      StringLiteralExpression [166..175) fullWidth=9
-        StringLiteral [166..171) fullWidth=5 text="""
-          LeadingTrivia [166..170) fullWidth=4
-            WhitespaceTrivia width=4 "    "
-        StringLiteralContent [171..174) fullWidth=3
-          StringLiteral [171..174) fullWidth=3 text="Yes"
-        StringLiteral [174..175) fullWidth=1 text="""
-      ColonToken [175..177) fullWidth=2 text=":"
-        TrailingTrivia [176..177) fullWidth=1
-          WhitespaceTrivia width=1 " "
-      ExpressionStatement [177..181) fullWidth=4
-        IdentifierExpression [177..181) fullWidth=4
-          Identifier [177..181) fullWidth=4 text="set"
-            TrailingTrivia [180..181) fullWidth=1
-              WhitespaceTrivia width=1 " "
-    MenuOption [181..196) fullWidth=15
-      FlagExpression [181..188) fullWidth=7
-        FlagKeyword [181..186) fullWidth=5 text="flag"
-          TrailingTrivia [185..186) fullWidth=1
-            WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [186..188) fullWidth=2
-          NumericLiteral [186..188) fullWidth=2 text="1"
-            TrailingTrivia [187..188) fullWidth=1
-              NewLineTrivia width=1 "\\n"
-      MissingToken [188..188) fullWidth=0 text=""
-      ExpressionStatement [188..196) fullWidth=8
-        StringLiteralExpression [188..196) fullWidth=8
-          StringLiteral [188..193) fullWidth=5 text="""
-            LeadingTrivia [188..192) fullWidth=4
-              WhitespaceTrivia width=4 "    "
-          StringLiteralContent [193..195) fullWidth=2
-            StringLiteral [193..195) fullWidth=2 text="No"
-          StringLiteral [195..196) fullWidth=1 text="""
-    MissingToken [196..196) fullWidth=0 text=""
-  ErrorStatement [196..198) fullWidth=2
-    ColonToken [196..198) fullWidth=2 text=":"
-      TrailingTrivia [197..198) fullWidth=1
         WhitespaceTrivia width=1 " "
-  ExpressionStatement [198..204) fullWidth=6
-    IdentifierExpression [198..204) fullWidth=6
-      Identifier [198..204) fullWidth=6 text="unset"
-        TrailingTrivia [203..204) fullWidth=1
+    OpenBraceToken [166..168) fullWidth=2 text="{"
+      TrailingTrivia [167..168) fullWidth=1
+        NewLineTrivia width=1 "\\n"
+    MenuOption [168..183) fullWidth=15
+      StringLiteralExpression [168..177) fullWidth=9
+        StringLiteral [168..173) fullWidth=5 text="""
+          LeadingTrivia [168..172) fullWidth=4
+            WhitespaceTrivia width=4 "    "
+        StringLiteralContent [173..176) fullWidth=3
+          StringLiteral [173..176) fullWidth=3 text="Yes"
+        StringLiteral [176..177) fullWidth=1 text="""
+      ColonToken [177..179) fullWidth=2 text=":"
+        TrailingTrivia [178..179) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [204..211) fullWidth=7
-    FlagExpression [204..211) fullWidth=7
-      FlagKeyword [204..209) fullWidth=5 text="flag"
-        TrailingTrivia [208..209) fullWidth=1
+      ExpressionStatement [179..183) fullWidth=4
+        IdentifierExpression [179..183) fullWidth=4
+          Identifier [179..183) fullWidth=4 text="set"
+            TrailingTrivia [182..183) fullWidth=1
+              WhitespaceTrivia width=1 " "
+    MenuOption [183..198) fullWidth=15
+      FlagExpression [183..190) fullWidth=7
+        FlagKeyword [183..188) fullWidth=5 text="flag"
+          TrailingTrivia [187..188) fullWidth=1
+            WhitespaceTrivia width=1 " "
+        NumericLiteralExpression [188..190) fullWidth=2
+          NumericLiteral [188..190) fullWidth=2 text="1"
+            TrailingTrivia [189..190) fullWidth=1
+              NewLineTrivia width=1 "\\n"
+      MissingToken [190..190) fullWidth=0 text=""
+      ExpressionStatement [190..198) fullWidth=8
+        StringLiteralExpression [190..198) fullWidth=8
+          StringLiteral [190..195) fullWidth=5 text="""
+            LeadingTrivia [190..194) fullWidth=4
+              WhitespaceTrivia width=4 "    "
+          StringLiteralContent [195..197) fullWidth=2
+            StringLiteral [195..197) fullWidth=2 text="No"
+          StringLiteral [197..198) fullWidth=1 text="""
+    MissingToken [198..198) fullWidth=0 text=""
+  ErrorStatement [198..200) fullWidth=2
+    ColonToken [198..200) fullWidth=2 text=":"
+      TrailingTrivia [199..200) fullWidth=1
+        WhitespaceTrivia width=1 " "
+  ExpressionStatement [200..206) fullWidth=6
+    IdentifierExpression [200..206) fullWidth=6
+      Identifier [200..206) fullWidth=6 text="unset"
+        TrailingTrivia [205..206) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [209..211) fullWidth=2
-        NumericLiteral [209..211) fullWidth=2 text="1"
-          TrailingTrivia [210..211) fullWidth=1
+  ExpressionStatement [206..213) fullWidth=7
+    FlagExpression [206..213) fullWidth=7
+      FlagKeyword [206..211) fullWidth=5 text="flag"
+        TrailingTrivia [210..211) fullWidth=1
+          WhitespaceTrivia width=1 " "
+      NumericLiteralExpression [211..213) fullWidth=2
+        NumericLiteral [211..213) fullWidth=2 text="1"
+          TrailingTrivia [212..213) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  MenuStatement [211..286) fullWidth=75
-    MenuKeyword [211..245) fullWidth=34 text="menu"
-      LeadingTrivia [211..240) fullWidth=29
+  ErrorStatement [213..215) fullWidth=2
+    CloseBraceToken [213..215) fullWidth=2 text="}"
+      TrailingTrivia [214..215) fullWidth=1
+        NewLineTrivia width=1 "\\n"
+  MenuStatement [215..290) fullWidth=75
+    MenuKeyword [215..249) fullWidth=34 text="menu"
+      LeadingTrivia [215..244) fullWidth=29
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=27 "// Menu with default option"
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [244..245) fullWidth=1
+      TrailingTrivia [248..249) fullWidth=1
         WhitespaceTrivia width=1 " "
-    OpenBraceToken [245..247) fullWidth=2 text="{"
-      TrailingTrivia [246..247) fullWidth=1
+    OpenBraceToken [249..251) fullWidth=2 text="{"
+      TrailingTrivia [250..251) fullWidth=1
         NewLineTrivia width=1 "\\n"
-    MenuOption [247..265) fullWidth=18
-      StringLiteralExpression [247..258) fullWidth=11
-        StringLiteral [247..252) fullWidth=5 text="""
-          LeadingTrivia [247..251) fullWidth=4
+    MenuOption [251..269) fullWidth=18
+      StringLiteralExpression [251..262) fullWidth=11
+        StringLiteral [251..256) fullWidth=5 text="""
+          LeadingTrivia [251..255) fullWidth=4
             WhitespaceTrivia width=4 "    "
-        StringLiteralContent [252..257) fullWidth=5
-          StringLiteral [252..257) fullWidth=5 text="First"
-        StringLiteral [257..258) fullWidth=1 text="""
-      ColonToken [258..260) fullWidth=2 text=":"
-        TrailingTrivia [259..260) fullWidth=1
+        StringLiteralContent [256..261) fullWidth=5
+          StringLiteral [256..261) fullWidth=5 text="First"
+        StringLiteral [261..262) fullWidth=1 text="""
+      ColonToken [262..264) fullWidth=2 text=":"
+        TrailingTrivia [263..264) fullWidth=1
           WhitespaceTrivia width=1 " "
-      ExpressionStatement [260..265) fullWidth=5
-        IdentifierExpression [260..265) fullWidth=5
-          Identifier [260..265) fullWidth=5 text="call"
-            TrailingTrivia [264..265) fullWidth=1
+      ExpressionStatement [264..269) fullWidth=5
+        IdentifierExpression [264..269) fullWidth=5
+          Identifier [264..269) fullWidth=5 text="call"
+            TrailingTrivia [268..269) fullWidth=1
               WhitespaceTrivia width=1 " "
-    MenuOption [265..286) fullWidth=21
-      IdentifierExpression [265..274) fullWidth=9
-        Identifier [265..274) fullWidth=9 text="handler1"
-          TrailingTrivia [273..274) fullWidth=1
+    MenuOption [269..290) fullWidth=21
+      IdentifierExpression [269..278) fullWidth=9
+        Identifier [269..278) fullWidth=9 text="handler1"
+          TrailingTrivia [277..278) fullWidth=1
             NewLineTrivia width=1 "\\n"
-      MissingToken [274..274) fullWidth=0 text=""
-      ExpressionStatement [274..286) fullWidth=12
-        StringLiteralExpression [274..286) fullWidth=12
-          StringLiteral [274..279) fullWidth=5 text="""
-            LeadingTrivia [274..278) fullWidth=4
+      MissingToken [278..278) fullWidth=0 text=""
+      ExpressionStatement [278..290) fullWidth=12
+        StringLiteralExpression [278..290) fullWidth=12
+          StringLiteral [278..283) fullWidth=5 text="""
+            LeadingTrivia [278..282) fullWidth=4
               WhitespaceTrivia width=4 "    "
-          StringLiteralContent [279..285) fullWidth=6
-            StringLiteral [279..285) fullWidth=6 text="Second"
-          StringLiteral [285..286) fullWidth=1 text="""
-    MissingToken [286..286) fullWidth=0 text=""
-  ErrorStatement [286..288) fullWidth=2
-    ColonToken [286..288) fullWidth=2 text=":"
-      TrailingTrivia [287..288) fullWidth=1
+          StringLiteralContent [283..289) fullWidth=6
+            StringLiteral [283..289) fullWidth=6 text="Second"
+          StringLiteral [289..290) fullWidth=1 text="""
+    MissingToken [290..290) fullWidth=0 text=""
+  ErrorStatement [290..292) fullWidth=2
+    ColonToken [290..292) fullWidth=2 text=":"
+      TrailingTrivia [291..292) fullWidth=1
         WhitespaceTrivia width=1 " "
-  ExpressionStatement [288..293) fullWidth=5
-    IdentifierExpression [288..293) fullWidth=5
-      Identifier [288..293) fullWidth=5 text="call"
-        TrailingTrivia [292..293) fullWidth=1
+  ExpressionStatement [292..297) fullWidth=5
+    IdentifierExpression [292..297) fullWidth=5
+      Identifier [292..297) fullWidth=5 text="call"
+        TrailingTrivia [296..297) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [293..302) fullWidth=9
-    IdentifierExpression [293..302) fullWidth=9
-      Identifier [293..302) fullWidth=9 text="handler2"
-        TrailingTrivia [301..302) fullWidth=1
+  ExpressionStatement [297..306) fullWidth=9
+    IdentifierExpression [297..306) fullWidth=9
+      Identifier [297..306) fullWidth=9 text="handler2"
+        TrailingTrivia [305..306) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ErrorStatement [302..314) fullWidth=12
-    DefaultKeyword [302..314) fullWidth=12 text="default"
-      LeadingTrivia [302..306) fullWidth=4
+  ErrorStatement [306..318) fullWidth=12
+    DefaultKeyword [306..318) fullWidth=12 text="default"
+      LeadingTrivia [306..310) fullWidth=4
         WhitespaceTrivia width=4 "    "
-      TrailingTrivia [313..314) fullWidth=1
+      TrailingTrivia [317..318) fullWidth=1
         WhitespaceTrivia width=1 " "
-  ExpressionStatement [314..322) fullWidth=8
-    StringLiteralExpression [314..322) fullWidth=8
-      StringLiteral [314..315) fullWidth=1 text="""
-      StringLiteralContent [315..321) fullWidth=6
-        StringLiteral [315..321) fullWidth=6 text="Cancel"
-      StringLiteral [321..322) fullWidth=1 text="""
-  ErrorStatement [322..324) fullWidth=2
-    ColonToken [322..324) fullWidth=2 text=":"
-      TrailingTrivia [323..324) fullWidth=1
+  ExpressionStatement [318..326) fullWidth=8
+    StringLiteralExpression [318..326) fullWidth=8
+      StringLiteral [318..319) fullWidth=1 text="""
+      StringLiteralContent [319..325) fullWidth=6
+        StringLiteral [319..325) fullWidth=6 text="Cancel"
+      StringLiteral [325..326) fullWidth=1 text="""
+  ErrorStatement [326..328) fullWidth=2
+    ColonToken [326..328) fullWidth=2 text=":"
+      TrailingTrivia [327..328) fullWidth=1
         WhitespaceTrivia width=1 " "
-  ExpressionStatement [324..329) fullWidth=5
-    IdentifierExpression [324..329) fullWidth=5
-      Identifier [324..329) fullWidth=5 text="goto"
-        TrailingTrivia [328..329) fullWidth=1
+  ExpressionStatement [328..333) fullWidth=5
+    IdentifierExpression [328..333) fullWidth=5
+      Identifier [328..333) fullWidth=5 text="goto"
+        TrailingTrivia [332..333) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [329..339) fullWidth=10
-    IdentifierExpression [329..339) fullWidth=10
-      Identifier [329..339) fullWidth=10 text="cancelled"
-        TrailingTrivia [338..339) fullWidth=1
+  ExpressionStatement [333..343) fullWidth=10
+    IdentifierExpression [333..343) fullWidth=10
+      Identifier [333..343) fullWidth=10 text="cancelled"
+        TrailingTrivia [342..343) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  MenuStatement [339..603) fullWidth=264
-    MenuKeyword [339..377) fullWidth=38 text="menu"
-      LeadingTrivia [339..372) fullWidth=33
+  ErrorStatement [343..345) fullWidth=2
+    CloseBraceToken [343..345) fullWidth=2 text="}"
+      TrailingTrivia [344..345) fullWidth=1
+        NewLineTrivia width=1 "\\n"
+  MenuStatement [345..609) fullWidth=264
+    MenuKeyword [345..383) fullWidth=38 text="menu"
+      LeadingTrivia [345..378) fullWidth=33
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=31 "// Menu with complex statements"
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [376..377) fullWidth=1
+      TrailingTrivia [382..383) fullWidth=1
         WhitespaceTrivia width=1 " "
-    NumericLiteral [377..379) fullWidth=2 text="3"
-      TrailingTrivia [378..379) fullWidth=1
+    NumericLiteral [383..385) fullWidth=2 text="3"
+      TrailingTrivia [384..385) fullWidth=1
         WhitespaceTrivia width=1 " "
-    OpenBraceToken [379..381) fullWidth=2 text="{"
-      TrailingTrivia [380..381) fullWidth=1
+    OpenBraceToken [385..387) fullWidth=2 text="{"
+      TrailingTrivia [386..387) fullWidth=1
         NewLineTrivia width=1 "\\n"
-    MenuOption [381..467) fullWidth=86
-      StringLiteralExpression [381..391) fullWidth=10
-        StringLiteral [381..386) fullWidth=5 text="""
-          LeadingTrivia [381..385) fullWidth=4
+    MenuOption [387..473) fullWidth=86
+      StringLiteralExpression [387..397) fullWidth=10
+        StringLiteral [387..392) fullWidth=5 text="""
+          LeadingTrivia [387..391) fullWidth=4
             WhitespaceTrivia width=4 "    "
-        StringLiteralContent [386..390) fullWidth=4
-          StringLiteral [386..390) fullWidth=4 text="Save"
-        StringLiteral [390..391) fullWidth=1 text="""
-      ColonToken [391..393) fullWidth=2 text=":"
-        TrailingTrivia [392..393) fullWidth=1
+        StringLiteralContent [392..396) fullWidth=4
+          StringLiteral [392..396) fullWidth=4 text="Save"
+        StringLiteral [396..397) fullWidth=1 text="""
+      ColonToken [397..399) fullWidth=2 text=":"
+        TrailingTrivia [398..399) fullWidth=1
           WhitespaceTrivia width=1 " "
-      BlockStatement [393..467) fullWidth=74
-        OpenBraceToken [393..395) fullWidth=2 text="{"
-          TrailingTrivia [394..395) fullWidth=1
+      BlockStatement [399..473) fullWidth=74
+        OpenBraceToken [399..401) fullWidth=2 text="{"
+          TrailingTrivia [400..401) fullWidth=1
             NewLineTrivia width=1 "\\n"
-        ExpressionStatement [395..407) fullWidth=12
-          IdentifierExpression [395..407) fullWidth=12
-            Identifier [395..407) fullWidth=12 text="set"
-              LeadingTrivia [395..403) fullWidth=8
+        ExpressionStatement [401..413) fullWidth=12
+          IdentifierExpression [401..413) fullWidth=12
+            Identifier [401..413) fullWidth=12 text="set"
+              LeadingTrivia [401..409) fullWidth=8
                 WhitespaceTrivia width=8 "        "
-              TrailingTrivia [406..407) fullWidth=1
+              TrailingTrivia [412..413) fullWidth=1
                 WhitespaceTrivia width=1 " "
-        ExpressionStatement [407..415) fullWidth=8
-          FlagExpression [407..415) fullWidth=8
-            FlagKeyword [407..412) fullWidth=5 text="flag"
-              TrailingTrivia [411..412) fullWidth=1
+        ExpressionStatement [413..421) fullWidth=8
+          FlagExpression [413..421) fullWidth=8
+            FlagKeyword [413..418) fullWidth=5 text="flag"
+              TrailingTrivia [417..418) fullWidth=1
                 WhitespaceTrivia width=1 " "
-            NumericLiteralExpression [412..415) fullWidth=3
-              NumericLiteral [412..415) fullWidth=3 text="10"
-                TrailingTrivia [414..415) fullWidth=1
+            NumericLiteralExpression [418..421) fullWidth=3
+              NumericLiteral [418..421) fullWidth=3 text="10"
+                TrailingTrivia [420..421) fullWidth=1
                   NewLineTrivia width=1 "\\n"
-        ExpressionStatement [415..428) fullWidth=13
-          IdentifierExpression [415..428) fullWidth=13
-            Identifier [415..428) fullWidth=13 text="call"
-              LeadingTrivia [415..423) fullWidth=8
+        ExpressionStatement [421..434) fullWidth=13
+          IdentifierExpression [421..434) fullWidth=13
+            Identifier [421..434) fullWidth=13 text="call"
+              LeadingTrivia [421..429) fullWidth=8
                 WhitespaceTrivia width=8 "        "
-              TrailingTrivia [427..428) fullWidth=1
+              TrailingTrivia [433..434) fullWidth=1
                 WhitespaceTrivia width=1 " "
-        ExpressionStatement [428..438) fullWidth=10
-          IdentifierExpression [428..438) fullWidth=10
-            Identifier [428..438) fullWidth=10 text="save_game"
-              TrailingTrivia [437..438) fullWidth=1
+        ExpressionStatement [434..444) fullWidth=10
+          IdentifierExpression [434..444) fullWidth=10
+            Identifier [434..444) fullWidth=10 text="save_game"
+              TrailingTrivia [443..444) fullWidth=1
                 NewLineTrivia width=1 "\\n"
-        ExpressionStatement [438..451) fullWidth=13
-          IdentifierExpression [438..451) fullWidth=13
-            Identifier [438..451) fullWidth=13 text="goto"
-              LeadingTrivia [438..446) fullWidth=8
+        ExpressionStatement [444..457) fullWidth=13
+          IdentifierExpression [444..457) fullWidth=13
+            Identifier [444..457) fullWidth=13 text="goto"
+              LeadingTrivia [444..452) fullWidth=8
                 WhitespaceTrivia width=8 "        "
-              TrailingTrivia [450..451) fullWidth=1
+              TrailingTrivia [456..457) fullWidth=1
                 WhitespaceTrivia width=1 " "
-        ExpressionStatement [451..461) fullWidth=10
-          IdentifierExpression [451..461) fullWidth=10
-            Identifier [451..461) fullWidth=10 text="main_menu"
-              TrailingTrivia [460..461) fullWidth=1
+        ExpressionStatement [457..467) fullWidth=10
+          IdentifierExpression [457..467) fullWidth=10
+            Identifier [457..467) fullWidth=10 text="main_menu"
+              TrailingTrivia [466..467) fullWidth=1
                 NewLineTrivia width=1 "\\n"
-        CloseBraceToken [461..467) fullWidth=6 text="}"
-          LeadingTrivia [461..465) fullWidth=4
-            WhitespaceTrivia width=4 "    "
-          TrailingTrivia [466..467) fullWidth=1
-            NewLineTrivia width=1 "\\n"
-    MenuOption [467..533) fullWidth=66
-      StringLiteralExpression [467..477) fullWidth=10
-        StringLiteral [467..472) fullWidth=5 text="""
+        CloseBraceToken [467..473) fullWidth=6 text="}"
           LeadingTrivia [467..471) fullWidth=4
             WhitespaceTrivia width=4 "    "
-        StringLiteralContent [472..476) fullWidth=4
-          StringLiteral [472..476) fullWidth=4 text="Load"
-        StringLiteral [476..477) fullWidth=1 text="""
-      ColonToken [477..479) fullWidth=2 text=":"
-        TrailingTrivia [478..479) fullWidth=1
-          WhitespaceTrivia width=1 " "
-      BlockStatement [479..533) fullWidth=54
-        OpenBraceToken [479..481) fullWidth=2 text="{"
-          TrailingTrivia [480..481) fullWidth=1
+          TrailingTrivia [472..473) fullWidth=1
             NewLineTrivia width=1 "\\n"
-        ExpressionStatement [481..494) fullWidth=13
-          IdentifierExpression [481..494) fullWidth=13
-            Identifier [481..494) fullWidth=13 text="call"
-              LeadingTrivia [481..489) fullWidth=8
-                WhitespaceTrivia width=8 "        "
-              TrailingTrivia [493..494) fullWidth=1
-                WhitespaceTrivia width=1 " "
-        ExpressionStatement [494..504) fullWidth=10
-          IdentifierExpression [494..504) fullWidth=10
-            Identifier [494..504) fullWidth=10 text="load_game"
-              TrailingTrivia [503..504) fullWidth=1
-                NewLineTrivia width=1 "\\n"
-        ExpressionStatement [504..517) fullWidth=13
-          IdentifierExpression [504..517) fullWidth=13
-            Identifier [504..517) fullWidth=13 text="goto"
-              LeadingTrivia [504..512) fullWidth=8
-                WhitespaceTrivia width=8 "        "
-              TrailingTrivia [516..517) fullWidth=1
-                WhitespaceTrivia width=1 " "
-        ExpressionStatement [517..527) fullWidth=10
-          IdentifierExpression [517..527) fullWidth=10
-            Identifier [517..527) fullWidth=10 text="main_menu"
-              TrailingTrivia [526..527) fullWidth=1
-                NewLineTrivia width=1 "\\n"
-        CloseBraceToken [527..533) fullWidth=6 text="}"
-          LeadingTrivia [527..531) fullWidth=4
+    MenuOption [473..539) fullWidth=66
+      StringLiteralExpression [473..483) fullWidth=10
+        StringLiteral [473..478) fullWidth=5 text="""
+          LeadingTrivia [473..477) fullWidth=4
             WhitespaceTrivia width=4 "    "
-          TrailingTrivia [532..533) fullWidth=1
+        StringLiteralContent [478..482) fullWidth=4
+          StringLiteral [478..482) fullWidth=4 text="Load"
+        StringLiteral [482..483) fullWidth=1 text="""
+      ColonToken [483..485) fullWidth=2 text=":"
+        TrailingTrivia [484..485) fullWidth=1
+          WhitespaceTrivia width=1 " "
+      BlockStatement [485..539) fullWidth=54
+        OpenBraceToken [485..487) fullWidth=2 text="{"
+          TrailingTrivia [486..487) fullWidth=1
             NewLineTrivia width=1 "\\n"
-    MenuOption [533..601) fullWidth=68
-      StringLiteralExpression [533..543) fullWidth=10
-        StringLiteral [533..538) fullWidth=5 text="""
+        ExpressionStatement [487..500) fullWidth=13
+          IdentifierExpression [487..500) fullWidth=13
+            Identifier [487..500) fullWidth=13 text="call"
+              LeadingTrivia [487..495) fullWidth=8
+                WhitespaceTrivia width=8 "        "
+              TrailingTrivia [499..500) fullWidth=1
+                WhitespaceTrivia width=1 " "
+        ExpressionStatement [500..510) fullWidth=10
+          IdentifierExpression [500..510) fullWidth=10
+            Identifier [500..510) fullWidth=10 text="load_game"
+              TrailingTrivia [509..510) fullWidth=1
+                NewLineTrivia width=1 "\\n"
+        ExpressionStatement [510..523) fullWidth=13
+          IdentifierExpression [510..523) fullWidth=13
+            Identifier [510..523) fullWidth=13 text="goto"
+              LeadingTrivia [510..518) fullWidth=8
+                WhitespaceTrivia width=8 "        "
+              TrailingTrivia [522..523) fullWidth=1
+                WhitespaceTrivia width=1 " "
+        ExpressionStatement [523..533) fullWidth=10
+          IdentifierExpression [523..533) fullWidth=10
+            Identifier [523..533) fullWidth=10 text="main_menu"
+              TrailingTrivia [532..533) fullWidth=1
+                NewLineTrivia width=1 "\\n"
+        CloseBraceToken [533..539) fullWidth=6 text="}"
           LeadingTrivia [533..537) fullWidth=4
             WhitespaceTrivia width=4 "    "
-        StringLiteralContent [538..542) fullWidth=4
-          StringLiteral [538..542) fullWidth=4 text="Quit"
-        StringLiteral [542..543) fullWidth=1 text="""
-      ColonToken [543..545) fullWidth=2 text=":"
-        TrailingTrivia [544..545) fullWidth=1
-          WhitespaceTrivia width=1 " "
-      BlockStatement [545..601) fullWidth=56
-        OpenBraceToken [545..547) fullWidth=2 text="{"
-          TrailingTrivia [546..547) fullWidth=1
+          TrailingTrivia [538..539) fullWidth=1
             NewLineTrivia width=1 "\\n"
-        ExpressionStatement [547..561) fullWidth=14
-          IdentifierExpression [547..561) fullWidth=14
-            Identifier [547..561) fullWidth=14 text="unset"
-              LeadingTrivia [547..555) fullWidth=8
-                WhitespaceTrivia width=8 "        "
-              TrailingTrivia [560..561) fullWidth=1
-                WhitespaceTrivia width=1 " "
-        ExpressionStatement [561..569) fullWidth=8
-          FlagExpression [561..569) fullWidth=8
-            FlagKeyword [561..566) fullWidth=5 text="flag"
-              TrailingTrivia [565..566) fullWidth=1
-                WhitespaceTrivia width=1 " "
-            NumericLiteralExpression [566..569) fullWidth=3
-              NumericLiteral [566..569) fullWidth=3 text="10"
-                TrailingTrivia [568..569) fullWidth=1
-                  NewLineTrivia width=1 "\\n"
-        ExpressionStatement [569..582) fullWidth=13
-          IdentifierExpression [569..582) fullWidth=13
-            Identifier [569..582) fullWidth=13 text="goto"
-              LeadingTrivia [569..577) fullWidth=8
-                WhitespaceTrivia width=8 "        "
-              TrailingTrivia [581..582) fullWidth=1
-                WhitespaceTrivia width=1 " "
-        ExpressionStatement [582..595) fullWidth=13
-          IdentifierExpression [582..595) fullWidth=13
-            Identifier [582..595) fullWidth=13 text="title_screen"
-              TrailingTrivia [594..595) fullWidth=1
-                NewLineTrivia width=1 "\\n"
-        CloseBraceToken [595..601) fullWidth=6 text="}"
-          LeadingTrivia [595..599) fullWidth=4
+    MenuOption [539..607) fullWidth=68
+      StringLiteralExpression [539..549) fullWidth=10
+        StringLiteral [539..544) fullWidth=5 text="""
+          LeadingTrivia [539..543) fullWidth=4
             WhitespaceTrivia width=4 "    "
-          TrailingTrivia [600..601) fullWidth=1
+        StringLiteralContent [544..548) fullWidth=4
+          StringLiteral [544..548) fullWidth=4 text="Quit"
+        StringLiteral [548..549) fullWidth=1 text="""
+      ColonToken [549..551) fullWidth=2 text=":"
+        TrailingTrivia [550..551) fullWidth=1
+          WhitespaceTrivia width=1 " "
+      BlockStatement [551..607) fullWidth=56
+        OpenBraceToken [551..553) fullWidth=2 text="{"
+          TrailingTrivia [552..553) fullWidth=1
             NewLineTrivia width=1 "\\n"
-    CloseBraceToken [601..603) fullWidth=2 text="}"
-      TrailingTrivia [602..603) fullWidth=1
+        ExpressionStatement [553..567) fullWidth=14
+          IdentifierExpression [553..567) fullWidth=14
+            Identifier [553..567) fullWidth=14 text="unset"
+              LeadingTrivia [553..561) fullWidth=8
+                WhitespaceTrivia width=8 "        "
+              TrailingTrivia [566..567) fullWidth=1
+                WhitespaceTrivia width=1 " "
+        ExpressionStatement [567..575) fullWidth=8
+          FlagExpression [567..575) fullWidth=8
+            FlagKeyword [567..572) fullWidth=5 text="flag"
+              TrailingTrivia [571..572) fullWidth=1
+                WhitespaceTrivia width=1 " "
+            NumericLiteralExpression [572..575) fullWidth=3
+              NumericLiteral [572..575) fullWidth=3 text="10"
+                TrailingTrivia [574..575) fullWidth=1
+                  NewLineTrivia width=1 "\\n"
+        ExpressionStatement [575..588) fullWidth=13
+          IdentifierExpression [575..588) fullWidth=13
+            Identifier [575..588) fullWidth=13 text="goto"
+              LeadingTrivia [575..583) fullWidth=8
+                WhitespaceTrivia width=8 "        "
+              TrailingTrivia [587..588) fullWidth=1
+                WhitespaceTrivia width=1 " "
+        ExpressionStatement [588..601) fullWidth=13
+          IdentifierExpression [588..601) fullWidth=13
+            Identifier [588..601) fullWidth=13 text="title_screen"
+              TrailingTrivia [600..601) fullWidth=1
+                NewLineTrivia width=1 "\\n"
+        CloseBraceToken [601..607) fullWidth=6 text="}"
+          LeadingTrivia [601..605) fullWidth=4
+            WhitespaceTrivia width=4 "    "
+          TrailingTrivia [606..607) fullWidth=1
+            NewLineTrivia width=1 "\\n"
+    CloseBraceToken [607..609) fullWidth=2 text="}"
+      TrailingTrivia [608..609) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  LabelDeclaration [603..610) fullWidth=7
-    Identifier [603..608) fullWidth=5 text="opt1"
-      LeadingTrivia [603..604) fullWidth=1
+  LabelDeclaration [609..616) fullWidth=7
+    Identifier [609..614) fullWidth=5 text="opt1"
+      LeadingTrivia [609..610) fullWidth=1
         NewLineTrivia width=1 "\\n"
-    ColonToken [608..610) fullWidth=2 text=":"
-      TrailingTrivia [609..610) fullWidth=1
-        NewLineTrivia width=1 "\\n"
-  LabelDeclaration [610..616) fullWidth=6
-    Identifier [610..614) fullWidth=4 text="opt2"
     ColonToken [614..616) fullWidth=2 text=":"
       TrailingTrivia [615..616) fullWidth=1
         NewLineTrivia width=1 "\\n"
   LabelDeclaration [616..622) fullWidth=6
-    Identifier [616..620) fullWidth=4 text="opt3"
+    Identifier [616..620) fullWidth=4 text="opt2"
     ColonToken [620..622) fullWidth=2 text=":"
       TrailingTrivia [621..622) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  LabelDeclaration [622..632) fullWidth=10
-    Identifier [622..630) fullWidth=8 text="handler1"
-    ColonToken [630..632) fullWidth=2 text=":"
-      TrailingTrivia [631..632) fullWidth=1
+  LabelDeclaration [622..628) fullWidth=6
+    Identifier [622..626) fullWidth=4 text="opt3"
+    ColonToken [626..628) fullWidth=2 text=":"
+      TrailingTrivia [627..628) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  LabelDeclaration [632..642) fullWidth=10
-    Identifier [632..640) fullWidth=8 text="handler2"
-    ColonToken [640..642) fullWidth=2 text=":"
-      TrailingTrivia [641..642) fullWidth=1
+  LabelDeclaration [628..638) fullWidth=10
+    Identifier [628..636) fullWidth=8 text="handler1"
+    ColonToken [636..638) fullWidth=2 text=":"
+      TrailingTrivia [637..638) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  LabelDeclaration [642..653) fullWidth=11
-    Identifier [642..651) fullWidth=9 text="cancelled"
-    ColonToken [651..653) fullWidth=2 text=":"
-      TrailingTrivia [652..653) fullWidth=1
+  LabelDeclaration [638..648) fullWidth=10
+    Identifier [638..646) fullWidth=8 text="handler2"
+    ColonToken [646..648) fullWidth=2 text=":"
+      TrailingTrivia [647..648) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  LabelDeclaration [653..664) fullWidth=11
-    Identifier [653..662) fullWidth=9 text="main_menu"
-    ColonToken [662..664) fullWidth=2 text=":"
-      TrailingTrivia [663..664) fullWidth=1
+  LabelDeclaration [648..659) fullWidth=11
+    Identifier [648..657) fullWidth=9 text="cancelled"
+    ColonToken [657..659) fullWidth=2 text=":"
+      TrailingTrivia [658..659) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  LabelDeclaration [664..675) fullWidth=11
-    Identifier [664..673) fullWidth=9 text="save_game"
-    ColonToken [673..675) fullWidth=2 text=":"
-      TrailingTrivia [674..675) fullWidth=1
+  LabelDeclaration [659..670) fullWidth=11
+    Identifier [659..668) fullWidth=9 text="main_menu"
+    ColonToken [668..670) fullWidth=2 text=":"
+      TrailingTrivia [669..670) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  LabelDeclaration [675..686) fullWidth=11
-    Identifier [675..684) fullWidth=9 text="load_game"
-    ColonToken [684..686) fullWidth=2 text=":"
-      TrailingTrivia [685..686) fullWidth=1
+  LabelDeclaration [670..681) fullWidth=11
+    Identifier [670..679) fullWidth=9 text="save_game"
+    ColonToken [679..681) fullWidth=2 text=":"
+      TrailingTrivia [680..681) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  LabelDeclaration [686..700) fullWidth=14
-    Identifier [686..698) fullWidth=12 text="title_screen"
-    ColonToken [698..700) fullWidth=2 text=":"
-      TrailingTrivia [699..700) fullWidth=1
+  LabelDeclaration [681..692) fullWidth=11
+    Identifier [681..690) fullWidth=9 text="load_game"
+    ColonToken [690..692) fullWidth=2 text=":"
+      TrailingTrivia [691..692) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  EndOfFileToken [700..700) fullWidth=0 text=""
+  LabelDeclaration [692..706) fullWidth=14
+    Identifier [692..704) fullWidth=12 text="title_screen"
+    ColonToken [704..706) fullWidth=2 text=":"
+      TrailingTrivia [705..706) fullWidth=1
+        NewLineTrivia width=1 "\\n"
+  EndOfFileToken [706..706) fullWidth=0 text=""
 "
 `;
 
@@ -1912,7 +1931,7 @@ exports[`AST Snapshots should match AST snapshot for 06-commands.ccs 1`] = `
 `;
 
 exports[`AST Snapshots should match AST snapshot for 07-rom-access.ccs 1`] = `
-"SourceFile [0..548) fullWidth=548
+"SourceFile [0..550) fullWidth=550
   ROMWriteStatement [0..40) fullWidth=40
     ROMKeyword [0..24) fullWidth=24 text="ROM"
       LeadingTrivia [0..21) fullWidth=21
@@ -2194,14 +2213,14 @@ exports[`AST Snapshots should match AST snapshot for 07-rom-access.ccs 1`] = `
       HexLiteral [469..476) fullWidth=7 text="0xFF00"
         TrailingTrivia [475..476) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ROMWriteStatement [476..548) fullWidth=72
+  ROMWriteStatement [476..550) fullWidth=74
     ROMKeyword [476..520) fullWidth=44 text="ROM"
       LeadingTrivia [476..517) fullWidth=41
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=39 "// ROM writes with calculated addresses"
         NewLineTrivia width=1 "\\n"
     OpenBracketToken [520..521) fullWidth=1 text="["
-    BinaryExpression [521..541) fullWidth=20
+    BinaryExpression [521..543) fullWidth=22
       NumericLiteralExpression [521..528) fullWidth=7
         HexLiteral [521..528) fullWidth=7 text="0x4000"
           TrailingTrivia [527..528) fullWidth=1
@@ -2209,36 +2228,39 @@ exports[`AST Snapshots should match AST snapshot for 07-rom-access.ccs 1`] = `
       Identifier [528..530) fullWidth=2 text="+"
         TrailingTrivia [529..530) fullWidth=1
           WhitespaceTrivia width=1 " "
-      BinaryExpression [530..541) fullWidth=11
-        FlagExpression [530..538) fullWidth=8
-          FlagKeyword [530..535) fullWidth=5 text="flag"
-            TrailingTrivia [534..535) fullWidth=1
-              WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [535..538) fullWidth=3
-            NumericLiteral [535..538) fullWidth=3 text="10"
-              TrailingTrivia [537..538) fullWidth=1
+      ParenthesizedExpression [530..543) fullWidth=13
+        OpenParenToken [530..531) fullWidth=1 text="("
+        BinaryExpression [531..542) fullWidth=11
+          FlagExpression [531..539) fullWidth=8
+            FlagKeyword [531..536) fullWidth=5 text="flag"
+              TrailingTrivia [535..536) fullWidth=1
                 WhitespaceTrivia width=1 " "
-        Identifier [538..540) fullWidth=2 text="*"
-          TrailingTrivia [539..540) fullWidth=1
-            WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [540..541) fullWidth=1
-          NumericLiteral [540..541) fullWidth=1 text="2"
-    CloseBracketToken [541..543) fullWidth=2 text="]"
-      TrailingTrivia [542..543) fullWidth=1
-        WhitespaceTrivia width=1 " "
-    EqualsToken [543..545) fullWidth=2 text="="
+            NumericLiteralExpression [536..539) fullWidth=3
+              NumericLiteral [536..539) fullWidth=3 text="10"
+                TrailingTrivia [538..539) fullWidth=1
+                  WhitespaceTrivia width=1 " "
+          Identifier [539..541) fullWidth=2 text="*"
+            TrailingTrivia [540..541) fullWidth=1
+              WhitespaceTrivia width=1 " "
+          NumericLiteralExpression [541..542) fullWidth=1
+            NumericLiteral [541..542) fullWidth=1 text="2"
+        CloseParenToken [542..543) fullWidth=1 text=")"
+    CloseBracketToken [543..545) fullWidth=2 text="]"
       TrailingTrivia [544..545) fullWidth=1
         WhitespaceTrivia width=1 " "
-    NumericLiteralExpression [545..548) fullWidth=3
-      NumericLiteral [545..548) fullWidth=3 text="99"
-        TrailingTrivia [547..548) fullWidth=1
+    EqualsToken [545..547) fullWidth=2 text="="
+      TrailingTrivia [546..547) fullWidth=1
+        WhitespaceTrivia width=1 " "
+    NumericLiteralExpression [547..550) fullWidth=3
+      NumericLiteral [547..550) fullWidth=3 text="99"
+        TrailingTrivia [549..550) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  EndOfFileToken [548..548) fullWidth=0 text=""
+  EndOfFileToken [550..550) fullWidth=0 text=""
 "
 `;
 
 exports[`AST Snapshots should match AST snapshot for 08-array-access.ccs 1`] = `
-"SourceFile [0..490) fullWidth=490
+"SourceFile [0..496) fullWidth=496
   ExpressionStatement [0..43) fullWidth=43
     ArrayAccessExpression [0..43) fullWidth=43
       ByteKeyword [0..32) fullWidth=32 text="byte"
@@ -2486,7 +2508,7 @@ exports[`AST Snapshots should match AST snapshot for 08-array-access.ccs 1`] = `
       CloseBraceToken [441..443) fullWidth=2 text="}"
         TrailingTrivia [442..443) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ConstantDeclaration [443..490) fullWidth=47
+  ConstantDeclaration [443..496) fullWidth=53
     DefineKeyword [443..451) fullWidth=8 text="define"
       LeadingTrivia [443..444) fullWidth=1
         NewLineTrivia width=1 "\\n"
@@ -2498,34 +2520,44 @@ exports[`AST Snapshots should match AST snapshot for 08-array-access.ccs 1`] = `
     EqualsToken [458..460) fullWidth=2 text="="
       TrailingTrivia [459..460) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BinaryExpression [460..490) fullWidth=30
-      ArrayAccessExpression [460..474) fullWidth=14
-        ByteKeyword [460..464) fullWidth=4 text="byte"
-        OpenBracketToken [464..465) fullWidth=1 text="["
-        NumericLiteral [465..466) fullWidth=1 text="0"
-        CloseBracketToken [466..468) fullWidth=2 text="]"
-          TrailingTrivia [467..468) fullWidth=1
+    BinaryExpression [460..496) fullWidth=36
+      ParenthesizedExpression [460..477) fullWidth=17
+        OpenParenToken [460..461) fullWidth=1 text="("
+        ArrayAccessExpression [461..475) fullWidth=14
+          ByteKeyword [461..465) fullWidth=4 text="byte"
+          OpenBracketToken [465..466) fullWidth=1 text="["
+          NumericLiteral [466..467) fullWidth=1 text="0"
+          CloseBracketToken [467..469) fullWidth=2 text="]"
+            TrailingTrivia [468..469) fullWidth=1
+              WhitespaceTrivia width=1 " "
+          NumericLiteralExpression [469..475) fullWidth=6
+            HexLiteral [469..475) fullWidth=6 text="0x1000"
+        CloseParenToken [475..477) fullWidth=2 text=")"
+          TrailingTrivia [476..477) fullWidth=1
             WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [468..474) fullWidth=6
-          HexLiteral [468..474) fullWidth=6 text="0x1000"
-      Identifier [474..476) fullWidth=2 text="+"
-        TrailingTrivia [475..476) fullWidth=1
+      Identifier [477..479) fullWidth=2 text="+"
+        TrailingTrivia [478..479) fullWidth=1
           WhitespaceTrivia width=1 " "
-      ArrayAccessExpression [476..490) fullWidth=14
-        ByteKeyword [476..480) fullWidth=4 text="byte"
-        OpenBracketToken [480..481) fullWidth=1 text="["
-        NumericLiteral [481..482) fullWidth=1 text="1"
-        CloseBracketToken [482..484) fullWidth=2 text="]"
-          TrailingTrivia [483..484) fullWidth=1
-            WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [484..490) fullWidth=6
-          HexLiteral [484..490) fullWidth=6 text="0x1000"
-  EndOfFileToken [490..490) fullWidth=0 text=""
+      ParenthesizedExpression [479..496) fullWidth=17
+        OpenParenToken [479..480) fullWidth=1 text="("
+        ArrayAccessExpression [480..494) fullWidth=14
+          ByteKeyword [480..484) fullWidth=4 text="byte"
+          OpenBracketToken [484..485) fullWidth=1 text="["
+          NumericLiteral [485..486) fullWidth=1 text="1"
+          CloseBracketToken [486..488) fullWidth=2 text="]"
+            TrailingTrivia [487..488) fullWidth=1
+              WhitespaceTrivia width=1 " "
+          NumericLiteralExpression [488..494) fullWidth=6
+            HexLiteral [488..494) fullWidth=6 text="0x1000"
+        CloseParenToken [494..496) fullWidth=2 text=")"
+          TrailingTrivia [495..496) fullWidth=1
+            NewLineTrivia width=1 "\\n"
+  EndOfFileToken [496..496) fullWidth=0 text=""
 "
 `;
 
 exports[`AST Snapshots should match AST snapshot for 09-flags.ccs 1`] = `
-"SourceFile [0..409) fullWidth=409
+"SourceFile [0..412) fullWidth=412
   ConstantDeclaration [0..39) fullWidth=39
     DefineKeyword [0..27) fullWidth=27 text="define"
       LeadingTrivia [0..20) fullWidth=20
@@ -2663,7 +2695,7 @@ exports[`AST Snapshots should match AST snapshot for 09-flags.ccs 1`] = `
       CloseBraceToken [172..174) fullWidth=2 text="}"
         TrailingTrivia [173..174) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ConstantDeclaration [174..255) fullWidth=81
+  ConstantDeclaration [174..258) fullWidth=84
     DefineKeyword [174..213) fullWidth=39 text="define"
       LeadingTrivia [174..206) fullWidth=32
         NewLineTrivia width=1 "\\n"
@@ -2677,161 +2709,166 @@ exports[`AST Snapshots should match AST snapshot for 09-flags.ccs 1`] = `
     EqualsToken [226..228) fullWidth=2 text="="
       TrailingTrivia [227..228) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BinaryExpression [228..255) fullWidth=27
-      BinaryExpression [228..245) fullWidth=17
-        FlagExpression [228..235) fullWidth=7
-          FlagKeyword [228..233) fullWidth=5 text="flag"
-            TrailingTrivia [232..233) fullWidth=1
-              WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [233..235) fullWidth=2
-            NumericLiteral [233..235) fullWidth=2 text="5"
-              TrailingTrivia [234..235) fullWidth=1
+    BinaryExpression [228..258) fullWidth=30
+      ParenthesizedExpression [228..248) fullWidth=20
+        OpenParenToken [228..229) fullWidth=1 text="("
+        BinaryExpression [229..246) fullWidth=17
+          FlagExpression [229..236) fullWidth=7
+            FlagKeyword [229..234) fullWidth=5 text="flag"
+              TrailingTrivia [233..234) fullWidth=1
                 WhitespaceTrivia width=1 " "
-        AndKeyword [235..239) fullWidth=4 text="and"
-          TrailingTrivia [238..239) fullWidth=1
-            WhitespaceTrivia width=1 " "
-        FlagExpression [239..245) fullWidth=6
-          FlagKeyword [239..244) fullWidth=5 text="flag"
-            TrailingTrivia [243..244) fullWidth=1
+            NumericLiteralExpression [234..236) fullWidth=2
+              NumericLiteral [234..236) fullWidth=2 text="5"
+                TrailingTrivia [235..236) fullWidth=1
+                  WhitespaceTrivia width=1 " "
+          AndKeyword [236..240) fullWidth=4 text="and"
+            TrailingTrivia [239..240) fullWidth=1
               WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [244..245) fullWidth=1
-            NumericLiteral [244..245) fullWidth=1 text="6"
-      OrKeyword [245..248) fullWidth=3 text="or"
-        TrailingTrivia [247..248) fullWidth=1
-          WhitespaceTrivia width=1 " "
-      FlagExpression [248..255) fullWidth=7
-        FlagKeyword [248..253) fullWidth=5 text="flag"
-          TrailingTrivia [252..253) fullWidth=1
+          FlagExpression [240..246) fullWidth=6
+            FlagKeyword [240..245) fullWidth=5 text="flag"
+              TrailingTrivia [244..245) fullWidth=1
+                WhitespaceTrivia width=1 " "
+            NumericLiteralExpression [245..246) fullWidth=1
+              NumericLiteral [245..246) fullWidth=1 text="6"
+        CloseParenToken [246..248) fullWidth=2 text=")"
+          TrailingTrivia [247..248) fullWidth=1
             WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [253..255) fullWidth=2
-          NumericLiteral [253..255) fullWidth=2 text="7"
-            TrailingTrivia [254..255) fullWidth=1
+      OrKeyword [248..251) fullWidth=3 text="or"
+        TrailingTrivia [250..251) fullWidth=1
+          WhitespaceTrivia width=1 " "
+      FlagExpression [251..258) fullWidth=7
+        FlagKeyword [251..256) fullWidth=5 text="flag"
+          TrailingTrivia [255..256) fullWidth=1
+            WhitespaceTrivia width=1 " "
+        NumericLiteralExpression [256..258) fullWidth=2
+          NumericLiteral [256..258) fullWidth=2 text="7"
+            TrailingTrivia [257..258) fullWidth=1
               NewLineTrivia width=1 "\\n"
-  IfStatement [255..310) fullWidth=55
-    IfKeyword [255..279) fullWidth=24 text="if"
-      LeadingTrivia [255..276) fullWidth=21
+  IfStatement [258..313) fullWidth=55
+    IfKeyword [258..282) fullWidth=24 text="if"
+      LeadingTrivia [258..279) fullWidth=21
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=19 "// Flag comparisons"
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [278..279) fullWidth=1
+      TrailingTrivia [281..282) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BinaryExpression [279..292) fullWidth=13
-      FlagExpression [279..287) fullWidth=8
-        FlagKeyword [279..284) fullWidth=5 text="flag"
-          TrailingTrivia [283..284) fullWidth=1
+    BinaryExpression [282..295) fullWidth=13
+      FlagExpression [282..290) fullWidth=8
+        FlagKeyword [282..287) fullWidth=5 text="flag"
+          TrailingTrivia [286..287) fullWidth=1
             WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [284..287) fullWidth=3
-          NumericLiteral [284..287) fullWidth=3 text="30"
-            TrailingTrivia [286..287) fullWidth=1
+        NumericLiteralExpression [287..290) fullWidth=3
+          NumericLiteral [287..290) fullWidth=3 text="30"
+            TrailingTrivia [289..290) fullWidth=1
               WhitespaceTrivia width=1 " "
-      EqualsToken [287..290) fullWidth=3 text="=="
-        TrailingTrivia [289..290) fullWidth=1
+      EqualsToken [290..293) fullWidth=3 text="=="
+        TrailingTrivia [292..293) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [290..292) fullWidth=2
-        NumericLiteral [290..292) fullWidth=2 text="1"
-          TrailingTrivia [291..292) fullWidth=1
+      NumericLiteralExpression [293..295) fullWidth=2
+        NumericLiteral [293..295) fullWidth=2 text="1"
+          TrailingTrivia [294..295) fullWidth=1
             WhitespaceTrivia width=1 " "
-    BlockStatement [292..310) fullWidth=18
-      OpenBraceToken [292..294) fullWidth=2 text="{"
-        TrailingTrivia [293..294) fullWidth=1
+    BlockStatement [295..313) fullWidth=18
+      OpenBraceToken [295..297) fullWidth=2 text="{"
+        TrailingTrivia [296..297) fullWidth=1
           NewLineTrivia width=1 "\\n"
-      ExpressionStatement [294..303) fullWidth=9
-        IdentifierExpression [294..303) fullWidth=9
-          Identifier [294..303) fullWidth=9 text="goto"
-            LeadingTrivia [294..298) fullWidth=4
+      ExpressionStatement [297..306) fullWidth=9
+        IdentifierExpression [297..306) fullWidth=9
+          Identifier [297..306) fullWidth=9 text="goto"
+            LeadingTrivia [297..301) fullWidth=4
               WhitespaceTrivia width=4 "    "
-            TrailingTrivia [302..303) fullWidth=1
+            TrailingTrivia [305..306) fullWidth=1
               WhitespaceTrivia width=1 " "
-      ExpressionStatement [303..308) fullWidth=5
-        IdentifierExpression [303..308) fullWidth=5
-          Identifier [303..308) fullWidth=5 text="next"
-            TrailingTrivia [307..308) fullWidth=1
+      ExpressionStatement [306..311) fullWidth=5
+        IdentifierExpression [306..311) fullWidth=5
+          Identifier [306..311) fullWidth=5 text="next"
+            TrailingTrivia [310..311) fullWidth=1
               NewLineTrivia width=1 "\\n"
-      CloseBraceToken [308..310) fullWidth=2 text="}"
-        TrailingTrivia [309..310) fullWidth=1
+      CloseBraceToken [311..313) fullWidth=2 text="}"
+        TrailingTrivia [312..313) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  IfStatement [310..348) fullWidth=38
-    IfKeyword [310..314) fullWidth=4 text="if"
-      LeadingTrivia [310..311) fullWidth=1
+  IfStatement [313..351) fullWidth=38
+    IfKeyword [313..317) fullWidth=4 text="if"
+      LeadingTrivia [313..314) fullWidth=1
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [313..314) fullWidth=1
+      TrailingTrivia [316..317) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BinaryExpression [314..327) fullWidth=13
-      FlagExpression [314..322) fullWidth=8
-        FlagKeyword [314..319) fullWidth=5 text="flag"
-          TrailingTrivia [318..319) fullWidth=1
+    BinaryExpression [317..330) fullWidth=13
+      FlagExpression [317..325) fullWidth=8
+        FlagKeyword [317..322) fullWidth=5 text="flag"
+          TrailingTrivia [321..322) fullWidth=1
             WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [319..322) fullWidth=3
-          NumericLiteral [319..322) fullWidth=3 text="40"
-            TrailingTrivia [321..322) fullWidth=1
+        NumericLiteralExpression [322..325) fullWidth=3
+          NumericLiteral [322..325) fullWidth=3 text="40"
+            TrailingTrivia [324..325) fullWidth=1
               WhitespaceTrivia width=1 " "
-      EqualsToken [322..325) fullWidth=3 text="!="
-        TrailingTrivia [324..325) fullWidth=1
+      EqualsToken [325..328) fullWidth=3 text="!="
+        TrailingTrivia [327..328) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [325..327) fullWidth=2
-        NumericLiteral [325..327) fullWidth=2 text="0"
-          TrailingTrivia [326..327) fullWidth=1
+      NumericLiteralExpression [328..330) fullWidth=2
+        NumericLiteral [328..330) fullWidth=2 text="0"
+          TrailingTrivia [329..330) fullWidth=1
             WhitespaceTrivia width=1 " "
-    BlockStatement [327..348) fullWidth=21
-      OpenBraceToken [327..329) fullWidth=2 text="{"
-        TrailingTrivia [328..329) fullWidth=1
+    BlockStatement [330..351) fullWidth=21
+      OpenBraceToken [330..332) fullWidth=2 text="{"
+        TrailingTrivia [331..332) fullWidth=1
           NewLineTrivia width=1 "\\n"
-      ExpressionStatement [329..338) fullWidth=9
-        IdentifierExpression [329..338) fullWidth=9
-          Identifier [329..338) fullWidth=9 text="call"
-            LeadingTrivia [329..333) fullWidth=4
+      ExpressionStatement [332..341) fullWidth=9
+        IdentifierExpression [332..341) fullWidth=9
+          Identifier [332..341) fullWidth=9 text="call"
+            LeadingTrivia [332..336) fullWidth=4
               WhitespaceTrivia width=4 "    "
-            TrailingTrivia [337..338) fullWidth=1
+            TrailingTrivia [340..341) fullWidth=1
               WhitespaceTrivia width=1 " "
-      ExpressionStatement [338..346) fullWidth=8
-        IdentifierExpression [338..346) fullWidth=8
-          Identifier [338..346) fullWidth=8 text="handler"
-            TrailingTrivia [345..346) fullWidth=1
+      ExpressionStatement [341..349) fullWidth=8
+        IdentifierExpression [341..349) fullWidth=8
+          Identifier [341..349) fullWidth=8 text="handler"
+            TrailingTrivia [348..349) fullWidth=1
               NewLineTrivia width=1 "\\n"
-      CloseBraceToken [346..348) fullWidth=2 text="}"
-        TrailingTrivia [347..348) fullWidth=1
+      CloseBraceToken [349..351) fullWidth=2 text="}"
+        TrailingTrivia [350..351) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ROMWriteStatement [348..393) fullWidth=45
-    ROMKeyword [348..374) fullWidth=26 text="ROM"
-      LeadingTrivia [348..371) fullWidth=23
+  ROMWriteStatement [351..396) fullWidth=45
+    ROMKeyword [351..377) fullWidth=26 text="ROM"
+      LeadingTrivia [351..374) fullWidth=23
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=21 "// Flag in ROM writes"
         NewLineTrivia width=1 "\\n"
-    OpenBracketToken [374..375) fullWidth=1 text="["
-    NumericLiteralExpression [375..381) fullWidth=6
-      HexLiteral [375..381) fullWidth=6 text="0x1000"
-    CloseBracketToken [381..383) fullWidth=2 text="]"
-      TrailingTrivia [382..383) fullWidth=1
+    OpenBracketToken [377..378) fullWidth=1 text="["
+    NumericLiteralExpression [378..384) fullWidth=6
+      HexLiteral [378..384) fullWidth=6 text="0x1000"
+    CloseBracketToken [384..386) fullWidth=2 text="]"
+      TrailingTrivia [385..386) fullWidth=1
         WhitespaceTrivia width=1 " "
-    EqualsToken [383..385) fullWidth=2 text="="
-      TrailingTrivia [384..385) fullWidth=1
+    EqualsToken [386..388) fullWidth=2 text="="
+      TrailingTrivia [387..388) fullWidth=1
         WhitespaceTrivia width=1 " "
-    FlagExpression [385..393) fullWidth=8
-      FlagKeyword [385..390) fullWidth=5 text="flag"
-        TrailingTrivia [389..390) fullWidth=1
+    FlagExpression [388..396) fullWidth=8
+      FlagKeyword [388..393) fullWidth=5 text="flag"
+        TrailingTrivia [392..393) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [390..393) fullWidth=3
-        NumericLiteral [390..393) fullWidth=3 text="50"
-          TrailingTrivia [392..393) fullWidth=1
+      NumericLiteralExpression [393..396) fullWidth=3
+        NumericLiteral [393..396) fullWidth=3 text="50"
+          TrailingTrivia [395..396) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  LabelDeclaration [393..400) fullWidth=7
-    Identifier [393..398) fullWidth=5 text="next"
-      LeadingTrivia [393..394) fullWidth=1
+  LabelDeclaration [396..403) fullWidth=7
+    Identifier [396..401) fullWidth=5 text="next"
+      LeadingTrivia [396..397) fullWidth=1
         NewLineTrivia width=1 "\\n"
-    ColonToken [398..400) fullWidth=2 text=":"
-      TrailingTrivia [399..400) fullWidth=1
+    ColonToken [401..403) fullWidth=2 text=":"
+      TrailingTrivia [402..403) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  LabelDeclaration [400..409) fullWidth=9
-    Identifier [400..407) fullWidth=7 text="handler"
-    ColonToken [407..409) fullWidth=2 text=":"
-      TrailingTrivia [408..409) fullWidth=1
+  LabelDeclaration [403..412) fullWidth=9
+    Identifier [403..410) fullWidth=7 text="handler"
+    ColonToken [410..412) fullWidth=2 text=":"
+      TrailingTrivia [411..412) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  EndOfFileToken [409..409) fullWidth=0 text=""
+  EndOfFileToken [412..412) fullWidth=0 text=""
 "
 `;
 
 exports[`AST Snapshots should match AST snapshot for 10-comments.ccs 1`] = `
-"SourceFile [0..694) fullWidth=694
+"SourceFile [0..696) fullWidth=696
   ExpressionStatement [0..49) fullWidth=49
     IdentifierExpression [0..49) fullWidth=49
       Identifier [0..49) fullWidth=49 text="set"
@@ -2918,59 +2955,65 @@ exports[`AST Snapshots should match AST snapshot for 10-comments.ccs 1`] = `
     UnexpectedToken [362..364) fullWidth=2 text="?"
       TrailingTrivia [363..364) fullWidth=1
         WhitespaceTrivia width=1 " "
-  ExpressionStatement [364..365) fullWidth=1
-    IdentifierExpression [364..365) fullWidth=1
-      Identifier [364..365) fullWidth=1 text="*"
-  IfStatement [365..493) fullWidth=128
-    IfKeyword [365..402) fullWidth=37 text="if"
-      LeadingTrivia [365..399) fullWidth=34
+  ExpressionStatement [364..367) fullWidth=3
+    BinaryExpression [364..367) fullWidth=3
+      IdentifierExpression [364..365) fullWidth=1
+        Identifier [364..365) fullWidth=1 text="*"
+      SlashToken [365..367) fullWidth=2 text="/"
+        TrailingTrivia [366..367) fullWidth=1
+          NewLineTrivia width=1 "\\n"
+      ErrorExpression [367..367) fullWidth=0
+        MissingToken [367..367) fullWidth=0 text=""
+  IfStatement [367..495) fullWidth=128
+    IfKeyword [367..404) fullWidth=37 text="if"
+      LeadingTrivia [367..401) fullWidth=34
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=32 "// Comments in various positions"
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [401..402) fullWidth=1
+      TrailingTrivia [403..404) fullWidth=1
         WhitespaceTrivia width=1 " "
-    FlagExpression [402..409) fullWidth=7
-      FlagKeyword [402..407) fullWidth=5 text="flag"
-        TrailingTrivia [406..407) fullWidth=1
+    FlagExpression [404..411) fullWidth=7
+      FlagKeyword [404..409) fullWidth=5 text="flag"
+        TrailingTrivia [408..409) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [407..409) fullWidth=2
-        NumericLiteral [407..409) fullWidth=2 text="1"
-          TrailingTrivia [408..409) fullWidth=1
+      NumericLiteralExpression [409..411) fullWidth=2
+        NumericLiteral [409..411) fullWidth=2 text="1"
+          TrailingTrivia [410..411) fullWidth=1
             WhitespaceTrivia width=1 " "
-    BlockStatement [409..493) fullWidth=84
-      OpenBraceToken [409..411) fullWidth=2 text="{"
-        TrailingTrivia [410..411) fullWidth=1
+    BlockStatement [411..495) fullWidth=84
+      OpenBraceToken [411..413) fullWidth=2 text="{"
+        TrailingTrivia [412..413) fullWidth=1
           WhitespaceTrivia width=1 " "
-      ExpressionStatement [411..463) fullWidth=52
-        IdentifierExpression [411..463) fullWidth=52
-          Identifier [411..463) fullWidth=52 text="set"
-            LeadingTrivia [411..459) fullWidth=48
+      ExpressionStatement [413..465) fullWidth=52
+        IdentifierExpression [413..465) fullWidth=52
+          Identifier [413..465) fullWidth=52 text="set"
+            LeadingTrivia [413..461) fullWidth=48
               SingleLineCommentTrivia width=20 "// condition comment"
               NewLineTrivia width=1 "\\n"
               WhitespaceTrivia width=4 "    "
               SingleLineCommentTrivia width=18 "// inside if block"
               NewLineTrivia width=1 "\\n"
               WhitespaceTrivia width=4 "    "
-            TrailingTrivia [462..463) fullWidth=1
+            TrailingTrivia [464..465) fullWidth=1
               WhitespaceTrivia width=1 " "
-      ExpressionStatement [463..470) fullWidth=7
-        FlagExpression [463..470) fullWidth=7
-          FlagKeyword [463..468) fullWidth=5 text="flag"
-            TrailingTrivia [467..468) fullWidth=1
+      ExpressionStatement [465..472) fullWidth=7
+        FlagExpression [465..472) fullWidth=7
+          FlagKeyword [465..470) fullWidth=5 text="flag"
+            TrailingTrivia [469..470) fullWidth=1
               WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [468..470) fullWidth=2
-            NumericLiteral [468..470) fullWidth=2 text="2"
-              TrailingTrivia [469..470) fullWidth=1
+          NumericLiteralExpression [470..472) fullWidth=2
+            NumericLiteral [470..472) fullWidth=2 text="2"
+              TrailingTrivia [471..472) fullWidth=1
                 WhitespaceTrivia width=1 " "
-      CloseBraceToken [470..493) fullWidth=23 text="}"
-        LeadingTrivia [470..491) fullWidth=21
+      CloseBraceToken [472..495) fullWidth=23 text="}"
+        LeadingTrivia [472..493) fullWidth=21
           SingleLineCommentTrivia width=20 "// statement comment"
           NewLineTrivia width=1 "\\n"
-        TrailingTrivia [492..493) fullWidth=1
+        TrailingTrivia [494..495) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ConstantDeclaration [493..612) fullWidth=119
-    DefineKeyword [493..575) fullWidth=82 text="define"
-      LeadingTrivia [493..568) fullWidth=75
+  ConstantDeclaration [495..614) fullWidth=119
+    DefineKeyword [495..577) fullWidth=82 text="define"
+      LeadingTrivia [495..570) fullWidth=75
         SingleLineCommentTrivia width=17 "// end if comment"
         NewLineTrivia width=1 "\\n"
         NewLineTrivia width=1 "\\n"
@@ -2982,41 +3025,41 @@ exports[`AST Snapshots should match AST snapshot for 10-comments.ccs 1`] = `
         SingleLineCommentTrivia width=29 "// Multiple blank lines above"
         NewLineTrivia width=1 "\\n"
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [574..575) fullWidth=1
+      TrailingTrivia [576..577) fullWidth=1
         WhitespaceTrivia width=1 " "
-    Identifier [575..581) fullWidth=6 text="value"
-      TrailingTrivia [580..581) fullWidth=1
-        WhitespaceTrivia width=1 " "
-    EqualsToken [581..583) fullWidth=2 text="="
+    Identifier [577..583) fullWidth=6 text="value"
       TrailingTrivia [582..583) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BinaryExpression [583..612) fullWidth=29
-      NumericLiteralExpression [583..586) fullWidth=3
-        NumericLiteral [583..586) fullWidth=3 text="42"
-          TrailingTrivia [585..586) fullWidth=1
+    EqualsToken [583..585) fullWidth=2 text="="
+      TrailingTrivia [584..585) fullWidth=1
+        WhitespaceTrivia width=1 " "
+    BinaryExpression [585..614) fullWidth=29
+      NumericLiteralExpression [585..588) fullWidth=3
+        NumericLiteral [585..588) fullWidth=3 text="42"
+          TrailingTrivia [587..588) fullWidth=1
             WhitespaceTrivia width=1 " "
-      Identifier [586..609) fullWidth=23 text="+"
-        LeadingTrivia [586..607) fullWidth=21
+      Identifier [588..611) fullWidth=23 text="+"
+        LeadingTrivia [588..609) fullWidth=21
           MultiLineCommentTrivia width=20 "/* inline comment */"
           WhitespaceTrivia width=1 " "
-        TrailingTrivia [608..609) fullWidth=1
+        TrailingTrivia [610..611) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [609..612) fullWidth=3
-        NumericLiteral [609..612) fullWidth=3 text="10"
-          TrailingTrivia [611..612) fullWidth=1
+      NumericLiteralExpression [611..614) fullWidth=3
+        NumericLiteral [611..614) fullWidth=3 text="10"
+          TrailingTrivia [613..614) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  LabelDeclaration [612..694) fullWidth=82
-    Identifier [612..692) fullWidth=80 text="section_start"
-      LeadingTrivia [612..679) fullWidth=67
+  LabelDeclaration [614..696) fullWidth=82
+    Identifier [614..694) fullWidth=80 text="section_start"
+      LeadingTrivia [614..681) fullWidth=67
         NewLineTrivia width=1 "\\n"
         MultiLineCommentTrivia width=63 "/*******************\\n * Section Header  *\\n *******************/"
         NewLineTrivia width=1 "\\n"
         WhitespaceTrivia width=1 " "
         NewLineTrivia width=1 "\\n"
-    ColonToken [692..694) fullWidth=2 text=":"
-      TrailingTrivia [693..694) fullWidth=1
+    ColonToken [694..696) fullWidth=2 text=":"
+      TrailingTrivia [695..696) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  EndOfFileToken [694..694) fullWidth=0 text=""
+  EndOfFileToken [696..696) fullWidth=0 text=""
 "
 `;
 
@@ -3224,7 +3267,7 @@ exports[`AST Snapshots should match AST snapshot for 11-qualified-names.ccs 1`] 
 `;
 
 exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = `
-"SourceFile [0..2569) fullWidth=2569
+"SourceFile [0..2579) fullWidth=2579
   ImportStatement [0..59) fullWidth=59
     ImportKeyword [0..55) fullWidth=55 text="import"
       LeadingTrivia [0..48) fullWidth=48
@@ -3668,985 +3711,1003 @@ exports[`AST Snapshots should match AST snapshot for 12-comprehensive.ccs 1`] = 
           WhitespaceTrivia width=4 "    "
         TrailingTrivia [883..884) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  CommandDeclaration [884..1234) fullWidth=350
-    CommandKeyword [884..915) fullWidth=31 text="command"
-      LeadingTrivia [884..907) fullWidth=23
+  ErrorStatement [884..886) fullWidth=2
+    CloseBraceToken [884..886) fullWidth=2 text="}"
+      TrailingTrivia [885..886) fullWidth=1
+        NewLineTrivia width=1 "\\n"
+  CommandDeclaration [886..1236) fullWidth=350
+    CommandKeyword [886..917) fullWidth=31 text="command"
+      LeadingTrivia [886..909) fullWidth=23
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=21 "// Game state updates"
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [914..915) fullWidth=1
+      TrailingTrivia [916..917) fullWidth=1
         WhitespaceTrivia width=1 " "
-    Identifier [915..933) fullWidth=18 text="update_game_state"
-      TrailingTrivia [932..933) fullWidth=1
+    Identifier [917..935) fullWidth=18 text="update_game_state"
+      TrailingTrivia [934..935) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BlockStatement [933..1234) fullWidth=301
-      OpenBraceToken [933..935) fullWidth=2 text="{"
-        TrailingTrivia [934..935) fullWidth=1
+    BlockStatement [935..1236) fullWidth=301
+      OpenBraceToken [935..937) fullWidth=2 text="{"
+        TrailingTrivia [936..937) fullWidth=1
           NewLineTrivia width=1 "\\n"
-      IfStatement [935..1017) fullWidth=82
-        IfKeyword [935..942) fullWidth=7 text="if"
-          LeadingTrivia [935..939) fullWidth=4
+      IfStatement [937..1019) fullWidth=82
+        IfKeyword [937..944) fullWidth=7 text="if"
+          LeadingTrivia [937..941) fullWidth=4
             WhitespaceTrivia width=4 "    "
-          TrailingTrivia [941..942) fullWidth=1
+          TrailingTrivia [943..944) fullWidth=1
             WhitespaceTrivia width=1 " "
-        BinaryExpression [942..962) fullWidth=20
-          FlagExpression [942..950) fullWidth=8
-            FlagKeyword [942..947) fullWidth=5 text="flag"
-              TrailingTrivia [946..947) fullWidth=1
+        BinaryExpression [944..964) fullWidth=20
+          FlagExpression [944..952) fullWidth=8
+            FlagKeyword [944..949) fullWidth=5 text="flag"
+              TrailingTrivia [948..949) fullWidth=1
                 WhitespaceTrivia width=1 " "
-            NumericLiteralExpression [947..950) fullWidth=3
-              NumericLiteral [947..950) fullWidth=3 text="10"
-                TrailingTrivia [949..950) fullWidth=1
+            NumericLiteralExpression [949..952) fullWidth=3
+              NumericLiteral [949..952) fullWidth=3 text="10"
+                TrailingTrivia [951..952) fullWidth=1
                   WhitespaceTrivia width=1 " "
-          AndKeyword [950..954) fullWidth=4 text="and"
-            TrailingTrivia [953..954) fullWidth=1
+          AndKeyword [952..956) fullWidth=4 text="and"
+            TrailingTrivia [955..956) fullWidth=1
               WhitespaceTrivia width=1 " "
-          FlagExpression [954..962) fullWidth=8
-            FlagKeyword [954..959) fullWidth=5 text="flag"
-              TrailingTrivia [958..959) fullWidth=1
+          FlagExpression [956..964) fullWidth=8
+            FlagKeyword [956..961) fullWidth=5 text="flag"
+              TrailingTrivia [960..961) fullWidth=1
                 WhitespaceTrivia width=1 " "
-            NumericLiteralExpression [959..962) fullWidth=3
-              NumericLiteral [959..962) fullWidth=3 text="11"
-                TrailingTrivia [961..962) fullWidth=1
+            NumericLiteralExpression [961..964) fullWidth=3
+              NumericLiteral [961..964) fullWidth=3 text="11"
+                TrailingTrivia [963..964) fullWidth=1
                   WhitespaceTrivia width=1 " "
-        BlockStatement [962..1017) fullWidth=55
-          OpenBraceToken [962..964) fullWidth=2 text="{"
-            TrailingTrivia [963..964) fullWidth=1
+        BlockStatement [964..1019) fullWidth=55
+          OpenBraceToken [964..966) fullWidth=2 text="{"
+            TrailingTrivia [965..966) fullWidth=1
               NewLineTrivia width=1 "\\n"
-          ExpressionStatement [964..976) fullWidth=12
-            IdentifierExpression [964..976) fullWidth=12
-              Identifier [964..976) fullWidth=12 text="set"
-                LeadingTrivia [964..972) fullWidth=8
+          ExpressionStatement [966..978) fullWidth=12
+            IdentifierExpression [966..978) fullWidth=12
+              Identifier [966..978) fullWidth=12 text="set"
+                LeadingTrivia [966..974) fullWidth=8
                   WhitespaceTrivia width=8 "        "
-                TrailingTrivia [975..976) fullWidth=1
+                TrailingTrivia [977..978) fullWidth=1
                   WhitespaceTrivia width=1 " "
-          ExpressionStatement [976..984) fullWidth=8
-            FlagExpression [976..984) fullWidth=8
-              FlagKeyword [976..981) fullWidth=5 text="flag"
-                TrailingTrivia [980..981) fullWidth=1
+          ExpressionStatement [978..986) fullWidth=8
+            FlagExpression [978..986) fullWidth=8
+              FlagKeyword [978..983) fullWidth=5 text="flag"
+                TrailingTrivia [982..983) fullWidth=1
                   WhitespaceTrivia width=1 " "
-              NumericLiteralExpression [981..984) fullWidth=3
-                NumericLiteral [981..984) fullWidth=3 text="20"
-                  TrailingTrivia [983..984) fullWidth=1
+              NumericLiteralExpression [983..986) fullWidth=3
+                NumericLiteral [983..986) fullWidth=3 text="20"
+                  TrailingTrivia [985..986) fullWidth=1
                     NewLineTrivia width=1 "\\n"
-          ExpressionStatement [984..997) fullWidth=13
-            IdentifierExpression [984..997) fullWidth=13
-              Identifier [984..997) fullWidth=13 text="call"
-                LeadingTrivia [984..992) fullWidth=8
+          ExpressionStatement [986..999) fullWidth=13
+            IdentifierExpression [986..999) fullWidth=13
+              Identifier [986..999) fullWidth=13 text="call"
+                LeadingTrivia [986..994) fullWidth=8
                   WhitespaceTrivia width=8 "        "
-                TrailingTrivia [996..997) fullWidth=1
+                TrailingTrivia [998..999) fullWidth=1
                   WhitespaceTrivia width=1 " "
-          ExpressionStatement [997..1011) fullWidth=14
-            IdentifierExpression [997..1011) fullWidth=14
-              Identifier [997..1011) fullWidth=14 text="trigger_event"
-                TrailingTrivia [1010..1011) fullWidth=1
+          ExpressionStatement [999..1013) fullWidth=14
+            IdentifierExpression [999..1013) fullWidth=14
+              Identifier [999..1013) fullWidth=14 text="trigger_event"
+                TrailingTrivia [1012..1013) fullWidth=1
                   NewLineTrivia width=1 "\\n"
-          CloseBraceToken [1011..1017) fullWidth=6 text="}"
-            LeadingTrivia [1011..1015) fullWidth=4
+          CloseBraceToken [1013..1019) fullWidth=6 text="}"
+            LeadingTrivia [1013..1017) fullWidth=4
               WhitespaceTrivia width=4 "    "
-            TrailingTrivia [1016..1017) fullWidth=1
+            TrailingTrivia [1018..1019) fullWidth=1
               NewLineTrivia width=1 "\\n"
-      IfStatement [1017..1232) fullWidth=215
-        IfKeyword [1017..1029) fullWidth=12 text="if"
-          LeadingTrivia [1017..1026) fullWidth=9
+      IfStatement [1019..1234) fullWidth=215
+        IfKeyword [1019..1031) fullWidth=12 text="if"
+          LeadingTrivia [1019..1028) fullWidth=9
             WhitespaceTrivia width=4 "    "
             NewLineTrivia width=1 "\\n"
             WhitespaceTrivia width=4 "    "
-          TrailingTrivia [1028..1029) fullWidth=1
+          TrailingTrivia [1030..1031) fullWidth=1
             WhitespaceTrivia width=1 " "
-        UnaryExpression [1029..1041) fullWidth=12
-          NotKeyword [1029..1033) fullWidth=4 text="not"
-            TrailingTrivia [1032..1033) fullWidth=1
+        UnaryExpression [1031..1043) fullWidth=12
+          NotKeyword [1031..1035) fullWidth=4 text="not"
+            TrailingTrivia [1034..1035) fullWidth=1
               WhitespaceTrivia width=1 " "
-          FlagExpression [1033..1041) fullWidth=8
-            FlagKeyword [1033..1038) fullWidth=5 text="flag"
-              TrailingTrivia [1037..1038) fullWidth=1
+          FlagExpression [1035..1043) fullWidth=8
+            FlagKeyword [1035..1040) fullWidth=5 text="flag"
+              TrailingTrivia [1039..1040) fullWidth=1
                 WhitespaceTrivia width=1 " "
-            NumericLiteralExpression [1038..1041) fullWidth=3
-              NumericLiteral [1038..1041) fullWidth=3 text="30"
-                TrailingTrivia [1040..1041) fullWidth=1
+            NumericLiteralExpression [1040..1043) fullWidth=3
+              NumericLiteral [1040..1043) fullWidth=3 text="30"
+                TrailingTrivia [1042..1043) fullWidth=1
                   WhitespaceTrivia width=1 " "
-        BlockStatement [1041..1071) fullWidth=30
-          OpenBraceToken [1041..1043) fullWidth=2 text="{"
-            TrailingTrivia [1042..1043) fullWidth=1
+        BlockStatement [1043..1073) fullWidth=30
+          OpenBraceToken [1043..1045) fullWidth=2 text="{"
+            TrailingTrivia [1044..1045) fullWidth=1
               NewLineTrivia width=1 "\\n"
-          ExpressionStatement [1043..1057) fullWidth=14
-            IdentifierExpression [1043..1057) fullWidth=14
-              Identifier [1043..1057) fullWidth=14 text="unset"
-                LeadingTrivia [1043..1051) fullWidth=8
+          ExpressionStatement [1045..1059) fullWidth=14
+            IdentifierExpression [1045..1059) fullWidth=14
+              Identifier [1045..1059) fullWidth=14 text="unset"
+                LeadingTrivia [1045..1053) fullWidth=8
                   WhitespaceTrivia width=8 "        "
-                TrailingTrivia [1056..1057) fullWidth=1
+                TrailingTrivia [1058..1059) fullWidth=1
                   WhitespaceTrivia width=1 " "
-          ExpressionStatement [1057..1065) fullWidth=8
-            FlagExpression [1057..1065) fullWidth=8
-              FlagKeyword [1057..1062) fullWidth=5 text="flag"
-                TrailingTrivia [1061..1062) fullWidth=1
+          ExpressionStatement [1059..1067) fullWidth=8
+            FlagExpression [1059..1067) fullWidth=8
+              FlagKeyword [1059..1064) fullWidth=5 text="flag"
+                TrailingTrivia [1063..1064) fullWidth=1
                   WhitespaceTrivia width=1 " "
-              NumericLiteralExpression [1062..1065) fullWidth=3
-                NumericLiteral [1062..1065) fullWidth=3 text="31"
-                  TrailingTrivia [1064..1065) fullWidth=1
+              NumericLiteralExpression [1064..1067) fullWidth=3
+                NumericLiteral [1064..1067) fullWidth=3 text="31"
+                  TrailingTrivia [1066..1067) fullWidth=1
                     NewLineTrivia width=1 "\\n"
-          CloseBraceToken [1065..1071) fullWidth=6 text="}"
-            LeadingTrivia [1065..1069) fullWidth=4
+          CloseBraceToken [1067..1073) fullWidth=6 text="}"
+            LeadingTrivia [1067..1071) fullWidth=4
               WhitespaceTrivia width=4 "    "
-            TrailingTrivia [1070..1071) fullWidth=1
+            TrailingTrivia [1072..1073) fullWidth=1
               WhitespaceTrivia width=1 " "
-        ElseKeyword [1071..1076) fullWidth=5 text="else"
-          TrailingTrivia [1075..1076) fullWidth=1
+        ElseKeyword [1073..1078) fullWidth=5 text="else"
+          TrailingTrivia [1077..1078) fullWidth=1
             WhitespaceTrivia width=1 " "
-        BlockStatement [1076..1232) fullWidth=156
-          OpenBraceToken [1076..1078) fullWidth=2 text="{"
-            TrailingTrivia [1077..1078) fullWidth=1
+        BlockStatement [1078..1234) fullWidth=156
+          OpenBraceToken [1078..1080) fullWidth=2 text="{"
+            TrailingTrivia [1079..1080) fullWidth=1
               NewLineTrivia width=1 "\\n"
-          IfStatement [1078..1226) fullWidth=148
-            IfKeyword [1078..1121) fullWidth=43 text="if"
-              LeadingTrivia [1078..1118) fullWidth=40
+          IfStatement [1080..1228) fullWidth=148
+            IfKeyword [1080..1123) fullWidth=43 text="if"
+              LeadingTrivia [1080..1120) fullWidth=40
                 WhitespaceTrivia width=8 "        "
                 SingleLineCommentTrivia width=23 "// Complex nested logic"
                 NewLineTrivia width=1 "\\n"
                 WhitespaceTrivia width=8 "        "
-              TrailingTrivia [1120..1121) fullWidth=1
+              TrailingTrivia [1122..1123) fullWidth=1
                 WhitespaceTrivia width=1 " "
-            ArrayAccessExpression [1121..1151) fullWidth=30
-              ByteKeyword [1121..1125) fullWidth=4 text="byte"
-              OpenBracketToken [1125..1126) fullWidth=1 text="["
-              NumericLiteral [1126..1127) fullWidth=1 text="0"
-              CloseBracketToken [1127..1129) fullWidth=2 text="]"
-                TrailingTrivia [1128..1129) fullWidth=1
+            ArrayAccessExpression [1123..1153) fullWidth=30
+              ByteKeyword [1123..1127) fullWidth=4 text="byte"
+              OpenBracketToken [1127..1128) fullWidth=1 text="["
+              NumericLiteral [1128..1129) fullWidth=1 text="0"
+              CloseBracketToken [1129..1131) fullWidth=2 text="]"
+                TrailingTrivia [1130..1131) fullWidth=1
                   WhitespaceTrivia width=1 " "
-              BinaryExpression [1129..1151) fullWidth=22
-                IdentifierExpression [1129..1146) fullWidth=17
-                  Identifier [1129..1146) fullWidth=17 text="BATTLE_BASE_ADDR"
-                    TrailingTrivia [1145..1146) fullWidth=1
+              BinaryExpression [1131..1153) fullWidth=22
+                IdentifierExpression [1131..1148) fullWidth=17
+                  Identifier [1131..1148) fullWidth=17 text="BATTLE_BASE_ADDR"
+                    TrailingTrivia [1147..1148) fullWidth=1
                       WhitespaceTrivia width=1 " "
-                EqualsToken [1146..1148) fullWidth=2 text=">"
-                  TrailingTrivia [1147..1148) fullWidth=1
+                EqualsToken [1148..1150) fullWidth=2 text=">"
+                  TrailingTrivia [1149..1150) fullWidth=1
                     WhitespaceTrivia width=1 " "
-                NumericLiteralExpression [1148..1151) fullWidth=3
-                  NumericLiteral [1148..1151) fullWidth=3 text="50"
-                    TrailingTrivia [1150..1151) fullWidth=1
+                NumericLiteralExpression [1150..1153) fullWidth=3
+                  NumericLiteral [1150..1153) fullWidth=3 text="50"
+                    TrailingTrivia [1152..1153) fullWidth=1
                       WhitespaceTrivia width=1 " "
-            BlockStatement [1151..1226) fullWidth=75
-              OpenBraceToken [1151..1153) fullWidth=2 text="{"
-                TrailingTrivia [1152..1153) fullWidth=1
+            BlockStatement [1153..1228) fullWidth=75
+              OpenBraceToken [1153..1155) fullWidth=2 text="{"
+                TrailingTrivia [1154..1155) fullWidth=1
                   NewLineTrivia width=1 "\\n"
-              ExpressionStatement [1153..1170) fullWidth=17
-                IdentifierExpression [1153..1170) fullWidth=17
-                  Identifier [1153..1170) fullWidth=17 text="call"
-                    LeadingTrivia [1153..1165) fullWidth=12
+              ExpressionStatement [1155..1172) fullWidth=17
+                IdentifierExpression [1155..1172) fullWidth=17
+                  Identifier [1155..1172) fullWidth=17 text="call"
+                    LeadingTrivia [1155..1167) fullWidth=12
                       WhitespaceTrivia width=12 "            "
-                    TrailingTrivia [1169..1170) fullWidth=1
+                    TrailingTrivia [1171..1172) fullWidth=1
                       WhitespaceTrivia width=1 " "
-              ExpressionStatement [1170..1182) fullWidth=12
-                IdentifierExpression [1170..1182) fullWidth=12
-                  Identifier [1170..1182) fullWidth=12 text="heal_player"
-                    TrailingTrivia [1181..1182) fullWidth=1
+              ExpressionStatement [1172..1184) fullWidth=12
+                IdentifierExpression [1172..1184) fullWidth=12
+                  Identifier [1172..1184) fullWidth=12 text="heal_player"
+                    TrailingTrivia [1183..1184) fullWidth=1
                       NewLineTrivia width=1 "\\n"
-              ROMWriteStatement [1182..1216) fullWidth=34
-                ROMKeyword [1182..1197) fullWidth=15 text="ROM"
-                  LeadingTrivia [1182..1194) fullWidth=12
+              ROMWriteStatement [1184..1218) fullWidth=34
+                ROMKeyword [1184..1199) fullWidth=15 text="ROM"
+                  LeadingTrivia [1184..1196) fullWidth=12
                     WhitespaceTrivia width=12 "            "
-                OpenBracketToken [1197..1198) fullWidth=1 text="["
-                NumericLiteralExpression [1198..1204) fullWidth=6
-                  HexLiteral [1198..1204) fullWidth=6 text="0x5000"
-                CloseBracketToken [1204..1206) fullWidth=2 text="]"
-                  TrailingTrivia [1205..1206) fullWidth=1
-                    WhitespaceTrivia width=1 " "
-                EqualsToken [1206..1208) fullWidth=2 text="="
+                OpenBracketToken [1199..1200) fullWidth=1 text="["
+                NumericLiteralExpression [1200..1206) fullWidth=6
+                  HexLiteral [1200..1206) fullWidth=6 text="0x5000"
+                CloseBracketToken [1206..1208) fullWidth=2 text="]"
                   TrailingTrivia [1207..1208) fullWidth=1
                     WhitespaceTrivia width=1 " "
-                FlagExpression [1208..1216) fullWidth=8
-                  FlagKeyword [1208..1213) fullWidth=5 text="flag"
-                    TrailingTrivia [1212..1213) fullWidth=1
+                EqualsToken [1208..1210) fullWidth=2 text="="
+                  TrailingTrivia [1209..1210) fullWidth=1
+                    WhitespaceTrivia width=1 " "
+                FlagExpression [1210..1218) fullWidth=8
+                  FlagKeyword [1210..1215) fullWidth=5 text="flag"
+                    TrailingTrivia [1214..1215) fullWidth=1
                       WhitespaceTrivia width=1 " "
-                  NumericLiteralExpression [1213..1216) fullWidth=3
-                    NumericLiteral [1213..1216) fullWidth=3 text="40"
-                      TrailingTrivia [1215..1216) fullWidth=1
+                  NumericLiteralExpression [1215..1218) fullWidth=3
+                    NumericLiteral [1215..1218) fullWidth=3 text="40"
+                      TrailingTrivia [1217..1218) fullWidth=1
                         NewLineTrivia width=1 "\\n"
-              CloseBraceToken [1216..1226) fullWidth=10 text="}"
-                LeadingTrivia [1216..1224) fullWidth=8
+              CloseBraceToken [1218..1228) fullWidth=10 text="}"
+                LeadingTrivia [1218..1226) fullWidth=8
                   WhitespaceTrivia width=8 "        "
-                TrailingTrivia [1225..1226) fullWidth=1
+                TrailingTrivia [1227..1228) fullWidth=1
                   NewLineTrivia width=1 "\\n"
-          CloseBraceToken [1226..1232) fullWidth=6 text="}"
-            LeadingTrivia [1226..1230) fullWidth=4
+          CloseBraceToken [1228..1234) fullWidth=6 text="}"
+            LeadingTrivia [1228..1232) fullWidth=4
               WhitespaceTrivia width=4 "    "
-            TrailingTrivia [1231..1232) fullWidth=1
+            TrailingTrivia [1233..1234) fullWidth=1
               NewLineTrivia width=1 "\\n"
-      CloseBraceToken [1232..1234) fullWidth=2 text="}"
-        TrailingTrivia [1233..1234) fullWidth=1
+      CloseBraceToken [1234..1236) fullWidth=2 text="}"
+        TrailingTrivia [1235..1236) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  CommandDeclaration [1234..1589) fullWidth=355
-    CommandKeyword [1234..1261) fullWidth=27 text="command"
-      LeadingTrivia [1234..1253) fullWidth=19
+  CommandDeclaration [1236..1591) fullWidth=355
+    CommandKeyword [1236..1263) fullWidth=27 text="command"
+      LeadingTrivia [1236..1255) fullWidth=19
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=17 "// Event handling"
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [1260..1261) fullWidth=1
+      TrailingTrivia [1262..1263) fullWidth=1
         WhitespaceTrivia width=1 " "
-    Identifier [1261..1274) fullWidth=13 text="trigger_event"
-    ParameterList [1274..1285) fullWidth=11
-      OpenParenToken [1274..1275) fullWidth=1 text="("
-      Identifier [1275..1283) fullWidth=8 text="event_id"
-      CloseParenToken [1283..1285) fullWidth=2 text=")"
-        TrailingTrivia [1284..1285) fullWidth=1
-          WhitespaceTrivia width=1 " "
-    BlockStatement [1285..1589) fullWidth=304
-      OpenBraceToken [1285..1287) fullWidth=2 text="{"
+    Identifier [1263..1276) fullWidth=13 text="trigger_event"
+    ParameterList [1276..1287) fullWidth=11
+      OpenParenToken [1276..1277) fullWidth=1 text="("
+      Identifier [1277..1285) fullWidth=8 text="event_id"
+      CloseParenToken [1285..1287) fullWidth=2 text=")"
         TrailingTrivia [1286..1287) fullWidth=1
+          WhitespaceTrivia width=1 " "
+    BlockStatement [1287..1591) fullWidth=304
+      OpenBraceToken [1287..1289) fullWidth=2 text="{"
+        TrailingTrivia [1288..1289) fullWidth=1
           NewLineTrivia width=1 "\\n"
-      ConstantDeclaration [1287..1366) fullWidth=79
-        DefineKeyword [1287..1326) fullWidth=39 text="define"
-          LeadingTrivia [1287..1319) fullWidth=32
+      ConstantDeclaration [1289..1368) fullWidth=79
+        DefineKeyword [1289..1328) fullWidth=39 text="define"
+          LeadingTrivia [1289..1321) fullWidth=32
             WhitespaceTrivia width=4 "    "
             SingleLineCommentTrivia width=23 "// String with template"
             NewLineTrivia width=1 "\\n"
             WhitespaceTrivia width=4 "    "
-          TrailingTrivia [1325..1326) fullWidth=1
+          TrailingTrivia [1327..1328) fullWidth=1
             WhitespaceTrivia width=1 " "
-        Identifier [1326..1334) fullWidth=8 text="message"
-          TrailingTrivia [1333..1334) fullWidth=1
-            WhitespaceTrivia width=1 " "
-        EqualsToken [1334..1336) fullWidth=2 text="="
+        Identifier [1328..1336) fullWidth=8 text="message"
           TrailingTrivia [1335..1336) fullWidth=1
             WhitespaceTrivia width=1 " "
-        TemplateStringExpression [1336..1366) fullWidth=30
-          StringLiteral [1336..1337) fullWidth=1 text="""
-          StringLiteralContent [1337..1343) fullWidth=6
-            StringLiteral [1337..1343) fullWidth=6 text="Event "
-          StringTemplateExpression [1343..1353) fullWidth=10
-            OpenBraceToken [1343..1344) fullWidth=1 text="{"
-            IdentifierExpression [1344..1352) fullWidth=8
-              Identifier [1344..1352) fullWidth=8 text="event_id"
-            CloseBraceToken [1352..1353) fullWidth=1 text="}"
-          StringLiteralContent [1353..1364) fullWidth=11
-            StringLiteral [1353..1364) fullWidth=11 text=" triggered!"
-          StringLiteral [1364..1366) fullWidth=2 text="""
-            TrailingTrivia [1365..1366) fullWidth=1
+        EqualsToken [1336..1338) fullWidth=2 text="="
+          TrailingTrivia [1337..1338) fullWidth=1
+            WhitespaceTrivia width=1 " "
+        TemplateStringExpression [1338..1368) fullWidth=30
+          StringLiteral [1338..1339) fullWidth=1 text="""
+          StringLiteralContent [1339..1345) fullWidth=6
+            StringLiteral [1339..1345) fullWidth=6 text="Event "
+          StringTemplateExpression [1345..1355) fullWidth=10
+            OpenBraceToken [1345..1346) fullWidth=1 text="{"
+            IdentifierExpression [1346..1354) fullWidth=8
+              Identifier [1346..1354) fullWidth=8 text="event_id"
+            CloseBraceToken [1354..1355) fullWidth=1 text="}"
+          StringLiteralContent [1355..1366) fullWidth=11
+            StringLiteral [1355..1366) fullWidth=11 text=" triggered!"
+          StringLiteral [1366..1368) fullWidth=2 text="""
+            TrailingTrivia [1367..1368) fullWidth=1
               NewLineTrivia width=1 "\\n"
-      ExpressionStatement [1366..1389) fullWidth=23
-        CallExpression [1366..1389) fullWidth=23
-          QualifiedNameExpression [1366..1379) fullWidth=13
-            Identifier [1366..1373) fullWidth=7 text="std"
-              LeadingTrivia [1366..1370) fullWidth=4
+      ExpressionStatement [1368..1391) fullWidth=23
+        CallExpression [1368..1391) fullWidth=23
+          QualifiedNameExpression [1368..1381) fullWidth=13
+            Identifier [1368..1375) fullWidth=7 text="std"
+              LeadingTrivia [1368..1372) fullWidth=4
                 WhitespaceTrivia width=4 "    "
-            DotToken [1373..1374) fullWidth=1 text="."
-            Identifier [1374..1379) fullWidth=5 text="print"
-          ArgumentList [1379..1389) fullWidth=10
-            OpenParenToken [1379..1380) fullWidth=1 text="("
-            IdentifierExpression [1380..1387) fullWidth=7
-              Identifier [1380..1387) fullWidth=7 text="message"
-            CloseParenToken [1387..1389) fullWidth=2 text=")"
-              TrailingTrivia [1388..1389) fullWidth=1
+            DotToken [1375..1376) fullWidth=1 text="."
+            Identifier [1376..1381) fullWidth=5 text="print"
+          ArgumentList [1381..1391) fullWidth=10
+            OpenParenToken [1381..1382) fullWidth=1 text="("
+            IdentifierExpression [1382..1389) fullWidth=7
+              Identifier [1382..1389) fullWidth=7 text="message"
+            CloseParenToken [1389..1391) fullWidth=2 text=")"
+              TrailingTrivia [1390..1391) fullWidth=1
                 NewLineTrivia width=1 "\\n"
-      IfStatement [1389..1587) fullWidth=198
-        IfKeyword [1389..1429) fullWidth=40 text="if"
-          LeadingTrivia [1389..1426) fullWidth=37
+      IfStatement [1391..1589) fullWidth=198
+        IfKeyword [1391..1431) fullWidth=40 text="if"
+          LeadingTrivia [1391..1428) fullWidth=37
             WhitespaceTrivia width=4 "    "
             NewLineTrivia width=1 "\\n"
             WhitespaceTrivia width=4 "    "
             SingleLineCommentTrivia width=23 "// Conditional handling"
             NewLineTrivia width=1 "\\n"
             WhitespaceTrivia width=4 "    "
-          TrailingTrivia [1428..1429) fullWidth=1
+          TrailingTrivia [1430..1431) fullWidth=1
             WhitespaceTrivia width=1 " "
-        BinaryExpression [1429..1443) fullWidth=14
-          IdentifierExpression [1429..1438) fullWidth=9
-            Identifier [1429..1438) fullWidth=9 text="event_id"
-              TrailingTrivia [1437..1438) fullWidth=1
+        BinaryExpression [1431..1445) fullWidth=14
+          IdentifierExpression [1431..1440) fullWidth=9
+            Identifier [1431..1440) fullWidth=9 text="event_id"
+              TrailingTrivia [1439..1440) fullWidth=1
                 WhitespaceTrivia width=1 " "
-          EqualsToken [1438..1441) fullWidth=3 text="=="
-            TrailingTrivia [1440..1441) fullWidth=1
+          EqualsToken [1440..1443) fullWidth=3 text="=="
+            TrailingTrivia [1442..1443) fullWidth=1
               WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [1441..1443) fullWidth=2
-            NumericLiteral [1441..1443) fullWidth=2 text="1"
-              TrailingTrivia [1442..1443) fullWidth=1
+          NumericLiteralExpression [1443..1445) fullWidth=2
+            NumericLiteral [1443..1445) fullWidth=2 text="1"
+              TrailingTrivia [1444..1445) fullWidth=1
                 WhitespaceTrivia width=1 " "
-        BlockStatement [1443..1480) fullWidth=37
-          OpenBraceToken [1443..1445) fullWidth=2 text="{"
-            TrailingTrivia [1444..1445) fullWidth=1
+        BlockStatement [1445..1482) fullWidth=37
+          OpenBraceToken [1445..1447) fullWidth=2 text="{"
+            TrailingTrivia [1446..1447) fullWidth=1
               NewLineTrivia width=1 "\\n"
-          ExpressionStatement [1445..1458) fullWidth=13
-            IdentifierExpression [1445..1458) fullWidth=13
-              Identifier [1445..1458) fullWidth=13 text="call"
-                LeadingTrivia [1445..1453) fullWidth=8
+          ExpressionStatement [1447..1460) fullWidth=13
+            IdentifierExpression [1447..1460) fullWidth=13
+              Identifier [1447..1460) fullWidth=13 text="call"
+                LeadingTrivia [1447..1455) fullWidth=8
                   WhitespaceTrivia width=8 "        "
-                TrailingTrivia [1457..1458) fullWidth=1
+                TrailingTrivia [1459..1460) fullWidth=1
                   WhitespaceTrivia width=1 " "
-          ExpressionStatement [1458..1474) fullWidth=16
-            IdentifierExpression [1458..1474) fullWidth=16
-              Identifier [1458..1474) fullWidth=16 text="event_handler_1"
-                TrailingTrivia [1473..1474) fullWidth=1
+          ExpressionStatement [1460..1476) fullWidth=16
+            IdentifierExpression [1460..1476) fullWidth=16
+              Identifier [1460..1476) fullWidth=16 text="event_handler_1"
+                TrailingTrivia [1475..1476) fullWidth=1
                   NewLineTrivia width=1 "\\n"
-          CloseBraceToken [1474..1480) fullWidth=6 text="}"
-            LeadingTrivia [1474..1478) fullWidth=4
+          CloseBraceToken [1476..1482) fullWidth=6 text="}"
+            LeadingTrivia [1476..1480) fullWidth=4
               WhitespaceTrivia width=4 "    "
-            TrailingTrivia [1479..1480) fullWidth=1
+            TrailingTrivia [1481..1482) fullWidth=1
               WhitespaceTrivia width=1 " "
-        ElseKeyword [1480..1485) fullWidth=5 text="else"
-          TrailingTrivia [1484..1485) fullWidth=1
+        ElseKeyword [1482..1487) fullWidth=5 text="else"
+          TrailingTrivia [1486..1487) fullWidth=1
             WhitespaceTrivia width=1 " "
-        IfStatement [1485..1587) fullWidth=102
-          IfKeyword [1485..1488) fullWidth=3 text="if"
-            TrailingTrivia [1487..1488) fullWidth=1
+        IfStatement [1487..1589) fullWidth=102
+          IfKeyword [1487..1490) fullWidth=3 text="if"
+            TrailingTrivia [1489..1490) fullWidth=1
               WhitespaceTrivia width=1 " "
-          BinaryExpression [1488..1502) fullWidth=14
-            IdentifierExpression [1488..1497) fullWidth=9
-              Identifier [1488..1497) fullWidth=9 text="event_id"
-                TrailingTrivia [1496..1497) fullWidth=1
+          BinaryExpression [1490..1504) fullWidth=14
+            IdentifierExpression [1490..1499) fullWidth=9
+              Identifier [1490..1499) fullWidth=9 text="event_id"
+                TrailingTrivia [1498..1499) fullWidth=1
                   WhitespaceTrivia width=1 " "
-            EqualsToken [1497..1500) fullWidth=3 text="=="
-              TrailingTrivia [1499..1500) fullWidth=1
+            EqualsToken [1499..1502) fullWidth=3 text="=="
+              TrailingTrivia [1501..1502) fullWidth=1
                 WhitespaceTrivia width=1 " "
-            NumericLiteralExpression [1500..1502) fullWidth=2
-              NumericLiteral [1500..1502) fullWidth=2 text="2"
-                TrailingTrivia [1501..1502) fullWidth=1
+            NumericLiteralExpression [1502..1504) fullWidth=2
+              NumericLiteral [1502..1504) fullWidth=2 text="2"
+                TrailingTrivia [1503..1504) fullWidth=1
                   WhitespaceTrivia width=1 " "
-          BlockStatement [1502..1539) fullWidth=37
-            OpenBraceToken [1502..1504) fullWidth=2 text="{"
-              TrailingTrivia [1503..1504) fullWidth=1
+          BlockStatement [1504..1541) fullWidth=37
+            OpenBraceToken [1504..1506) fullWidth=2 text="{"
+              TrailingTrivia [1505..1506) fullWidth=1
                 NewLineTrivia width=1 "\\n"
-            ExpressionStatement [1504..1517) fullWidth=13
-              IdentifierExpression [1504..1517) fullWidth=13
-                Identifier [1504..1517) fullWidth=13 text="call"
-                  LeadingTrivia [1504..1512) fullWidth=8
+            ExpressionStatement [1506..1519) fullWidth=13
+              IdentifierExpression [1506..1519) fullWidth=13
+                Identifier [1506..1519) fullWidth=13 text="call"
+                  LeadingTrivia [1506..1514) fullWidth=8
                     WhitespaceTrivia width=8 "        "
-                  TrailingTrivia [1516..1517) fullWidth=1
+                  TrailingTrivia [1518..1519) fullWidth=1
                     WhitespaceTrivia width=1 " "
-            ExpressionStatement [1517..1533) fullWidth=16
-              IdentifierExpression [1517..1533) fullWidth=16
-                Identifier [1517..1533) fullWidth=16 text="event_handler_2"
-                  TrailingTrivia [1532..1533) fullWidth=1
+            ExpressionStatement [1519..1535) fullWidth=16
+              IdentifierExpression [1519..1535) fullWidth=16
+                Identifier [1519..1535) fullWidth=16 text="event_handler_2"
+                  TrailingTrivia [1534..1535) fullWidth=1
                     NewLineTrivia width=1 "\\n"
-            CloseBraceToken [1533..1539) fullWidth=6 text="}"
-              LeadingTrivia [1533..1537) fullWidth=4
+            CloseBraceToken [1535..1541) fullWidth=6 text="}"
+              LeadingTrivia [1535..1539) fullWidth=4
                 WhitespaceTrivia width=4 "    "
-              TrailingTrivia [1538..1539) fullWidth=1
+              TrailingTrivia [1540..1541) fullWidth=1
                 WhitespaceTrivia width=1 " "
-          ElseKeyword [1539..1544) fullWidth=5 text="else"
-            TrailingTrivia [1543..1544) fullWidth=1
+          ElseKeyword [1541..1546) fullWidth=5 text="else"
+            TrailingTrivia [1545..1546) fullWidth=1
               WhitespaceTrivia width=1 " "
-          BlockStatement [1544..1587) fullWidth=43
-            OpenBraceToken [1544..1546) fullWidth=2 text="{"
-              TrailingTrivia [1545..1546) fullWidth=1
+          BlockStatement [1546..1589) fullWidth=43
+            OpenBraceToken [1546..1548) fullWidth=2 text="{"
+              TrailingTrivia [1547..1548) fullWidth=1
                 NewLineTrivia width=1 "\\n"
-            ExpressionStatement [1546..1581) fullWidth=35
-              CallExpression [1546..1581) fullWidth=35
-                QualifiedNameExpression [1546..1563) fullWidth=17
-                  Identifier [1546..1557) fullWidth=11 text="std"
-                    LeadingTrivia [1546..1554) fullWidth=8
+            ExpressionStatement [1548..1583) fullWidth=35
+              CallExpression [1548..1583) fullWidth=35
+                QualifiedNameExpression [1548..1565) fullWidth=17
+                  Identifier [1548..1559) fullWidth=11 text="std"
+                    LeadingTrivia [1548..1556) fullWidth=8
                       WhitespaceTrivia width=8 "        "
-                  DotToken [1557..1558) fullWidth=1 text="."
-                  Identifier [1558..1563) fullWidth=5 text="print"
-                ArgumentList [1563..1581) fullWidth=18
-                  OpenParenToken [1563..1564) fullWidth=1 text="("
-                  StringLiteralExpression [1564..1579) fullWidth=15
-                    StringLiteral [1564..1565) fullWidth=1 text="""
-                    StringLiteralContent [1565..1578) fullWidth=13
-                      StringLiteral [1565..1578) fullWidth=13 text="Unknown event"
-                    StringLiteral [1578..1579) fullWidth=1 text="""
-                  CloseParenToken [1579..1581) fullWidth=2 text=")"
-                    TrailingTrivia [1580..1581) fullWidth=1
+                  DotToken [1559..1560) fullWidth=1 text="."
+                  Identifier [1560..1565) fullWidth=5 text="print"
+                ArgumentList [1565..1583) fullWidth=18
+                  OpenParenToken [1565..1566) fullWidth=1 text="("
+                  StringLiteralExpression [1566..1581) fullWidth=15
+                    StringLiteral [1566..1567) fullWidth=1 text="""
+                    StringLiteralContent [1567..1580) fullWidth=13
+                      StringLiteral [1567..1580) fullWidth=13 text="Unknown event"
+                    StringLiteral [1580..1581) fullWidth=1 text="""
+                  CloseParenToken [1581..1583) fullWidth=2 text=")"
+                    TrailingTrivia [1582..1583) fullWidth=1
                       NewLineTrivia width=1 "\\n"
-            CloseBraceToken [1581..1587) fullWidth=6 text="}"
-              LeadingTrivia [1581..1585) fullWidth=4
+            CloseBraceToken [1583..1589) fullWidth=6 text="}"
+              LeadingTrivia [1583..1587) fullWidth=4
                 WhitespaceTrivia width=4 "    "
-              TrailingTrivia [1586..1587) fullWidth=1
+              TrailingTrivia [1588..1589) fullWidth=1
                 NewLineTrivia width=1 "\\n"
-      CloseBraceToken [1587..1589) fullWidth=2 text="}"
-        TrailingTrivia [1588..1589) fullWidth=1
+      CloseBraceToken [1589..1591) fullWidth=2 text="}"
+        TrailingTrivia [1590..1591) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  CommandDeclaration [1589..1697) fullWidth=108
-    CommandKeyword [1589..1617) fullWidth=28 text="command"
-      LeadingTrivia [1589..1609) fullWidth=20
+  CommandDeclaration [1591..1699) fullWidth=108
+    CommandKeyword [1591..1619) fullWidth=28 text="command"
+      LeadingTrivia [1591..1611) fullWidth=20
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=18 "// Helper commands"
         NewLineTrivia width=1 "\\n"
-      TrailingTrivia [1616..1617) fullWidth=1
+      TrailingTrivia [1618..1619) fullWidth=1
         WhitespaceTrivia width=1 " "
-    Identifier [1617..1629) fullWidth=12 text="heal_player"
-      TrailingTrivia [1628..1629) fullWidth=1
+    Identifier [1619..1631) fullWidth=12 text="heal_player"
+      TrailingTrivia [1630..1631) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BlockStatement [1629..1697) fullWidth=68
-      OpenBraceToken [1629..1631) fullWidth=2 text="{"
-        TrailingTrivia [1630..1631) fullWidth=1
+    BlockStatement [1631..1699) fullWidth=68
+      OpenBraceToken [1631..1633) fullWidth=2 text="{"
+        TrailingTrivia [1632..1633) fullWidth=1
           NewLineTrivia width=1 "\\n"
-      ROMWriteStatement [1631..1663) fullWidth=32
-        ROMKeyword [1631..1638) fullWidth=7 text="ROM"
-          LeadingTrivia [1631..1635) fullWidth=4
+      ROMWriteStatement [1633..1665) fullWidth=32
+        ROMKeyword [1633..1640) fullWidth=7 text="ROM"
+          LeadingTrivia [1633..1637) fullWidth=4
             WhitespaceTrivia width=4 "    "
-        OpenBracketToken [1638..1639) fullWidth=1 text="["
-        NumericLiteralExpression [1639..1645) fullWidth=6
-          HexLiteral [1639..1645) fullWidth=6 text="0x1000"
-        CloseBracketToken [1645..1647) fullWidth=2 text="]"
-          TrailingTrivia [1646..1647) fullWidth=1
-            WhitespaceTrivia width=1 " "
-        EqualsToken [1647..1649) fullWidth=2 text="="
+        OpenBracketToken [1640..1641) fullWidth=1 text="["
+        NumericLiteralExpression [1641..1647) fullWidth=6
+          HexLiteral [1641..1647) fullWidth=6 text="0x1000"
+        CloseBracketToken [1647..1649) fullWidth=2 text="]"
           TrailingTrivia [1648..1649) fullWidth=1
             WhitespaceTrivia width=1 " "
-        IdentifierExpression [1649..1663) fullWidth=14
-          Identifier [1649..1663) fullWidth=14 text="PLAYER_HP_MAX"
-            TrailingTrivia [1662..1663) fullWidth=1
-              NewLineTrivia width=1 "\\n"
-      ExpressionStatement [1663..1695) fullWidth=32
-        CallExpression [1663..1695) fullWidth=32
-          QualifiedNameExpression [1663..1676) fullWidth=13
-            Identifier [1663..1670) fullWidth=7 text="std"
-              LeadingTrivia [1663..1667) fullWidth=4
-                WhitespaceTrivia width=4 "    "
-            DotToken [1670..1671) fullWidth=1 text="."
-            Identifier [1671..1676) fullWidth=5 text="print"
-          ArgumentList [1676..1695) fullWidth=19
-            OpenParenToken [1676..1677) fullWidth=1 text="("
-            StringLiteralExpression [1677..1693) fullWidth=16
-              StringLiteral [1677..1678) fullWidth=1 text="""
-              StringLiteralContent [1678..1692) fullWidth=14
-                StringLiteral [1678..1692) fullWidth=14 text="Player healed!"
-              StringLiteral [1692..1693) fullWidth=1 text="""
-            CloseParenToken [1693..1695) fullWidth=2 text=")"
-              TrailingTrivia [1694..1695) fullWidth=1
-                NewLineTrivia width=1 "\\n"
-      CloseBraceToken [1695..1697) fullWidth=2 text="}"
-        TrailingTrivia [1696..1697) fullWidth=1
-          NewLineTrivia width=1 "\\n"
-  CommandDeclaration [1697..1899) fullWidth=202
-    CommandKeyword [1697..1706) fullWidth=9 text="command"
-      LeadingTrivia [1697..1698) fullWidth=1
-        NewLineTrivia width=1 "\\n"
-      TrailingTrivia [1705..1706) fullWidth=1
-        WhitespaceTrivia width=1 " "
-    Identifier [1706..1719) fullWidth=13 text="show_options"
-      TrailingTrivia [1718..1719) fullWidth=1
-        WhitespaceTrivia width=1 " "
-    BlockStatement [1719..1899) fullWidth=180
-      OpenBraceToken [1719..1721) fullWidth=2 text="{"
-        TrailingTrivia [1720..1721) fullWidth=1
-          NewLineTrivia width=1 "\\n"
-      MenuStatement [1721..1788) fullWidth=67
-        MenuKeyword [1721..1730) fullWidth=9 text="menu"
-          LeadingTrivia [1721..1725) fullWidth=4
-            WhitespaceTrivia width=4 "    "
-          TrailingTrivia [1729..1730) fullWidth=1
+        EqualsToken [1649..1651) fullWidth=2 text="="
+          TrailingTrivia [1650..1651) fullWidth=1
             WhitespaceTrivia width=1 " "
-        NumericLiteral [1730..1732) fullWidth=2 text="2"
+        IdentifierExpression [1651..1665) fullWidth=14
+          Identifier [1651..1665) fullWidth=14 text="PLAYER_HP_MAX"
+            TrailingTrivia [1664..1665) fullWidth=1
+              NewLineTrivia width=1 "\\n"
+      ExpressionStatement [1665..1697) fullWidth=32
+        CallExpression [1665..1697) fullWidth=32
+          QualifiedNameExpression [1665..1678) fullWidth=13
+            Identifier [1665..1672) fullWidth=7 text="std"
+              LeadingTrivia [1665..1669) fullWidth=4
+                WhitespaceTrivia width=4 "    "
+            DotToken [1672..1673) fullWidth=1 text="."
+            Identifier [1673..1678) fullWidth=5 text="print"
+          ArgumentList [1678..1697) fullWidth=19
+            OpenParenToken [1678..1679) fullWidth=1 text="("
+            StringLiteralExpression [1679..1695) fullWidth=16
+              StringLiteral [1679..1680) fullWidth=1 text="""
+              StringLiteralContent [1680..1694) fullWidth=14
+                StringLiteral [1680..1694) fullWidth=14 text="Player healed!"
+              StringLiteral [1694..1695) fullWidth=1 text="""
+            CloseParenToken [1695..1697) fullWidth=2 text=")"
+              TrailingTrivia [1696..1697) fullWidth=1
+                NewLineTrivia width=1 "\\n"
+      CloseBraceToken [1697..1699) fullWidth=2 text="}"
+        TrailingTrivia [1698..1699) fullWidth=1
+          NewLineTrivia width=1 "\\n"
+  CommandDeclaration [1699..1901) fullWidth=202
+    CommandKeyword [1699..1708) fullWidth=9 text="command"
+      LeadingTrivia [1699..1700) fullWidth=1
+        NewLineTrivia width=1 "\\n"
+      TrailingTrivia [1707..1708) fullWidth=1
+        WhitespaceTrivia width=1 " "
+    Identifier [1708..1721) fullWidth=13 text="show_options"
+      TrailingTrivia [1720..1721) fullWidth=1
+        WhitespaceTrivia width=1 " "
+    BlockStatement [1721..1901) fullWidth=180
+      OpenBraceToken [1721..1723) fullWidth=2 text="{"
+        TrailingTrivia [1722..1723) fullWidth=1
+          NewLineTrivia width=1 "\\n"
+      MenuStatement [1723..1790) fullWidth=67
+        MenuKeyword [1723..1732) fullWidth=9 text="menu"
+          LeadingTrivia [1723..1727) fullWidth=4
+            WhitespaceTrivia width=4 "    "
           TrailingTrivia [1731..1732) fullWidth=1
             WhitespaceTrivia width=1 " "
-        OpenBraceToken [1732..1734) fullWidth=2 text="{"
+        NumericLiteral [1732..1734) fullWidth=2 text="2"
           TrailingTrivia [1733..1734) fullWidth=1
+            WhitespaceTrivia width=1 " "
+        OpenBraceToken [1734..1736) fullWidth=2 text="{"
+          TrailingTrivia [1735..1736) fullWidth=1
             NewLineTrivia width=1 "\\n"
-        MenuOption [1734..1759) fullWidth=25
-          StringLiteralExpression [1734..1753) fullWidth=19
-            StringLiteral [1734..1743) fullWidth=9 text="""
-              LeadingTrivia [1734..1742) fullWidth=8
+        MenuOption [1736..1761) fullWidth=25
+          StringLiteralExpression [1736..1755) fullWidth=19
+            StringLiteral [1736..1745) fullWidth=9 text="""
+              LeadingTrivia [1736..1744) fullWidth=8
                 WhitespaceTrivia width=8 "        "
-            StringLiteralContent [1743..1752) fullWidth=9
-              StringLiteral [1743..1752) fullWidth=9 text="Sound: On"
-            StringLiteral [1752..1753) fullWidth=1 text="""
-          ColonToken [1753..1755) fullWidth=2 text=":"
-            TrailingTrivia [1754..1755) fullWidth=1
+            StringLiteralContent [1745..1754) fullWidth=9
+              StringLiteral [1745..1754) fullWidth=9 text="Sound: On"
+            StringLiteral [1754..1755) fullWidth=1 text="""
+          ColonToken [1755..1757) fullWidth=2 text=":"
+            TrailingTrivia [1756..1757) fullWidth=1
               WhitespaceTrivia width=1 " "
-          ExpressionStatement [1755..1759) fullWidth=4
-            IdentifierExpression [1755..1759) fullWidth=4
-              Identifier [1755..1759) fullWidth=4 text="set"
-                TrailingTrivia [1758..1759) fullWidth=1
+          ExpressionStatement [1757..1761) fullWidth=4
+            IdentifierExpression [1757..1761) fullWidth=4
+              Identifier [1757..1761) fullWidth=4 text="set"
+                TrailingTrivia [1760..1761) fullWidth=1
                   WhitespaceTrivia width=1 " "
-        MenuOption [1759..1788) fullWidth=29
-          FlagExpression [1759..1768) fullWidth=9
-            FlagKeyword [1759..1764) fullWidth=5 text="flag"
-              TrailingTrivia [1763..1764) fullWidth=1
+        MenuOption [1761..1790) fullWidth=29
+          FlagExpression [1761..1770) fullWidth=9
+            FlagKeyword [1761..1766) fullWidth=5 text="flag"
+              TrailingTrivia [1765..1766) fullWidth=1
                 WhitespaceTrivia width=1 " "
-            NumericLiteralExpression [1764..1768) fullWidth=4
-              NumericLiteral [1764..1768) fullWidth=4 text="200"
-                TrailingTrivia [1767..1768) fullWidth=1
+            NumericLiteralExpression [1766..1770) fullWidth=4
+              NumericLiteral [1766..1770) fullWidth=4 text="200"
+                TrailingTrivia [1769..1770) fullWidth=1
                   NewLineTrivia width=1 "\\n"
-          MissingToken [1768..1768) fullWidth=0 text=""
-          ExpressionStatement [1768..1788) fullWidth=20
-            StringLiteralExpression [1768..1788) fullWidth=20
-              StringLiteral [1768..1777) fullWidth=9 text="""
-                LeadingTrivia [1768..1776) fullWidth=8
+          MissingToken [1770..1770) fullWidth=0 text=""
+          ExpressionStatement [1770..1790) fullWidth=20
+            StringLiteralExpression [1770..1790) fullWidth=20
+              StringLiteral [1770..1779) fullWidth=9 text="""
+                LeadingTrivia [1770..1778) fullWidth=8
                   WhitespaceTrivia width=8 "        "
-              StringLiteralContent [1777..1787) fullWidth=10
-                StringLiteral [1777..1787) fullWidth=10 text="Sound: Off"
-              StringLiteral [1787..1788) fullWidth=1 text="""
-        MissingToken [1788..1788) fullWidth=0 text=""
-      ErrorStatement [1788..1790) fullWidth=2
-        ColonToken [1788..1790) fullWidth=2 text=":"
-          TrailingTrivia [1789..1790) fullWidth=1
+              StringLiteralContent [1779..1789) fullWidth=10
+                StringLiteral [1779..1789) fullWidth=10 text="Sound: Off"
+              StringLiteral [1789..1790) fullWidth=1 text="""
+        MissingToken [1790..1790) fullWidth=0 text=""
+      ErrorStatement [1790..1792) fullWidth=2
+        ColonToken [1790..1792) fullWidth=2 text=":"
+          TrailingTrivia [1791..1792) fullWidth=1
             WhitespaceTrivia width=1 " "
-      ExpressionStatement [1790..1796) fullWidth=6
-        IdentifierExpression [1790..1796) fullWidth=6
-          Identifier [1790..1796) fullWidth=6 text="unset"
-            TrailingTrivia [1795..1796) fullWidth=1
+      ExpressionStatement [1792..1798) fullWidth=6
+        IdentifierExpression [1792..1798) fullWidth=6
+          Identifier [1792..1798) fullWidth=6 text="unset"
+            TrailingTrivia [1797..1798) fullWidth=1
               WhitespaceTrivia width=1 " "
-      ExpressionStatement [1796..1805) fullWidth=9
-        FlagExpression [1796..1805) fullWidth=9
-          FlagKeyword [1796..1801) fullWidth=5 text="flag"
-            TrailingTrivia [1800..1801) fullWidth=1
+      ExpressionStatement [1798..1807) fullWidth=9
+        FlagExpression [1798..1807) fullWidth=9
+          FlagKeyword [1798..1803) fullWidth=5 text="flag"
+            TrailingTrivia [1802..1803) fullWidth=1
               WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [1801..1805) fullWidth=4
-            NumericLiteral [1801..1805) fullWidth=4 text="200"
-              TrailingTrivia [1804..1805) fullWidth=1
+          NumericLiteralExpression [1803..1807) fullWidth=4
+            NumericLiteral [1803..1807) fullWidth=4 text="200"
+              TrailingTrivia [1806..1807) fullWidth=1
                 NewLineTrivia width=1 "\\n"
-      ExpressionStatement [1805..1831) fullWidth=26
-        StringLiteralExpression [1805..1831) fullWidth=26
-          StringLiteral [1805..1814) fullWidth=9 text="""
-            LeadingTrivia [1805..1813) fullWidth=8
+      ExpressionStatement [1807..1833) fullWidth=26
+        StringLiteralExpression [1807..1833) fullWidth=26
+          StringLiteral [1807..1816) fullWidth=9 text="""
+            LeadingTrivia [1807..1815) fullWidth=8
               WhitespaceTrivia width=8 "        "
-          StringLiteralContent [1814..1830) fullWidth=16
-            StringLiteral [1814..1830) fullWidth=16 text="Difficulty: Easy"
-          StringLiteral [1830..1831) fullWidth=1 text="""
-      ErrorStatement [1831..1833) fullWidth=2
-        ColonToken [1831..1833) fullWidth=2 text=":"
-          TrailingTrivia [1832..1833) fullWidth=1
+          StringLiteralContent [1816..1832) fullWidth=16
+            StringLiteral [1816..1832) fullWidth=16 text="Difficulty: Easy"
+          StringLiteral [1832..1833) fullWidth=1 text="""
+      ErrorStatement [1833..1835) fullWidth=2
+        ColonToken [1833..1835) fullWidth=2 text=":"
+          TrailingTrivia [1834..1835) fullWidth=1
             WhitespaceTrivia width=1 " "
-      ROMWriteStatement [1833..1849) fullWidth=16
-        ROMKeyword [1833..1836) fullWidth=3 text="ROM"
-        OpenBracketToken [1836..1837) fullWidth=1 text="["
-        NumericLiteralExpression [1837..1843) fullWidth=6
-          HexLiteral [1837..1843) fullWidth=6 text="0x6000"
-        CloseBracketToken [1843..1845) fullWidth=2 text="]"
-          TrailingTrivia [1844..1845) fullWidth=1
-            WhitespaceTrivia width=1 " "
-        EqualsToken [1845..1847) fullWidth=2 text="="
+      ROMWriteStatement [1835..1851) fullWidth=16
+        ROMKeyword [1835..1838) fullWidth=3 text="ROM"
+        OpenBracketToken [1838..1839) fullWidth=1 text="["
+        NumericLiteralExpression [1839..1845) fullWidth=6
+          HexLiteral [1839..1845) fullWidth=6 text="0x6000"
+        CloseBracketToken [1845..1847) fullWidth=2 text="]"
           TrailingTrivia [1846..1847) fullWidth=1
             WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [1847..1849) fullWidth=2
-          NumericLiteral [1847..1849) fullWidth=2 text="1"
-            TrailingTrivia [1848..1849) fullWidth=1
+        EqualsToken [1847..1849) fullWidth=2 text="="
+          TrailingTrivia [1848..1849) fullWidth=1
+            WhitespaceTrivia width=1 " "
+        NumericLiteralExpression [1849..1851) fullWidth=2
+          NumericLiteral [1849..1851) fullWidth=2 text="1"
+            TrailingTrivia [1850..1851) fullWidth=1
               NewLineTrivia width=1 "\\n"
-      ExpressionStatement [1849..1875) fullWidth=26
-        StringLiteralExpression [1849..1875) fullWidth=26
-          StringLiteral [1849..1858) fullWidth=9 text="""
-            LeadingTrivia [1849..1857) fullWidth=8
+      ExpressionStatement [1851..1877) fullWidth=26
+        StringLiteralExpression [1851..1877) fullWidth=26
+          StringLiteral [1851..1860) fullWidth=9 text="""
+            LeadingTrivia [1851..1859) fullWidth=8
               WhitespaceTrivia width=8 "        "
-          StringLiteralContent [1858..1874) fullWidth=16
-            StringLiteral [1858..1874) fullWidth=16 text="Difficulty: Hard"
-          StringLiteral [1874..1875) fullWidth=1 text="""
-      ErrorStatement [1875..1877) fullWidth=2
-        ColonToken [1875..1877) fullWidth=2 text=":"
-          TrailingTrivia [1876..1877) fullWidth=1
+          StringLiteralContent [1860..1876) fullWidth=16
+            StringLiteral [1860..1876) fullWidth=16 text="Difficulty: Hard"
+          StringLiteral [1876..1877) fullWidth=1 text="""
+      ErrorStatement [1877..1879) fullWidth=2
+        ColonToken [1877..1879) fullWidth=2 text=":"
+          TrailingTrivia [1878..1879) fullWidth=1
             WhitespaceTrivia width=1 " "
-      ROMWriteStatement [1877..1893) fullWidth=16
-        ROMKeyword [1877..1880) fullWidth=3 text="ROM"
-        OpenBracketToken [1880..1881) fullWidth=1 text="["
-        NumericLiteralExpression [1881..1887) fullWidth=6
-          HexLiteral [1881..1887) fullWidth=6 text="0x6000"
-        CloseBracketToken [1887..1889) fullWidth=2 text="]"
-          TrailingTrivia [1888..1889) fullWidth=1
-            WhitespaceTrivia width=1 " "
-        EqualsToken [1889..1891) fullWidth=2 text="="
+      ROMWriteStatement [1879..1895) fullWidth=16
+        ROMKeyword [1879..1882) fullWidth=3 text="ROM"
+        OpenBracketToken [1882..1883) fullWidth=1 text="["
+        NumericLiteralExpression [1883..1889) fullWidth=6
+          HexLiteral [1883..1889) fullWidth=6 text="0x6000"
+        CloseBracketToken [1889..1891) fullWidth=2 text="]"
           TrailingTrivia [1890..1891) fullWidth=1
             WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [1891..1893) fullWidth=2
-          NumericLiteral [1891..1893) fullWidth=2 text="3"
-            TrailingTrivia [1892..1893) fullWidth=1
+        EqualsToken [1891..1893) fullWidth=2 text="="
+          TrailingTrivia [1892..1893) fullWidth=1
+            WhitespaceTrivia width=1 " "
+        NumericLiteralExpression [1893..1895) fullWidth=2
+          NumericLiteral [1893..1895) fullWidth=2 text="3"
+            TrailingTrivia [1894..1895) fullWidth=1
               NewLineTrivia width=1 "\\n"
-      CloseBraceToken [1893..1899) fullWidth=6 text="}"
-        LeadingTrivia [1893..1897) fullWidth=4
+      CloseBraceToken [1895..1901) fullWidth=6 text="}"
+        LeadingTrivia [1895..1899) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [1898..1899) fullWidth=1
+        TrailingTrivia [1900..1901) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ExpressionStatement [1899..1908) fullWidth=9
-    IdentifierExpression [1899..1908) fullWidth=9
-      Identifier [1899..1908) fullWidth=9 text="goto"
-        LeadingTrivia [1899..1903) fullWidth=4
+  ExpressionStatement [1901..1910) fullWidth=9
+    IdentifierExpression [1901..1910) fullWidth=9
+      Identifier [1901..1910) fullWidth=9 text="goto"
+        LeadingTrivia [1901..1905) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [1907..1908) fullWidth=1
+        TrailingTrivia [1909..1910) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [1908..1918) fullWidth=10
-    IdentifierExpression [1908..1918) fullWidth=10
-      Identifier [1908..1918) fullWidth=10 text="main_loop"
-        TrailingTrivia [1917..1918) fullWidth=1
+  ExpressionStatement [1910..1920) fullWidth=10
+    IdentifierExpression [1910..1920) fullWidth=10
+      Identifier [1910..1920) fullWidth=10 text="main_loop"
+        TrailingTrivia [1919..1920) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  LabelDeclaration [1918..1954) fullWidth=36
-    Identifier [1918..1952) fullWidth=34 text="event_handler_1"
-      LeadingTrivia [1918..1937) fullWidth=19
+  ErrorStatement [1920..1922) fullWidth=2
+    CloseBraceToken [1920..1922) fullWidth=2 text="}"
+      TrailingTrivia [1921..1922) fullWidth=1
+        NewLineTrivia width=1 "\\n"
+  LabelDeclaration [1922..1958) fullWidth=36
+    Identifier [1922..1956) fullWidth=34 text="event_handler_1"
+      LeadingTrivia [1922..1941) fullWidth=19
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=17 "// Event handlers"
         NewLineTrivia width=1 "\\n"
-    ColonToken [1952..1954) fullWidth=2 text=":"
-      TrailingTrivia [1953..1954) fullWidth=1
+    ColonToken [1956..1958) fullWidth=2 text=":"
+      TrailingTrivia [1957..1958) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  ExpressionStatement [1954..1962) fullWidth=8
-    IdentifierExpression [1954..1962) fullWidth=8
-      Identifier [1954..1962) fullWidth=8 text="set"
-        LeadingTrivia [1954..1958) fullWidth=4
+  ExpressionStatement [1958..1966) fullWidth=8
+    IdentifierExpression [1958..1966) fullWidth=8
+      Identifier [1958..1966) fullWidth=8 text="set"
+        LeadingTrivia [1958..1962) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [1961..1962) fullWidth=1
+        TrailingTrivia [1965..1966) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [1962..1970) fullWidth=8
-    FlagExpression [1962..1970) fullWidth=8
-      FlagKeyword [1962..1967) fullWidth=5 text="flag"
-        TrailingTrivia [1966..1967) fullWidth=1
+  ExpressionStatement [1966..1974) fullWidth=8
+    FlagExpression [1966..1974) fullWidth=8
+      FlagKeyword [1966..1971) fullWidth=5 text="flag"
+        TrailingTrivia [1970..1971) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [1967..1970) fullWidth=3
-        NumericLiteral [1967..1970) fullWidth=3 text="50"
-          TrailingTrivia [1969..1970) fullWidth=1
+      NumericLiteralExpression [1971..1974) fullWidth=3
+        NumericLiteral [1971..1974) fullWidth=3 text="50"
+          TrailingTrivia [1973..1974) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  ExpressionStatement [1970..1979) fullWidth=9
-    IdentifierExpression [1970..1979) fullWidth=9
-      Identifier [1970..1979) fullWidth=9 text="call"
-        LeadingTrivia [1970..1974) fullWidth=4
+  ExpressionStatement [1974..1983) fullWidth=9
+    IdentifierExpression [1974..1983) fullWidth=9
+      Identifier [1974..1983) fullWidth=9 text="call"
+        LeadingTrivia [1974..1978) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [1978..1979) fullWidth=1
+        TrailingTrivia [1982..1983) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [1979..1992) fullWidth=13
-    CallExpression [1979..1992) fullWidth=13
-      QualifiedNameExpression [1979..1987) fullWidth=8
-        Identifier [1979..1982) fullWidth=3 text="std"
-        DotToken [1982..1983) fullWidth=1 text="."
-        Identifier [1983..1987) fullWidth=4 text="wait"
-      ArgumentList [1987..1992) fullWidth=5
-        OpenParenToken [1987..1988) fullWidth=1 text="("
-        NumericLiteralExpression [1988..1990) fullWidth=2
-          NumericLiteral [1988..1990) fullWidth=2 text="30"
-        CloseParenToken [1990..1992) fullWidth=2 text=")"
-          TrailingTrivia [1991..1992) fullWidth=1
+  ExpressionStatement [1983..1996) fullWidth=13
+    CallExpression [1983..1996) fullWidth=13
+      QualifiedNameExpression [1983..1991) fullWidth=8
+        Identifier [1983..1986) fullWidth=3 text="std"
+        DotToken [1986..1987) fullWidth=1 text="."
+        Identifier [1987..1991) fullWidth=4 text="wait"
+      ArgumentList [1991..1996) fullWidth=5
+        OpenParenToken [1991..1992) fullWidth=1 text="("
+        NumericLiteralExpression [1992..1994) fullWidth=2
+          NumericLiteral [1992..1994) fullWidth=2 text="30"
+        CloseParenToken [1994..1996) fullWidth=2 text=")"
+          TrailingTrivia [1995..1996) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  ExpressionStatement [1992..2001) fullWidth=9
-    IdentifierExpression [1992..2001) fullWidth=9
-      Identifier [1992..2001) fullWidth=9 text="goto"
-        LeadingTrivia [1992..1996) fullWidth=4
+  ExpressionStatement [1996..2005) fullWidth=9
+    IdentifierExpression [1996..2005) fullWidth=9
+      Identifier [1996..2005) fullWidth=9 text="goto"
+        LeadingTrivia [1996..2000) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2000..2001) fullWidth=1
+        TrailingTrivia [2004..2005) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [2001..2011) fullWidth=10
-    IdentifierExpression [2001..2011) fullWidth=10
-      Identifier [2001..2011) fullWidth=10 text="main_loop"
-        TrailingTrivia [2010..2011) fullWidth=1
+  ExpressionStatement [2005..2015) fullWidth=10
+    IdentifierExpression [2005..2015) fullWidth=10
+      Identifier [2005..2015) fullWidth=10 text="main_loop"
+        TrailingTrivia [2014..2015) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  LabelDeclaration [2011..2029) fullWidth=18
-    Identifier [2011..2027) fullWidth=16 text="event_handler_2"
-      LeadingTrivia [2011..2012) fullWidth=1
+  LabelDeclaration [2015..2033) fullWidth=18
+    Identifier [2015..2031) fullWidth=16 text="event_handler_2"
+      LeadingTrivia [2015..2016) fullWidth=1
         NewLineTrivia width=1 "\\n"
-    ColonToken [2027..2029) fullWidth=2 text=":"
-      TrailingTrivia [2028..2029) fullWidth=1
+    ColonToken [2031..2033) fullWidth=2 text=":"
+      TrailingTrivia [2032..2033) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  ExpressionStatement [2029..2039) fullWidth=10
-    IdentifierExpression [2029..2039) fullWidth=10
-      Identifier [2029..2039) fullWidth=10 text="unset"
-        LeadingTrivia [2029..2033) fullWidth=4
+  ExpressionStatement [2033..2043) fullWidth=10
+    IdentifierExpression [2033..2043) fullWidth=10
+      Identifier [2033..2043) fullWidth=10 text="unset"
+        LeadingTrivia [2033..2037) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2038..2039) fullWidth=1
+        TrailingTrivia [2042..2043) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [2039..2047) fullWidth=8
-    FlagExpression [2039..2047) fullWidth=8
-      FlagKeyword [2039..2044) fullWidth=5 text="flag"
-        TrailingTrivia [2043..2044) fullWidth=1
+  ExpressionStatement [2043..2051) fullWidth=8
+    FlagExpression [2043..2051) fullWidth=8
+      FlagKeyword [2043..2048) fullWidth=5 text="flag"
+        TrailingTrivia [2047..2048) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [2044..2047) fullWidth=3
-        NumericLiteral [2044..2047) fullWidth=3 text="50"
-          TrailingTrivia [2046..2047) fullWidth=1
+      NumericLiteralExpression [2048..2051) fullWidth=3
+        NumericLiteral [2048..2051) fullWidth=3 text="50"
+          TrailingTrivia [2050..2051) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  ExpressionStatement [2047..2056) fullWidth=9
-    IdentifierExpression [2047..2056) fullWidth=9
-      Identifier [2047..2056) fullWidth=9 text="goto"
-        LeadingTrivia [2047..2051) fullWidth=4
+  ExpressionStatement [2051..2060) fullWidth=9
+    IdentifierExpression [2051..2060) fullWidth=9
+      Identifier [2051..2060) fullWidth=9 text="goto"
+        LeadingTrivia [2051..2055) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2055..2056) fullWidth=1
+        TrailingTrivia [2059..2060) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [2056..2066) fullWidth=10
-    IdentifierExpression [2056..2066) fullWidth=10
-      Identifier [2056..2066) fullWidth=10 text="main_loop"
-        TrailingTrivia [2065..2066) fullWidth=1
+  ExpressionStatement [2060..2070) fullWidth=10
+    IdentifierExpression [2060..2070) fullWidth=10
+      Identifier [2060..2070) fullWidth=10 text="main_loop"
+        TrailingTrivia [2069..2070) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  LabelDeclaration [2066..2093) fullWidth=27
-    Identifier [2066..2091) fullWidth=25 text="start_game"
-      LeadingTrivia [2066..2081) fullWidth=15
+  LabelDeclaration [2070..2097) fullWidth=27
+    Identifier [2070..2095) fullWidth=25 text="start_game"
+      LeadingTrivia [2070..2085) fullWidth=15
         NewLineTrivia width=1 "\\n"
         SingleLineCommentTrivia width=13 "// Game start"
         NewLineTrivia width=1 "\\n"
-    ColonToken [2091..2093) fullWidth=2 text=":"
-      TrailingTrivia [2092..2093) fullWidth=1
+    ColonToken [2095..2097) fullWidth=2 text=":"
+      TrailingTrivia [2096..2097) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  ExpressionStatement [2093..2102) fullWidth=9
-    IdentifierExpression [2093..2102) fullWidth=9
-      Identifier [2093..2102) fullWidth=9 text="call"
-        LeadingTrivia [2093..2097) fullWidth=4
+  ExpressionStatement [2097..2106) fullWidth=9
+    IdentifierExpression [2097..2106) fullWidth=9
+      Identifier [2097..2106) fullWidth=9 text="call"
+        LeadingTrivia [2097..2101) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2101..2102) fullWidth=1
+        TrailingTrivia [2105..2106) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [2102..2118) fullWidth=16
-    IdentifierExpression [2102..2118) fullWidth=16
-      Identifier [2102..2118) fullWidth=16 text="initialize_game"
-        TrailingTrivia [2117..2118) fullWidth=1
+  ExpressionStatement [2106..2122) fullWidth=16
+    IdentifierExpression [2106..2122) fullWidth=16
+      Identifier [2106..2122) fullWidth=16 text="initialize_game"
+        TrailingTrivia [2121..2122) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ExpressionStatement [2118..2126) fullWidth=8
-    IdentifierExpression [2118..2126) fullWidth=8
-      Identifier [2118..2126) fullWidth=8 text="set"
-        LeadingTrivia [2118..2122) fullWidth=4
+  ExpressionStatement [2122..2130) fullWidth=8
+    IdentifierExpression [2122..2130) fullWidth=8
+      Identifier [2122..2130) fullWidth=8 text="set"
+        LeadingTrivia [2122..2126) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2125..2126) fullWidth=1
+        TrailingTrivia [2129..2130) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [2126..2135) fullWidth=9
-    FlagExpression [2126..2135) fullWidth=9
-      FlagKeyword [2126..2131) fullWidth=5 text="flag"
-        TrailingTrivia [2130..2131) fullWidth=1
+  ExpressionStatement [2130..2139) fullWidth=9
+    FlagExpression [2130..2139) fullWidth=9
+      FlagKeyword [2130..2135) fullWidth=5 text="flag"
+        TrailingTrivia [2134..2135) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [2131..2135) fullWidth=4
-        NumericLiteral [2131..2135) fullWidth=4 text="100"
-          TrailingTrivia [2134..2135) fullWidth=1
+      NumericLiteralExpression [2135..2139) fullWidth=4
+        NumericLiteral [2135..2139) fullWidth=4 text="100"
+          TrailingTrivia [2138..2139) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  ConstantDeclaration [2135..2217) fullWidth=82
-    DefineKeyword [2135..2194) fullWidth=59 text="define"
-      LeadingTrivia [2135..2187) fullWidth=52
+  ConstantDeclaration [2139..2224) fullWidth=85
+    DefineKeyword [2139..2198) fullWidth=59 text="define"
+      LeadingTrivia [2139..2191) fullWidth=52
         WhitespaceTrivia width=4 "    "
         SingleLineCommentTrivia width=43 "// Binary operators and complex expressions"
         NewLineTrivia width=1 "\\n"
         WhitespaceTrivia width=4 "    "
-      TrailingTrivia [2193..2194) fullWidth=1
+      TrailingTrivia [2197..2198) fullWidth=1
         WhitespaceTrivia width=1 " "
-    Identifier [2194..2200) fullWidth=6 text="score"
-      TrailingTrivia [2199..2200) fullWidth=1
+    Identifier [2198..2204) fullWidth=6 text="score"
+      TrailingTrivia [2203..2204) fullWidth=1
         WhitespaceTrivia width=1 " "
-    EqualsToken [2200..2202) fullWidth=2 text="="
-      TrailingTrivia [2201..2202) fullWidth=1
+    EqualsToken [2204..2206) fullWidth=2 text="="
+      TrailingTrivia [2205..2206) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BinaryExpression [2202..2217) fullWidth=15
-      BinaryExpression [2202..2213) fullWidth=11
-        BinaryExpression [2202..2209) fullWidth=7
-          NumericLiteralExpression [2202..2205) fullWidth=3
-            NumericLiteral [2202..2205) fullWidth=3 text="10"
-              TrailingTrivia [2204..2205) fullWidth=1
+    BinaryExpression [2206..2224) fullWidth=18
+      BinaryExpression [2206..2220) fullWidth=14
+        ParenthesizedExpression [2206..2216) fullWidth=10
+          OpenParenToken [2206..2207) fullWidth=1 text="("
+          BinaryExpression [2207..2214) fullWidth=7
+            NumericLiteralExpression [2207..2210) fullWidth=3
+              NumericLiteral [2207..2210) fullWidth=3 text="10"
+                TrailingTrivia [2209..2210) fullWidth=1
+                  WhitespaceTrivia width=1 " "
+            Identifier [2210..2212) fullWidth=2 text="+"
+              TrailingTrivia [2211..2212) fullWidth=1
                 WhitespaceTrivia width=1 " "
-          Identifier [2205..2207) fullWidth=2 text="+"
-            TrailingTrivia [2206..2207) fullWidth=1
+            NumericLiteralExpression [2212..2214) fullWidth=2
+              NumericLiteral [2212..2214) fullWidth=2 text="20"
+          CloseParenToken [2214..2216) fullWidth=2 text=")"
+            TrailingTrivia [2215..2216) fullWidth=1
               WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [2207..2209) fullWidth=2
-            NumericLiteral [2207..2209) fullWidth=2 text="20"
-        Identifier [2209..2211) fullWidth=2 text="*"
-          TrailingTrivia [2210..2211) fullWidth=1
+        Identifier [2216..2218) fullWidth=2 text="*"
+          TrailingTrivia [2217..2218) fullWidth=1
             WhitespaceTrivia width=1 " "
-        NumericLiteralExpression [2211..2213) fullWidth=2
-          NumericLiteral [2211..2213) fullWidth=2 text="3"
-            TrailingTrivia [2212..2213) fullWidth=1
+        NumericLiteralExpression [2218..2220) fullWidth=2
+          NumericLiteral [2218..2220) fullWidth=2 text="3"
+            TrailingTrivia [2219..2220) fullWidth=1
               WhitespaceTrivia width=1 " "
-      Identifier [2213..2215) fullWidth=2 text="-"
-        TrailingTrivia [2214..2215) fullWidth=1
+      Identifier [2220..2222) fullWidth=2 text="-"
+        TrailingTrivia [2221..2222) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [2215..2217) fullWidth=2
-        NumericLiteral [2215..2217) fullWidth=2 text="5"
-          TrailingTrivia [2216..2217) fullWidth=1
+      NumericLiteralExpression [2222..2224) fullWidth=2
+        NumericLiteral [2222..2224) fullWidth=2 text="5"
+          TrailingTrivia [2223..2224) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  ConstantDeclaration [2217..2267) fullWidth=50
-    DefineKeyword [2217..2228) fullWidth=11 text="define"
-      LeadingTrivia [2217..2221) fullWidth=4
+  ConstantDeclaration [2224..2277) fullWidth=53
+    DefineKeyword [2224..2235) fullWidth=11 text="define"
+      LeadingTrivia [2224..2228) fullWidth=4
         WhitespaceTrivia width=4 "    "
-      TrailingTrivia [2227..2228) fullWidth=1
+      TrailingTrivia [2234..2235) fullWidth=1
         WhitespaceTrivia width=1 " "
-    Identifier [2228..2234) fullWidth=6 text="check"
-      TrailingTrivia [2233..2234) fullWidth=1
+    Identifier [2235..2241) fullWidth=6 text="check"
+      TrailingTrivia [2240..2241) fullWidth=1
         WhitespaceTrivia width=1 " "
-    EqualsToken [2234..2236) fullWidth=2 text="="
-      TrailingTrivia [2235..2236) fullWidth=1
+    EqualsToken [2241..2243) fullWidth=2 text="="
+      TrailingTrivia [2242..2243) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BinaryExpression [2236..2267) fullWidth=31
-      BinaryExpression [2236..2252) fullWidth=16
-        FlagExpression [2236..2243) fullWidth=7
-          FlagKeyword [2236..2241) fullWidth=5 text="flag"
-            TrailingTrivia [2240..2241) fullWidth=1
-              WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [2241..2243) fullWidth=2
-            NumericLiteral [2241..2243) fullWidth=2 text="1"
-              TrailingTrivia [2242..2243) fullWidth=1
+    BinaryExpression [2243..2277) fullWidth=34
+      ParenthesizedExpression [2243..2262) fullWidth=19
+        OpenParenToken [2243..2244) fullWidth=1 text="("
+        BinaryExpression [2244..2260) fullWidth=16
+          FlagExpression [2244..2251) fullWidth=7
+            FlagKeyword [2244..2249) fullWidth=5 text="flag"
+              TrailingTrivia [2248..2249) fullWidth=1
                 WhitespaceTrivia width=1 " "
-        OrKeyword [2243..2246) fullWidth=3 text="or"
-          TrailingTrivia [2245..2246) fullWidth=1
-            WhitespaceTrivia width=1 " "
-        FlagExpression [2246..2252) fullWidth=6
-          FlagKeyword [2246..2251) fullWidth=5 text="flag"
-            TrailingTrivia [2250..2251) fullWidth=1
+            NumericLiteralExpression [2249..2251) fullWidth=2
+              NumericLiteral [2249..2251) fullWidth=2 text="1"
+                TrailingTrivia [2250..2251) fullWidth=1
+                  WhitespaceTrivia width=1 " "
+          OrKeyword [2251..2254) fullWidth=3 text="or"
+            TrailingTrivia [2253..2254) fullWidth=1
               WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [2251..2252) fullWidth=1
-            NumericLiteral [2251..2252) fullWidth=1 text="2"
-      AndKeyword [2252..2256) fullWidth=4 text="and"
-        TrailingTrivia [2255..2256) fullWidth=1
+          FlagExpression [2254..2260) fullWidth=6
+            FlagKeyword [2254..2259) fullWidth=5 text="flag"
+              TrailingTrivia [2258..2259) fullWidth=1
+                WhitespaceTrivia width=1 " "
+            NumericLiteralExpression [2259..2260) fullWidth=1
+              NumericLiteral [2259..2260) fullWidth=1 text="2"
+        CloseParenToken [2260..2262) fullWidth=2 text=")"
+          TrailingTrivia [2261..2262) fullWidth=1
+            WhitespaceTrivia width=1 " "
+      AndKeyword [2262..2266) fullWidth=4 text="and"
+        TrailingTrivia [2265..2266) fullWidth=1
           WhitespaceTrivia width=1 " "
-      UnaryExpression [2256..2267) fullWidth=11
-        NotKeyword [2256..2260) fullWidth=4 text="not"
-          TrailingTrivia [2259..2260) fullWidth=1
+      UnaryExpression [2266..2277) fullWidth=11
+        NotKeyword [2266..2270) fullWidth=4 text="not"
+          TrailingTrivia [2269..2270) fullWidth=1
             WhitespaceTrivia width=1 " "
-        FlagExpression [2260..2267) fullWidth=7
-          FlagKeyword [2260..2265) fullWidth=5 text="flag"
-            TrailingTrivia [2264..2265) fullWidth=1
+        FlagExpression [2270..2277) fullWidth=7
+          FlagKeyword [2270..2275) fullWidth=5 text="flag"
+            TrailingTrivia [2274..2275) fullWidth=1
               WhitespaceTrivia width=1 " "
-          NumericLiteralExpression [2265..2267) fullWidth=2
-            NumericLiteral [2265..2267) fullWidth=2 text="3"
-              TrailingTrivia [2266..2267) fullWidth=1
+          NumericLiteralExpression [2275..2277) fullWidth=2
+            NumericLiteral [2275..2277) fullWidth=2 text="3"
+              TrailingTrivia [2276..2277) fullWidth=1
                 NewLineTrivia width=1 "\\n"
-  ExpressionStatement [2267..2276) fullWidth=9
-    IdentifierExpression [2267..2276) fullWidth=9
-      Identifier [2267..2276) fullWidth=9 text="goto"
-        LeadingTrivia [2267..2271) fullWidth=4
+  ExpressionStatement [2277..2286) fullWidth=9
+    IdentifierExpression [2277..2286) fullWidth=9
+      Identifier [2277..2286) fullWidth=9 text="goto"
+        LeadingTrivia [2277..2281) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2275..2276) fullWidth=1
+        TrailingTrivia [2285..2286) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [2276..2290) fullWidth=14
-    IdentifierExpression [2276..2290) fullWidth=14
-      Identifier [2276..2290) fullWidth=14 text="gameplay_loop"
-        TrailingTrivia [2289..2290) fullWidth=1
+  ExpressionStatement [2286..2300) fullWidth=14
+    IdentifierExpression [2286..2300) fullWidth=14
+      Identifier [2286..2300) fullWidth=14 text="gameplay_loop"
+        TrailingTrivia [2299..2300) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  LabelDeclaration [2290..2306) fullWidth=16
-    Identifier [2290..2304) fullWidth=14 text="gameplay_loop"
-      LeadingTrivia [2290..2291) fullWidth=1
+  LabelDeclaration [2300..2316) fullWidth=16
+    Identifier [2300..2314) fullWidth=14 text="gameplay_loop"
+      LeadingTrivia [2300..2301) fullWidth=1
         NewLineTrivia width=1 "\\n"
-    ColonToken [2304..2306) fullWidth=2 text=":"
-      TrailingTrivia [2305..2306) fullWidth=1
+    ColonToken [2314..2316) fullWidth=2 text=":"
+      TrailingTrivia [2315..2316) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  ExpressionStatement [2306..2315) fullWidth=9
-    IdentifierExpression [2306..2315) fullWidth=9
-      Identifier [2306..2315) fullWidth=9 text="call"
-        LeadingTrivia [2306..2310) fullWidth=4
+  ExpressionStatement [2316..2325) fullWidth=9
+    IdentifierExpression [2316..2325) fullWidth=9
+      Identifier [2316..2325) fullWidth=9 text="call"
+        LeadingTrivia [2316..2320) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2314..2315) fullWidth=1
+        TrailingTrivia [2324..2325) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [2315..2333) fullWidth=18
-    IdentifierExpression [2315..2333) fullWidth=18
-      Identifier [2315..2333) fullWidth=18 text="update_game_state"
-        TrailingTrivia [2332..2333) fullWidth=1
+  ExpressionStatement [2325..2343) fullWidth=18
+    IdentifierExpression [2325..2343) fullWidth=18
+      Identifier [2325..2343) fullWidth=18 text="update_game_state"
+        TrailingTrivia [2342..2343) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  ExpressionStatement [2333..2342) fullWidth=9
-    IdentifierExpression [2333..2342) fullWidth=9
-      Identifier [2333..2342) fullWidth=9 text="call"
-        LeadingTrivia [2333..2337) fullWidth=4
+  ExpressionStatement [2343..2352) fullWidth=9
+    IdentifierExpression [2343..2352) fullWidth=9
+      Identifier [2343..2352) fullWidth=9 text="call"
+        LeadingTrivia [2343..2347) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2341..2342) fullWidth=1
+        TrailingTrivia [2351..2352) fullWidth=1
           WhitespaceTrivia width=1 " "
-  ExpressionStatement [2342..2355) fullWidth=13
-    IdentifierExpression [2342..2355) fullWidth=13
-      Identifier [2342..2355) fullWidth=13 text="render_frame"
-        TrailingTrivia [2354..2355) fullWidth=1
+  ExpressionStatement [2352..2365) fullWidth=13
+    IdentifierExpression [2352..2365) fullWidth=13
+      Identifier [2352..2365) fullWidth=13 text="render_frame"
+        TrailingTrivia [2364..2365) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  IfStatement [2355..2447) fullWidth=92
-    IfKeyword [2355..2367) fullWidth=12 text="if"
-      LeadingTrivia [2355..2364) fullWidth=9
+  IfStatement [2365..2457) fullWidth=92
+    IfKeyword [2365..2377) fullWidth=12 text="if"
+      LeadingTrivia [2365..2374) fullWidth=9
         WhitespaceTrivia width=4 "    "
         NewLineTrivia width=1 "\\n"
         WhitespaceTrivia width=4 "    "
-      TrailingTrivia [2366..2367) fullWidth=1
+      TrailingTrivia [2376..2377) fullWidth=1
         WhitespaceTrivia width=1 " "
-    FlagExpression [2367..2376) fullWidth=9
-      FlagKeyword [2367..2372) fullWidth=5 text="flag"
-        TrailingTrivia [2371..2372) fullWidth=1
+    FlagExpression [2377..2386) fullWidth=9
+      FlagKeyword [2377..2382) fullWidth=5 text="flag"
+        TrailingTrivia [2381..2382) fullWidth=1
           WhitespaceTrivia width=1 " "
-      NumericLiteralExpression [2372..2376) fullWidth=4
-        NumericLiteral [2372..2376) fullWidth=4 text="100"
-          TrailingTrivia [2375..2376) fullWidth=1
+      NumericLiteralExpression [2382..2386) fullWidth=4
+        NumericLiteral [2382..2386) fullWidth=4 text="100"
+          TrailingTrivia [2385..2386) fullWidth=1
             WhitespaceTrivia width=1 " "
-    BlockStatement [2376..2411) fullWidth=35
-      OpenBraceToken [2376..2378) fullWidth=2 text="{"
-        TrailingTrivia [2377..2378) fullWidth=1
+    BlockStatement [2386..2421) fullWidth=35
+      OpenBraceToken [2386..2388) fullWidth=2 text="{"
+        TrailingTrivia [2387..2388) fullWidth=1
           NewLineTrivia width=1 "\\n"
-      ExpressionStatement [2378..2391) fullWidth=13
-        IdentifierExpression [2378..2391) fullWidth=13
-          Identifier [2378..2391) fullWidth=13 text="goto"
-            LeadingTrivia [2378..2386) fullWidth=8
+      ExpressionStatement [2388..2401) fullWidth=13
+        IdentifierExpression [2388..2401) fullWidth=13
+          Identifier [2388..2401) fullWidth=13 text="goto"
+            LeadingTrivia [2388..2396) fullWidth=8
               WhitespaceTrivia width=8 "        "
-            TrailingTrivia [2390..2391) fullWidth=1
+            TrailingTrivia [2400..2401) fullWidth=1
               WhitespaceTrivia width=1 " "
-      ExpressionStatement [2391..2405) fullWidth=14
-        IdentifierExpression [2391..2405) fullWidth=14
-          Identifier [2391..2405) fullWidth=14 text="gameplay_loop"
-            TrailingTrivia [2404..2405) fullWidth=1
+      ExpressionStatement [2401..2415) fullWidth=14
+        IdentifierExpression [2401..2415) fullWidth=14
+          Identifier [2401..2415) fullWidth=14 text="gameplay_loop"
+            TrailingTrivia [2414..2415) fullWidth=1
               NewLineTrivia width=1 "\\n"
-      CloseBraceToken [2405..2411) fullWidth=6 text="}"
-        LeadingTrivia [2405..2409) fullWidth=4
+      CloseBraceToken [2415..2421) fullWidth=6 text="}"
+        LeadingTrivia [2415..2419) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2410..2411) fullWidth=1
+        TrailingTrivia [2420..2421) fullWidth=1
           WhitespaceTrivia width=1 " "
-    ElseKeyword [2411..2416) fullWidth=5 text="else"
-      TrailingTrivia [2415..2416) fullWidth=1
+    ElseKeyword [2421..2426) fullWidth=5 text="else"
+      TrailingTrivia [2425..2426) fullWidth=1
         WhitespaceTrivia width=1 " "
-    BlockStatement [2416..2447) fullWidth=31
-      OpenBraceToken [2416..2418) fullWidth=2 text="{"
-        TrailingTrivia [2417..2418) fullWidth=1
+    BlockStatement [2426..2457) fullWidth=31
+      OpenBraceToken [2426..2428) fullWidth=2 text="{"
+        TrailingTrivia [2427..2428) fullWidth=1
           NewLineTrivia width=1 "\\n"
-      ExpressionStatement [2418..2431) fullWidth=13
-        IdentifierExpression [2418..2431) fullWidth=13
-          Identifier [2418..2431) fullWidth=13 text="goto"
-            LeadingTrivia [2418..2426) fullWidth=8
+      ExpressionStatement [2428..2441) fullWidth=13
+        IdentifierExpression [2428..2441) fullWidth=13
+          Identifier [2428..2441) fullWidth=13 text="goto"
+            LeadingTrivia [2428..2436) fullWidth=8
               WhitespaceTrivia width=8 "        "
-            TrailingTrivia [2430..2431) fullWidth=1
-              WhitespaceTrivia width=1 " "
-      ExpressionStatement [2431..2441) fullWidth=10
-        IdentifierExpression [2431..2441) fullWidth=10
-          Identifier [2431..2441) fullWidth=10 text="game_over"
             TrailingTrivia [2440..2441) fullWidth=1
+              WhitespaceTrivia width=1 " "
+      ExpressionStatement [2441..2451) fullWidth=10
+        IdentifierExpression [2441..2451) fullWidth=10
+          Identifier [2441..2451) fullWidth=10 text="game_over"
+            TrailingTrivia [2450..2451) fullWidth=1
               NewLineTrivia width=1 "\\n"
-      CloseBraceToken [2441..2447) fullWidth=6 text="}"
-        LeadingTrivia [2441..2445) fullWidth=4
+      CloseBraceToken [2451..2457) fullWidth=6 text="}"
+        LeadingTrivia [2451..2455) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2446..2447) fullWidth=1
+        TrailingTrivia [2456..2457) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  LabelDeclaration [2447..2459) fullWidth=12
-    Identifier [2447..2457) fullWidth=10 text="game_over"
-      LeadingTrivia [2447..2448) fullWidth=1
+  LabelDeclaration [2457..2469) fullWidth=12
+    Identifier [2457..2467) fullWidth=10 text="game_over"
+      LeadingTrivia [2457..2458) fullWidth=1
         NewLineTrivia width=1 "\\n"
-    ColonToken [2457..2459) fullWidth=2 text=":"
-      TrailingTrivia [2458..2459) fullWidth=1
+    ColonToken [2467..2469) fullWidth=2 text=":"
+      TrailingTrivia [2468..2469) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  ExpressionStatement [2459..2486) fullWidth=27
-    CallExpression [2459..2486) fullWidth=27
-      QualifiedNameExpression [2459..2472) fullWidth=13
-        Identifier [2459..2466) fullWidth=7 text="std"
-          LeadingTrivia [2459..2463) fullWidth=4
+  ExpressionStatement [2469..2496) fullWidth=27
+    CallExpression [2469..2496) fullWidth=27
+      QualifiedNameExpression [2469..2482) fullWidth=13
+        Identifier [2469..2476) fullWidth=7 text="std"
+          LeadingTrivia [2469..2473) fullWidth=4
             WhitespaceTrivia width=4 "    "
-        DotToken [2466..2467) fullWidth=1 text="."
-        Identifier [2467..2472) fullWidth=5 text="print"
-      ArgumentList [2472..2486) fullWidth=14
-        OpenParenToken [2472..2473) fullWidth=1 text="("
-        StringLiteralExpression [2473..2484) fullWidth=11
-          StringLiteral [2473..2474) fullWidth=1 text="""
-          StringLiteralContent [2474..2483) fullWidth=9
-            StringLiteral [2474..2483) fullWidth=9 text="Game Over"
+        DotToken [2476..2477) fullWidth=1 text="."
+        Identifier [2477..2482) fullWidth=5 text="print"
+      ArgumentList [2482..2496) fullWidth=14
+        OpenParenToken [2482..2483) fullWidth=1 text="("
+        StringLiteralExpression [2483..2494) fullWidth=11
           StringLiteral [2483..2484) fullWidth=1 text="""
-        CloseParenToken [2484..2486) fullWidth=2 text=")"
-          TrailingTrivia [2485..2486) fullWidth=1
+          StringLiteralContent [2484..2493) fullWidth=9
+            StringLiteral [2484..2493) fullWidth=9 text="Game Over"
+          StringLiteral [2493..2494) fullWidth=1 text="""
+        CloseParenToken [2494..2496) fullWidth=2 text=")"
+          TrailingTrivia [2495..2496) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  ExpressionStatement [2486..2495) fullWidth=9
-    IdentifierExpression [2486..2495) fullWidth=9
-      Identifier [2486..2495) fullWidth=9 text="goto"
-        LeadingTrivia [2486..2490) fullWidth=4
+  ExpressionStatement [2496..2505) fullWidth=9
+    IdentifierExpression [2496..2505) fullWidth=9
+      Identifier [2496..2505) fullWidth=9 text="goto"
+        LeadingTrivia [2496..2500) fullWidth=4
           WhitespaceTrivia width=4 "    "
-        TrailingTrivia [2494..2495) fullWidth=1
-          WhitespaceTrivia width=1 " "
-  ExpressionStatement [2495..2505) fullWidth=10
-    IdentifierExpression [2495..2505) fullWidth=10
-      Identifier [2495..2505) fullWidth=10 text="main_loop"
         TrailingTrivia [2504..2505) fullWidth=1
+          WhitespaceTrivia width=1 " "
+  ExpressionStatement [2505..2515) fullWidth=10
+    IdentifierExpression [2505..2515) fullWidth=10
+      Identifier [2505..2515) fullWidth=10 text="main_loop"
+        TrailingTrivia [2514..2515) fullWidth=1
           NewLineTrivia width=1 "\\n"
-  LabelDeclaration [2505..2517) fullWidth=12
-    Identifier [2505..2515) fullWidth=10 text="quit_game"
-      LeadingTrivia [2505..2506) fullWidth=1
+  LabelDeclaration [2515..2527) fullWidth=12
+    Identifier [2515..2525) fullWidth=10 text="quit_game"
+      LeadingTrivia [2515..2516) fullWidth=1
         NewLineTrivia width=1 "\\n"
-    ColonToken [2515..2517) fullWidth=2 text=":"
-      TrailingTrivia [2516..2517) fullWidth=1
+    ColonToken [2525..2527) fullWidth=2 text=":"
+      TrailingTrivia [2526..2527) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  ExpressionStatement [2517..2554) fullWidth=37
-    CallExpression [2517..2554) fullWidth=37
-      QualifiedNameExpression [2517..2530) fullWidth=13
-        Identifier [2517..2524) fullWidth=7 text="std"
-          LeadingTrivia [2517..2521) fullWidth=4
+  ExpressionStatement [2527..2564) fullWidth=37
+    CallExpression [2527..2564) fullWidth=37
+      QualifiedNameExpression [2527..2540) fullWidth=13
+        Identifier [2527..2534) fullWidth=7 text="std"
+          LeadingTrivia [2527..2531) fullWidth=4
             WhitespaceTrivia width=4 "    "
-        DotToken [2524..2525) fullWidth=1 text="."
-        Identifier [2525..2530) fullWidth=5 text="print"
-      ArgumentList [2530..2554) fullWidth=24
-        OpenParenToken [2530..2531) fullWidth=1 text="("
-        StringLiteralExpression [2531..2552) fullWidth=21
-          StringLiteral [2531..2532) fullWidth=1 text="""
-          StringLiteralContent [2532..2551) fullWidth=19
-            StringLiteral [2532..2551) fullWidth=19 text="Thanks for playing!"
-          StringLiteral [2551..2552) fullWidth=1 text="""
-        CloseParenToken [2552..2554) fullWidth=2 text=")"
-          TrailingTrivia [2553..2554) fullWidth=1
+        DotToken [2534..2535) fullWidth=1 text="."
+        Identifier [2535..2540) fullWidth=5 text="print"
+      ArgumentList [2540..2564) fullWidth=24
+        OpenParenToken [2540..2541) fullWidth=1 text="("
+        StringLiteralExpression [2541..2562) fullWidth=21
+          StringLiteral [2541..2542) fullWidth=1 text="""
+          StringLiteralContent [2542..2561) fullWidth=19
+            StringLiteral [2542..2561) fullWidth=19 text="Thanks for playing!"
+          StringLiteral [2561..2562) fullWidth=1 text="""
+        CloseParenToken [2562..2564) fullWidth=2 text=")"
+          TrailingTrivia [2563..2564) fullWidth=1
             NewLineTrivia width=1 "\\n"
-  LabelDeclaration [2554..2569) fullWidth=15
-    Identifier [2554..2567) fullWidth=13 text="render_frame"
-      LeadingTrivia [2554..2555) fullWidth=1
+  LabelDeclaration [2564..2579) fullWidth=15
+    Identifier [2564..2577) fullWidth=13 text="render_frame"
+      LeadingTrivia [2564..2565) fullWidth=1
         NewLineTrivia width=1 "\\n"
-    ColonToken [2567..2569) fullWidth=2 text=":"
-      TrailingTrivia [2568..2569) fullWidth=1
+    ColonToken [2577..2579) fullWidth=2 text=":"
+      TrailingTrivia [2578..2579) fullWidth=1
         NewLineTrivia width=1 "\\n"
-  EndOfFileToken [2569..2569) fullWidth=0 text=""
+  EndOfFileToken [2579..2579) fullWidth=0 text=""
 "
 `;

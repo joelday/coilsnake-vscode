@@ -324,6 +324,20 @@ describe('SyntaxTree', () => {
         });
     });
 
+    describe('Template expression positions', () => {
+        it.each([
+            'define s = "a{ x }b"\ndefine y = 1',
+            'define s = "a{  byte x\t}b{ }c{  }d"\ndefine y = 1',
+            'define s = "{call( 1 , 2 )} and { short[1] y }"',
+        ])('should place every token at its source position: %j', source => {
+            const tree = SyntaxTree.parse(source);
+            expect(tree.getRoot().fullWidth).toBe(source.length);
+            for (const token of tree.getTokens()) {
+                expect(source.substr(token.span.start, token.text.length)).toBe(token.text);
+            }
+        });
+    });
+
     describe('Template expression diagnostics', () => {
         it('should report embedded expression errors at their position in the file', () => {
             const source = 'define a = 1\ndefine s = "text {  a + } more"';

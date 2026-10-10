@@ -279,6 +279,7 @@ export type GreenExpression =
     | GreenNumericLiteralExpression
     | GreenStringLiteralExpression
     | GreenTemplateStringExpression
+    | GreenParenthesizedExpression
     | GreenIdentifierExpression
     | GreenQualifiedNameExpression
     | GreenCallExpression
@@ -316,6 +317,13 @@ export interface GreenTemplateStringExpression extends GreenNode {
 export interface GreenStringLiteralContent extends GreenNode {
     readonly kind: SyntaxKind.StringLiteralContent;
     readonly textToken: GreenToken;  // The actual string text without quotes
+}
+
+export interface GreenParenthesizedExpression extends GreenNode {
+    readonly kind: SyntaxKind.ParenthesizedExpression;
+    readonly openParen: GreenToken;
+    readonly expression: GreenExpression;
+    readonly closeParen: GreenToken;
 }
 
 /**
@@ -428,6 +436,7 @@ export type GreenNodeOfKind<K extends SyntaxKind> =
     K extends SyntaxKind.TemplateStringExpression ? GreenTemplateStringExpression :
     K extends SyntaxKind.StringLiteralContent ? GreenStringLiteralContent :
     K extends SyntaxKind.InsertbinExpression ? GreenInsertbinExpression :
+    K extends SyntaxKind.ParenthesizedExpression ? GreenParenthesizedExpression :
     K extends SyntaxKind.IdentifierExpression ? GreenIdentifierExpression :
     K extends SyntaxKind.QualifiedNameExpression ? GreenQualifiedNameExpression :
     K extends SyntaxKind.CallExpression ? GreenCallExpression :

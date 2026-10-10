@@ -150,6 +150,53 @@ describe('Program - Module Visibility', () => {
             expect(main.dependencies[0]).toBe(program.getModule('/project/lib/utils.ccs'));
         });
 
+        it('should apply concurrent reloads of a file in order', async () => {
+            const fs = createFileSystem({ '/project/main.ccs': 'command a() { }' });
+            const program = createProgram(fs);
+            await program.loadModule('/project/main.ccs');
+
+            // Make the first read slow, so it would finish last if reloads ran concurrently
+            const readFile = fs.readFile.bind(fs);
+            let first = true;
+            fs.readFile = async (path: string) => {
+                const content = await readFile(path);
+                if (first) {
+                    first = false;
+                    await new Promise(resolve => setTimeout(resolve, 20));
+                }
+                return content;
+            };
+
+            fs.addFile('/project/main.ccs', 'command b() { }');
+            const older = program.reloadModule('/project/main.ccs');
+            fs.addFile('/project/main.ccs', 'command c() { }');
+            const newer = program.reloadModule('/project/main.ccs');
+            await Promise.all([older, newer]);
+
+            expect(program.getModule('/project/main.ccs')!.tree.source).toBe('command c() { }');
+        });
+
+        it('should reload importers when a module is removed', async () => {
+            const fs = createFileSystem({
+                '/project/lib/utils.ccs': 'command helper() { }',
+                '/project/src/main.ccs': 'import "lib/utils.ccs"\ncommand main() { helper() utils.helper() }',
+            });
+
+            const program = createProgram(fs);
+            await program.loadModule('/project/src/main.ccs');
+            expect(messages(program, '/project/src/main.ccs')).toEqual([]);
+
+            fs.removeFile('/project/lib/utils.ccs');
+            await program.removeModule('/project/lib/utils.ccs');
+
+            expect(program.getModule('/project/lib/utils.ccs')).toBeUndefined();
+            expect(program.getDiagnostics().map(d => d.message)).toEqual(['Cannot resolve import: lib/utils.ccs']);
+            expect(messages(program, '/project/src/main.ccs')).toEqual([
+                "Undefined command 'helper'",
+                "Unknown module 'utils'",
+            ]);
+        });
+
         it('should not accumulate import diagnostics across reloads', async () => {
             const fs = createFileSystem({
                 '/project/main.ccs': 'import missing',

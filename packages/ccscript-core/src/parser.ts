@@ -55,6 +55,29 @@ export class Parser {
         const scanner = new Scanner(source);
         this.tokens = scanner.scanTokens();
         this.diagnostics.push(...scanner.getDiagnostics());
+
+        this.tokenStarts = new Array(this.tokens.length + 1);
+        this.tokenStarts[0] = 0;
+        for (let i = 0; i < this.tokens.length; i++) {
+            this.tokenStarts[i + 1] = this.tokenStarts[i] + this.tokens[i].fullWidth;
+        }
+    }
+
+    /** Offset of each token (including its leading trivia) in the source */
+    private readonly tokenStarts: number[];
+
+    /**
+     * Parse an expression that must make up the whole source (e.g. inside a string template).
+     * Returns null if anything is left over.
+     */
+    parseStandaloneExpression(): GreenExpression | null {
+        const expression = this.parseExpression();
+        if (!this.isAtEnd()) {
+            const current = this.current()!;
+            this.addDiagnostic(current, DiagnosticSeverity.Error, `Unexpected token: ${current.text}`);
+            return null;
+        }
+        return expression;
     }
 
     /**
@@ -71,14 +94,7 @@ export class Parser {
         const statements: GreenStatement[] = [];
 
         while (!this.isAtEnd()) {
-            // Skip unexpected tokens at statement level
-            if (this.check(SyntaxKind.CloseBraceToken) ||
-                this.check(SyntaxKind.CloseParenToken) ||
-                this.check(SyntaxKind.CloseBracketToken)) {
-                this.advance(); // Consume and continue
-                continue;
-            }
-
+            // (Unexpected tokens, like a stray '}', become error statements)
             const statement = this.parseStatement();
             if (statement) {
                 statements.push(statement);
@@ -144,6 +160,11 @@ export class Parser {
                 children,
                 expression: expr,
             };
+        }
+
+        // Nothing left to recover from (the end-of-file token belongs to the source file)
+        if (this.isAtEnd()) {
+            return this.createErrorStatement();
         }
 
         // Error recovery - create error node and skip token
@@ -552,11 +573,11 @@ export class Parser {
             }
 
             const operator = this.advance();
-            const right = this.parseBinaryExpression(precedence + 1);
+            let right = this.parseBinaryExpression(precedence + 1);
             if (!right) {
                 this.addDiagnostic(operator, DiagnosticSeverity.Error,
                     'Expected expression after operator');
-                break;
+                right = this.createErrorExpression();
             }
 
             const children: GreenNode[] = [left, operator, right];
@@ -580,10 +601,18 @@ export class Parser {
         // Parenthesized expression - must be checked BEFORE parsePostfixExpression
         // to avoid confusion with call syntax
         if (this.check(SyntaxKind.OpenParenToken)) {
-            this.advance();  // consume '('
-            const expr = this.parseExpression();
-            this.expectToken(SyntaxKind.CloseParenToken);  // consume ')'
-            return expr;
+            const openParen = this.advance();
+            const expression = this.parseExpression() || this.createErrorExpression();
+            const closeParen = this.expectToken(SyntaxKind.CloseParenToken);
+            const children = [openParen, expression, closeParen];
+            return {
+                kind: SyntaxKind.ParenthesizedExpression,
+                fullWidth: this.calculateWidth(children),
+                children,
+                openParen,
+                expression,
+                closeParen,
+            };
         }
 
         // Flag expression - parse here to avoid postfix call confusion
@@ -633,41 +662,35 @@ export class Parser {
         }
 
         while (true) {
-            // Member access (qualified name)
-            if (this.check(SyntaxKind.DotToken)) {
+            // Member access (qualified name). After anything but an identifier, leave the '.'
+            // for statement-level error recovery.
+            if (this.check(SyntaxKind.DotToken) && expr.kind === SyntaxKind.IdentifierExpression) {
                 const dot = this.advance();
                 const right = this.expectToken(SyntaxKind.Identifier);
-
-                // Convert to qualified name if left is identifier
-                if (expr.kind === SyntaxKind.IdentifierExpression) {
-                    const children: GreenNode[] = [expr.identifier, dot, right];
-                    expr = {
-                        kind: SyntaxKind.QualifiedNameExpression,
-                        fullWidth: this.calculateWidth(children),
-                        children,
-                        left: expr.identifier,
-                        dot,
-                        right,
-                    };
-                } else {
-                    this.addDiagnostic(dot, DiagnosticSeverity.Error,
-                        'Qualified names must start with identifier');
-                    break;
-                }
+                const children: GreenNode[] = [expr.identifier, dot, right];
+                expr = {
+                    kind: SyntaxKind.QualifiedNameExpression,
+                    fullWidth: this.calculateWidth(children),
+                    children,
+                    left: expr.identifier,
+                    dot,
+                    right,
+                };
             }
             // Call expression
             else if (this.check(SyntaxKind.OpenParenToken)) {
                 const openParen = this.advance();
                 const args: GreenExpression[] = [];
-                const commas: GreenToken[] = [];
+                // Arguments and commas in source order
+                const argChildren: GreenNode[] = [openParen];
 
                 while (!this.check(SyntaxKind.CloseParenToken) && !this.isAtEnd()) {
                     const arg = this.parseExpression();
                     if (arg) {
                         args.push(arg);
+                        argChildren.push(arg);
                         if (this.check(SyntaxKind.CommaToken)) {
-                            const comma = this.advance();
-                            commas.push(comma);
+                            argChildren.push(this.advance());
                         }
                     } else {
                         break;
@@ -683,14 +706,6 @@ export class Parser {
                         'Can only call identifiers or qualified names');
                 }
 
-                // Build argument list with interleaved arguments and commas
-                const argChildren: GreenNode[] = [openParen];
-                for (let i = 0; i < args.length; i++) {
-                    argChildren.push(args[i]);
-                    if (i < commas.length) {
-                        argChildren.push(commas[i]);
-                    }
-                }
                 argChildren.push(closeParen);
 
                 const argumentList: GreenArgumentList = {
@@ -833,15 +848,28 @@ export class Parser {
             children: [],
         };
 
-        const closeQuote: GreenToken = {
-            kind: SyntaxKind.StringLiteral,
-            text: '"',
-            fullWidth: 1 + (stringToken.trailingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0),
-            trailingTrivia: stringToken.trailingTrivia,
-            children: [],
-        };
+        // An unterminated string (common mid-edit) has no closing quote; the closing quote ends the
+        // string unless it's escaped by an odd number of backslashes
+        const trailingBackslashes = text.length - 1 - text.slice(0, -1).replace(/\\+$/, '').length;
+        const terminated = text.length >= 2 && text.endsWith('"') && trailingBackslashes % 2 === 0;
+        const trailingWidth = stringToken.trailingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0;
+        const closeQuote: GreenToken = terminated
+            ? {
+                kind: SyntaxKind.StringLiteral,
+                text: '"',
+                fullWidth: 1 + trailingWidth,
+                trailingTrivia: stringToken.trailingTrivia,
+                children: [],
+            }
+            : {
+                kind: SyntaxKind.MissingToken,
+                text: '',
+                fullWidth: trailingWidth,
+                trailingTrivia: stringToken.trailingTrivia,
+                children: [],
+            };
 
-        const contentText = text.slice(1, -1); // Remove quotes
+        const contentText = terminated ? text.slice(1, -1) : text.slice(1); // Remove quotes
 
         // If no curly braces, return simple string literal
         if (!contentText.includes('{')) {
@@ -874,7 +902,7 @@ export class Parser {
         const children: GreenNode[] = [openQuote];
 
         // Parse the string content between quotes
-        const content = text.slice(1, -1); // Remove quotes
+        const content = contentText;
         let pos = 0;
         let currentText = '';
 
@@ -923,7 +951,7 @@ export class Parser {
                     if (exprText.length > 0) {
                         // Parse the expression
                         const tempParser = new Parser(exprText);
-                        const expression = tempParser.parseExpression();
+                        const expression = tempParser.parseStandaloneExpression();
                         const exprDiagnostics = tempParser.getDiagnostics();
 
                         // Forward any diagnostics from the embedded parser, mapped into this file
@@ -937,23 +965,35 @@ export class Parser {
 
                         if (expression && SyntaxKind.isExpression(expression.kind)) {
                             // Create brace tokens
+                            // Whitespace just inside the braces becomes trivia on them, so
+                            // positions inside the expression line up with the source
+                            const leadingSpace = rawExprText.slice(0, rawExprText.length - rawExprText.trimStart().length);
+                            // Anything after the expression (trailing space, or trivia such as a
+                            // comment the inner parser left on its end-of-file token)
+                            const trailingSpace = rawExprText.slice(leadingSpace.length + expression.fullWidth);
                             const openBrace: GreenToken = {
                                 kind: SyntaxKind.OpenBraceToken,
                                 text: '{',
-                                fullWidth: 1,
+                                fullWidth: 1 + leadingSpace.length,
                                 children: [],
+                                trailingTrivia: leadingSpace
+                                    ? [{ kind: SyntaxKind.WhitespaceTrivia, text: leadingSpace, width: leadingSpace.length }]
+                                    : undefined,
                             };
                             const closeBrace: GreenToken = {
                                 kind: SyntaxKind.CloseBraceToken,
                                 text: '}',
-                                fullWidth: 1,
+                                fullWidth: 1 + trailingSpace.length,
                                 children: [],
+                                leadingTrivia: trailingSpace
+                                    ? [{ kind: SyntaxKind.WhitespaceTrivia, text: trailingSpace, width: trailingSpace.length }]
+                                    : undefined,
                             };
 
                             // Create template expression node
                             const templateExpr: GreenStringTemplateExpression = {
                                 kind: SyntaxKind.StringTemplateExpression,
-                                fullWidth: 1 + expression.fullWidth + 1,
+                                fullWidth: openBrace.fullWidth + expression.fullWidth + closeBrace.fullWidth,
                                 children: [openBrace, expression, closeBrace],
                                 openBrace,
                                 expression: expression as GreenExpression,
@@ -964,11 +1004,11 @@ export class Parser {
                             children.push(templateExpr);
                         } else {
                             // Failed to parse - treat as literal text
-                            currentText += '{' + exprText + '}';
+                            currentText += content.slice(pos, exprEnd);
                         }
                     } else {
                         // Empty braces - treat as literal
-                        currentText += '{}';
+                        currentText += content.slice(pos, exprEnd);
                     }
                     pos = exprEnd;
                 } else {
@@ -1197,23 +1237,18 @@ export class Parser {
      * Offset of the token at `index`'s text (after its leading trivia) in the source.
      */
     private getTokenTextStart(index: number): number {
-        let position = 0;
-        for (let i = 0; i < index; i++) {
-            position += this.tokens[i].fullWidth;
-        }
-        return position + (this.tokens[index]?.leadingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0);
+        const clamped = Math.min(index, this.tokens.length - 1);
+        return this.tokenStarts[clamped] +
+            (this.tokens[clamped]?.leadingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0);
     }
 
     /**
      * Add diagnostic
      */
     private addDiagnostic(token: GreenToken, severity: DiagnosticSeverity, message: string): void {
-        // Position of the current token's text: fullWidth of all previous tokens plus leading trivia
-        let position = 0;
-        for (let i = 0; i < this.pos; i++) {
-            position += this.tokens[i].fullWidth;
-        }
-        position += token.leadingTrivia?.reduce((sum, t) => sum + t.width, 0) ?? 0;
+        // The token may already have been consumed, so locate it by identity
+        const index = this.tokens.lastIndexOf(token, this.pos);
+        const position = this.getTokenTextStart(index >= 0 ? index : this.pos);
 
         this.diagnostics.push({
             span: { start: position, length: token.text.length },

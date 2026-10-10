@@ -79,6 +79,7 @@ export enum SyntaxKind {
     NumericLiteralExpression,
     StringLiteralExpression,
     TemplateStringExpression,
+    ParenthesizedExpression,
     IdentifierExpression,
     QualifiedNameExpression,
     CallExpression,

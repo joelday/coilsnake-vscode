@@ -410,6 +410,12 @@ export class Binder {
             case SyntaxKind.ArrayAccessExpression:
                 this.bindArrayAccessExpression(node);
                 break;
+            case SyntaxKind.ParenthesizedExpression: {
+                this.bindChildren(node);
+                const inner = node.getChildren().find(c => this.types.has(c));
+                this.types.set(node, (inner && this.types.get(inner)) || Types.unknown);
+                break;
+            }
             default:
                 // For other nodes, just bind children
                 this.bindChildren(node);
