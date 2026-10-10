@@ -238,10 +238,6 @@
           "name": "keyword.operator.logical.ccs"
         },
         {
-          "match": "\\b(true|false)\\b",
-          "name": "constant.language.boolean.ccs"
-        },
-        {
           "name": "meta.block.ccs",
           "begin": "{",
           "beginCaptures": {

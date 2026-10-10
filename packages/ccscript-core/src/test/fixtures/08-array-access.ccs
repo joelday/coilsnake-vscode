@@ -15,8 +15,8 @@ define val2 = short[5] 0x9000
 define val3 = long[10] 0xA000
 
 // Array access in statements
-rom[0xB000] = byte[0] 0xC000
-rom[0xD000] = short[2] 0xE000
+ROM[0xB000] = byte[0] 0xC000
+ROM[0xD000] = short[2] 0xE000
 
 // Complex array expressions
 if byte[3] 0xF000 == 0xFF {

@@ -27,7 +27,7 @@ import {
     GreenArgumentList,
     GreenLabelDeclaration,
     GreenConstantDeclaration,
-    GreenVariableDeclaration,
+    GreenInsertbinExpression,
     GreenCommandDeclaration,
     GreenROMWriteStatement,
     GreenROMTableWriteStatement,
@@ -114,9 +114,6 @@ export class Parser {
         }
         if (this.check(SyntaxKind.DefineKeyword)) {
             return this.parseConstantDeclaration();
-        }
-        if (this.check(SyntaxKind.VarKeyword)) {
-            return this.parseVariableDeclaration();
         }
         if (this.check(SyntaxKind.CommandKeyword)) {
             return this.parseCommandDeclaration();
@@ -353,27 +350,6 @@ export class Parser {
             fullWidth: this.calculateWidth(children),
             children,
             defineKeyword,
-            identifier,
-            equals,
-            value,
-        };
-    }
-
-    /**
-     * Parse variable declaration: var name = expression
-     */
-    private parseVariableDeclaration(): GreenVariableDeclaration {
-        const varKeyword = this.expectToken(SyntaxKind.VarKeyword);
-        const identifier = this.expectToken(SyntaxKind.Identifier);
-        const equals = this.expectToken(SyntaxKind.EqualsToken);
-        const value = this.parseExpression() || this.createErrorExpression();
-        const children = [varKeyword, identifier, equals, value];
-
-        return {
-            kind: SyntaxKind.VariableDeclaration,
-            fullWidth: this.calculateWidth(children),
-            children,
-            varKeyword,
             identifier,
             equals,
             value,
@@ -770,14 +746,8 @@ export class Parser {
             return this.parseStringLiteralWithTemplates();
         }
 
-        if (this.check(SyntaxKind.TrueKeyword) || this.check(SyntaxKind.FalseKeyword)) {
-            const token = this.advance();
-            return {
-                kind: SyntaxKind.BooleanLiteralExpression,
-                fullWidth: token.fullWidth,
-                children: [token],
-                token,
-            };
+        if (this.check(SyntaxKind.InsertbinKeyword)) {
+            return this.parseInsertbinExpression();
         }
 
         // Identifier
@@ -792,6 +762,54 @@ export class Parser {
         }
 
         return null;
+    }
+
+    /**
+     * Parse insertbin expression: insertbin [ '[' offset [ ',' size ] ']' ] "path"
+     */
+    private parseInsertbinExpression(): GreenInsertbinExpression {
+        const insertbinKeyword = this.advance();
+        const children: GreenToken[] = [insertbinKeyword];
+
+        let openBracket: GreenToken | undefined;
+        let offset: GreenToken | undefined;
+        let comma: GreenToken | undefined;
+        let size: GreenToken | undefined;
+        let closeBracket: GreenToken | undefined;
+        if (this.check(SyntaxKind.OpenBracketToken)) {
+            openBracket = this.advance();
+            offset = this.expectNumber();
+            children.push(openBracket, offset);
+            if (this.check(SyntaxKind.CommaToken)) {
+                comma = this.advance();
+                size = this.expectNumber();
+                children.push(comma, size);
+            }
+            closeBracket = this.expectToken(SyntaxKind.CloseBracketToken);
+            children.push(closeBracket);
+        }
+
+        const path = this.expectToken(SyntaxKind.StringLiteral);
+        children.push(path);
+
+        return {
+            kind: SyntaxKind.InsertbinExpression,
+            fullWidth: this.calculateWidth(children),
+            children,
+            insertbinKeyword,
+            openBracket,
+            offset,
+            comma,
+            size,
+            closeBracket,
+            path,
+        };
+    }
+
+    private expectNumber(): GreenToken {
+        return this.check(SyntaxKind.HexLiteral)
+            ? this.advance()
+            : this.expectToken(SyntaxKind.NumericLiteral);
     }
 
     /**

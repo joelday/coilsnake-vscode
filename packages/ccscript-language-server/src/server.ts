@@ -993,7 +993,7 @@ connection.languages.semanticTokens.on(async (params) => {
         let tokenType = 0; // default to keyword
         const tokenModifiers = 0;
 
-        if (token.kind >= SyntaxKind.AndKeyword && token.kind <= SyntaxKind.TrueKeyword) {
+        if (SyntaxKind.isKeyword(token.kind)) {
             tokenType = 0; // keyword
         } else if (token.kind === SyntaxKind.Identifier) {
             tokenType = 2; // variable (default for identifiers)

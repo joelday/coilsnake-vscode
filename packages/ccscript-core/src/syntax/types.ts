@@ -152,7 +152,6 @@ export type GreenStatement =
     | GreenMenuStatement
     | GreenLabelDeclaration
     | GreenConstantDeclaration
-    | GreenVariableDeclaration
     | GreenCommandDeclaration
     | GreenROMWriteStatement
     | GreenROMTableWriteStatement
@@ -232,14 +231,6 @@ export interface GreenConstantDeclaration extends GreenNode {
     readonly value: GreenExpression;
 }
 
-export interface GreenVariableDeclaration extends GreenNode {
-    readonly kind: SyntaxKind.VariableDeclaration;
-    readonly varKeyword: GreenToken;
-    readonly identifier: GreenToken;
-    readonly equals: GreenToken;
-    readonly value: GreenExpression;
-}
-
 export interface GreenCommandDeclaration extends GreenNode {
     readonly kind: SyntaxKind.CommandDeclaration;
     readonly commandKeyword: GreenToken;
@@ -288,7 +279,6 @@ export type GreenExpression =
     | GreenNumericLiteralExpression
     | GreenStringLiteralExpression
     | GreenTemplateStringExpression
-    | GreenBooleanLiteralExpression
     | GreenIdentifierExpression
     | GreenQualifiedNameExpression
     | GreenCallExpression
@@ -298,6 +288,7 @@ export type GreenExpression =
     | GreenArrayAccessExpression
     | GreenCountExpression
     | GreenSetcountExpression
+    | GreenInsertbinExpression
     | GreenIfStatement          // if can be used as expression
     | GreenMenuStatement        // menu can be used as expression
     | GreenBlockStatement       // blocks can be used as expressions
@@ -327,9 +318,18 @@ export interface GreenStringLiteralContent extends GreenNode {
     readonly textToken: GreenToken;  // The actual string text without quotes
 }
 
-export interface GreenBooleanLiteralExpression extends GreenNode {
-    readonly kind: SyntaxKind.BooleanLiteralExpression;
-    readonly token: GreenToken;
+/**
+ * insertbin [ '[' offset [ ',' size ] ']' ] "path" -- embeds a binary file's bytes
+ */
+export interface GreenInsertbinExpression extends GreenNode {
+    readonly kind: SyntaxKind.InsertbinExpression;
+    readonly insertbinKeyword: GreenToken;
+    readonly openBracket?: GreenToken;
+    readonly offset?: GreenToken;
+    readonly comma?: GreenToken;
+    readonly size?: GreenToken;
+    readonly closeBracket?: GreenToken;
+    readonly path: GreenToken;
 }
 
 export interface GreenIdentifierExpression extends GreenNode {
@@ -427,7 +427,7 @@ export type GreenNodeOfKind<K extends SyntaxKind> =
     K extends SyntaxKind.StringLiteralExpression ? GreenStringLiteralExpression :
     K extends SyntaxKind.TemplateStringExpression ? GreenTemplateStringExpression :
     K extends SyntaxKind.StringLiteralContent ? GreenStringLiteralContent :
-    K extends SyntaxKind.BooleanLiteralExpression ? GreenBooleanLiteralExpression :
+    K extends SyntaxKind.InsertbinExpression ? GreenInsertbinExpression :
     K extends SyntaxKind.IdentifierExpression ? GreenIdentifierExpression :
     K extends SyntaxKind.QualifiedNameExpression ? GreenQualifiedNameExpression :
     K extends SyntaxKind.CallExpression ? GreenCallExpression :

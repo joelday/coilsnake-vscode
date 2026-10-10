@@ -219,7 +219,7 @@ describe('Parser', () => {
 
     describe('ROM statements', () => {
         it('should parse ROM write', () => {
-            const tree = parse('rom[0x1000] = 42');
+            const tree = parse('ROM[0x1000] = 42');
             const rom = tree.statements[0];
             expect(rom.kind).toBe(SyntaxKind.ROMWriteStatement);
             if (rom.kind === SyntaxKind.ROMWriteStatement) {
@@ -230,7 +230,7 @@ describe('Parser', () => {
         });
 
         it('should parse ROM table write', () => {
-            const tree = parse('romtbl[base, 4, index] = value');
+            const tree = parse('ROMTBL[base, 4, index] = value');
             const romtbl = tree.statements[0];
             expect(romtbl.kind).toBe(SyntaxKind.ROMTableWriteStatement);
             if (romtbl.kind === SyntaxKind.ROMTableWriteStatement) {
@@ -300,16 +300,20 @@ describe('Parser', () => {
             }
         });
 
-        it('should parse boolean literals', () => {
-            const tree = parse('true false');
+        it('should parse insertbin expressions', () => {
+            const tree = parse('define a = insertbin "a.bin"\ndefine b = insertbin [0x10, 4] "b.bin"');
             expect(tree.statements).toHaveLength(2);
-            const expr1 = tree.statements[0];
-            const expr2 = tree.statements[1];
-            if (expr1.kind === SyntaxKind.ExpressionStatement) {
-                expect(expr1.expression.kind).toBe(SyntaxKind.BooleanLiteralExpression);
+            for (const statement of tree.statements) {
+                expect(statement.kind).toBe(SyntaxKind.ConstantDeclaration);
+                if (statement.kind === SyntaxKind.ConstantDeclaration) {
+                    expect(statement.value.kind).toBe(SyntaxKind.InsertbinExpression);
+                }
             }
-            if (expr2.kind === SyntaxKind.ExpressionStatement) {
-                expect(expr2.expression.kind).toBe(SyntaxKind.BooleanLiteralExpression);
+            const b = tree.statements[1];
+            if (b.kind === SyntaxKind.ConstantDeclaration && b.value.kind === SyntaxKind.InsertbinExpression) {
+                expect(b.value.offset!.text).toBe('0x10');
+                expect(b.value.size!.text).toBe('4');
+                expect(b.value.path.text).toBe('"b.bin"');
             }
         });
     });

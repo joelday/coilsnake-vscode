@@ -4,7 +4,7 @@ import std
 // Constants
 define PLAYER_HP_MAX = 999
 define BATTLE_BASE_ADDR = 0x10000
-define DEBUG_MODE = false
+define DEBUG_MODE = 0
 
 // Entry point
 main:
@@ -19,12 +19,12 @@ command initialize_game {
     unset flag 100
     
     // Initialize ROM data
-    rom[BATTLE_BASE_ADDR] = 0xFF
-    rom[BATTLE_BASE_ADDR + 1] = PLAYER_HP_MAX
+    ROM[BATTLE_BASE_ADDR] = 0xFF
+    ROM[BATTLE_BASE_ADDR + 1] = PLAYER_HP_MAX
     
     // ROM table setup
-    romtbl[0x20000, 8, 0] = 100
-    romtbl[0x20000, 8, 1] = 200
+    ROMTBL[0x20000, 8, 0] = 100
+    ROMTBL[0x20000, 8, 1] = 200
 }
 
 // Main game loop
@@ -57,7 +57,7 @@ command update_game_state {
         // Complex nested logic
         if byte[0] BATTLE_BASE_ADDR > 50 {
             call heal_player
-            rom[0x5000] = flag 40
+            ROM[0x5000] = flag 40
         }
     }
 }
@@ -80,7 +80,7 @@ command trigger_event(event_id) {
 
 // Helper commands
 command heal_player {
-    rom[0x1000] = PLAYER_HP_MAX
+    ROM[0x1000] = PLAYER_HP_MAX
     std.print("Player healed!")
 }
 
@@ -88,8 +88,8 @@ command show_options {
     menu 2 {
         "Sound: On": set flag 200
         "Sound: Off": unset flag 200
-        "Difficulty: Easy": rom[0x6000] = 1
-        "Difficulty: Hard": rom[0x6000] = 3
+        "Difficulty: Easy": ROM[0x6000] = 1
+        "Difficulty: Hard": ROM[0x6000] = 3
     }
     goto main_loop
 }

@@ -14,8 +14,6 @@ export enum SyntaxKind {
     NumericLiteral,
     HexLiteral,
     StringLiteral,
-    TrueKeyword,
-    FalseKeyword,
 
     // Identifiers
     Identifier,
@@ -31,6 +29,7 @@ export enum SyntaxKind {
     FlagKeyword,
     IfKeyword,
     ImportKeyword,
+    InsertbinKeyword,
     LongKeyword,
     MenuKeyword,
     NotKeyword,
@@ -39,7 +38,6 @@ export enum SyntaxKind {
     ROMTBLKeyword,
     SetcountKeyword,
     ShortKeyword,
-    VarKeyword,
 
     // Punctuation
     OpenBraceToken,
@@ -70,7 +68,6 @@ export enum SyntaxKind {
     MenuOption,
     LabelDeclaration,
     ConstantDeclaration,
-    VariableDeclaration,
     CommandDeclaration,
     Parameter,
     ParameterList,
@@ -82,7 +79,6 @@ export enum SyntaxKind {
     NumericLiteralExpression,
     StringLiteralExpression,
     TemplateStringExpression,
-    BooleanLiteralExpression,
     IdentifierExpression,
     QualifiedNameExpression,
     CallExpression,
@@ -93,6 +89,7 @@ export enum SyntaxKind {
     ArrayAccessExpression,
     CountExpression,
     SetcountExpression,
+    InsertbinExpression,
 
     // String content types
     StringLiteralContent,      // Text content node (reused in both simple and template strings)
@@ -134,6 +131,6 @@ export namespace SyntaxKind {
     }
 
     export function isLiteral(kind: SyntaxKind): boolean {
-        return kind >= SyntaxKind.NumericLiteral && kind <= SyntaxKind.FalseKeyword;
+        return kind >= SyntaxKind.NumericLiteral && kind <= SyntaxKind.StringLiteral;
     }
 }

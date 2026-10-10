@@ -2,7 +2,7 @@
 define PI = 3.14159
 define MAX_HP = 999
 define GAME_NAME = "EarthBound"
-define DEBUG_MODE = true
+define DEBUG_MODE = 1
 
 // Simple label
 start:
@@ -11,5 +11,5 @@ start:
 42
 0x1A2B
 "Hello, world!"
-true
-false
+1
+0

@@ -16,16 +16,16 @@ if not flag 20 {
 define complex_flag = (flag 5 and flag 6) or flag 7
 
 // Flag comparisons
-if flag 30 == true {
+if flag 30 == 1 {
     goto next
 }
 
-if flag 40 != false {
+if flag 40 != 0 {
     call handler
 }
 
 // Flag in ROM writes
-rom[0x1000] = flag 50
+ROM[0x1000] = flag 50
 
 next:
 handler:

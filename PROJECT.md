@@ -103,7 +103,7 @@ The project follows **Microsoft Roslyn's red/green tree pattern**, which provide
 - Error-tolerant (produces BadToken on errors)
 
 **Token Types**:
-- Keywords: `command`, `define`, `var`, `if`, `else`, `flag`, etc.
+- Keywords (case-sensitive, as in the compiler's lexer): `if`, `else`, `menu`, `default`, `define`, `command`, `or`, `and`, `not`, `flag`, `byte`, `short`, `long`, `ROM`, `ROMTBL`, `import`, `count`, `setcount`, `insertbin`
 - Literals: integers (dec/hex/binary), strings
 - Operators: `=`, `and`, `or`, `not`, `.`, `:`
 - Delimiters: `(`, `)`, `[`, `]`, `{`, `}`
@@ -209,7 +209,6 @@ program := ( statement )* EOF
 statement := '{' ( statement )* '}'
           | command-def
           | const-def
-          | var-def
           | label
           | rom-write
           | expression
@@ -217,8 +216,6 @@ statement := '{' ( statement )* '}'
 command-def := 'command' IDENTIFIER ['(' params ')'] expression
 
 const-def := 'define' IDENTIFIER '=' expression
-
-var-def := 'var' IDENTIFIER '=' expression
 
 label := IDENTIFIER ':'
 
@@ -238,6 +235,7 @@ if-expr := 'if' expression expression ['else' expression]
 menu-expr := 'menu' [INT_LITERAL] '{' ( ['default'] expression ':' expression )* '}'
 
 factor := 'flag' primary-expr
+       | insertbin-expr
        | INT_LITERAL
        | STRING_LITERAL
        | '(' expression ')'
@@ -250,7 +248,24 @@ primary-expr := INT_LITERAL
 bounds := sizetag [ '[' INT_LITERAL ']' ]
 
 sizetag := 'byte' | 'short' | 'long' | 'size' INT_LITERAL
+
+insertbin-expr := 'insertbin' [ '[' INT_LITERAL [ ',' INT_LITERAL ] ']' ] STRING_LITERAL
 ```
+
+The reference implementation is the compiler CoilSnake builds with,
+[ccscript_legacy](https://github.com/charasyn/ccscript_legacy) (v1.500, pinned in CoilSnake's
+`pyproject.toml`).
+
+### Name Resolution
+
+Matches the compiler:
+- A CoilSnake build compiles every `.ccs` file directly in `Project/ccscript/`, plus whatever
+  they import. `std.ccs` and `stdarg.ccs` are imported implicitly by every module.
+- Unqualified names resolve to the module's own declarations, then the top-level declarations
+  of its imports. Imports aren't transitive, and files in the same directory don't share names.
+- `module.member` resolves against any loaded module, imported or not.
+- Circular imports are allowed.
+- Labels inside a block are visible throughout that block (forward jumps work).
 
 ### Language Features
 
@@ -260,10 +275,6 @@ sizetag := 'byte' | 'short' | 'long' | 'size' INT_LITERAL
 define myNumber = 42
 define myString = "Hello"
 define myFlag = flag 1
-
-// Variables
-var counter = 0
-var playerHP = 100
 
 // Commands
 command myCommand() {
@@ -293,7 +304,7 @@ if flag 1 {
 }
 
 // If as expression
-var result = if flag 2 10 else 20
+define result = if flag 2 10 else 20
 ```
 
 #### Expressions
@@ -369,7 +380,7 @@ CCScript includes a comprehensive standard library (11 modules):
 - Error cases
 
 **Parser Tests** (51 tests)
-- Statement parsing (command, define, var, label)
+- Statement parsing (command, define, label)
 - Expression parsing (if, menu, boolean, bounds)
 - Factor parsing (literals, identifiers, calls)
 - Error recovery

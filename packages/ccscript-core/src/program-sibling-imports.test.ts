@@ -1,5 +1,7 @@
 /**
- * Tests for implicit sibling module imports in Program
+ * Tests for how files see each other, matching the CCScript compiler used by CoilSnake
+ * (ccscript_legacy): files in the same directory don't share names; unqualified names need
+ * an import, while `module.member` works for any loaded module.
  */
 
 import { Program } from './program';
@@ -13,285 +15,165 @@ function createFileSystem(files: Record<string, string>): MemoryFileSystem {
     return fs;
 }
 
-describe('Program - Sibling Module Imports', () => {
-    it('should allow files in same directory to reference each other without explicit imports', async () => {
-        // Create a virtual file system with two files in the same directory
+function createProgram(fs: MemoryFileSystem, rootPath = '/project'): Program {
+    return new Program({ fileSystem: fs, rootPath, includeStdLibs: false });
+}
+
+function messages(program: Program, path: string): string[] {
+    return (program.getModule(path)!.binding?.diagnostics || []).map(d => d.message);
+}
+
+describe('Program - Module Visibility', () => {
+    it('should not resolve unqualified names from same-directory files without an import', async () => {
         const fs = createFileSystem({
-            '/project/commands.ccs': `
-                command helper() {
-                    // Helper command defined in commands.ccs
-                }
-            `,
-            '/project/main.ccs': `
-                command main() {
-                    helper()  // Should resolve to helper from commands.ccs
-                }
-            `,
+            '/project/commands.ccs': 'command helper() { }\ndefine MAX = 1',
+            '/project/main.ccs': 'command main() { helper() MAX }',
         });
 
-        const program = new Program({
-            fileSystem: fs,
-            rootPath: '/project',
-            includeStdLibs: false,
-        });
-
-        // Load both files
-        await program.loadModule('/project/commands.ccs');
+        const program = createProgram(fs);
         await program.loadModule('/project/main.ccs');
 
-        // Check that main.ccs can see helper from commands.ccs
-        const mainModule = program.getModule('/project/main.ccs');
-        expect(mainModule).toBeDefined();
-
-        const diagnostics = mainModule!.binding?.diagnostics || [];
-
-        // Should have no errors - helper() should resolve
-        expect(diagnostics).toHaveLength(0);
+        expect(messages(program, '/project/main.ccs')).toEqual([
+            "Undefined command 'helper'",
+            "Undefined identifier 'MAX'",
+        ]);
     });
 
-    it('should import constants from sibling files', async () => {
+    it('should resolve commands and constants from an imported same-directory file', async () => {
         const fs = createFileSystem({
-            '/game/constants.ccs': `
-                define MAX_HP = 100
-            `,
+            '/game/constants.ccs': 'define MAX_HP = 100\ncommand heal() { }',
             '/game/player.ccs': `
+                import constants
                 command init_player() {
-                    ROM[0x1000] = MAX_HP  // Should resolve to constant from constants.ccs
+                    ROM[0x1000] = MAX_HP
+                    heal()
                 }
             `,
         });
 
-        const program = new Program({
-            fileSystem: fs,
-            rootPath: '/game',
-            includeStdLibs: false,
-        });
-
-        await program.loadModule('/game/constants.ccs');
+        const program = createProgram(fs, '/game');
         await program.loadModule('/game/player.ccs');
 
-        const playerModule = program.getModule('/game/player.ccs');
-        const diagnostics = playerModule!.binding?.diagnostics || [];
-
-        expect(diagnostics).toHaveLength(0);
+        expect(messages(program, '/game/player.ccs')).toEqual([]);
     });
 
-    it('should not import from files in different directories', async () => {
+    it('should resolve qualified references to same-directory files without an import', async () => {
         const fs = createFileSystem({
-            '/project/lib/helper.ccs': `
-                command lib_helper() {
-                    // Helper in lib directory
-                }
-            `,
-            '/project/src/main.ccs': `
-                command main() {
-                    lib_helper()  // Should NOT resolve - different directory
-                }
-            `,
+            '/project/utils.ccs': 'command helper() { }\ndefine MAX = 100',
+            '/project/main.ccs': 'command main() { utils.helper() ROM[0] = utils.MAX }',
         });
 
-        const program = new Program({
-            fileSystem: fs,
-            rootPath: '/project',
-            includeStdLibs: false,
+        const program = createProgram(fs);
+        await program.loadModule('/project/main.ccs');
+
+        expect(messages(program, '/project/main.ccs')).toEqual([]);
+    });
+
+    it('should resolve imports from other directories', async () => {
+        const fs = createFileSystem({
+            '/project/lib/helper.ccs': 'command lib_helper() { }',
+            '/project/src/main.ccs': 'import "../lib/helper.ccs"\ncommand main() { lib_helper() }',
+            '/project/src/other.ccs': 'command other() { lib_helper() }',
         });
 
-        await program.loadModule('/project/lib/helper.ccs');
+        const program = createProgram(fs);
         await program.loadModule('/project/src/main.ccs');
 
-        const mainModule = program.getModule('/project/src/main.ccs');
-        const diagnostics = mainModule!.binding?.diagnostics || [];
-
-        // Should have an error about undefined command
-        expect(diagnostics.length).toBeGreaterThan(0);
-        expect(diagnostics.some((d) => d.message.includes('Undefined') || d.message.includes('lib_helper')))
-            .toBe(true);
+        expect(messages(program, '/project/src/main.ccs')).toEqual([]);
+        expect(messages(program, '/project/src/other.ccs')).toEqual(["Undefined command 'lib_helper'"]);
     });
 
-    it('should allow access to sibling symbols without Module prefix', async () => {
-        // In CCScript, sibling files share a namespace - no qualified names needed
-        const fs = createFileSystem({
-            '/project/utils.ccs': `
-                command helper() {
-                    // Helper in same directory
-                }
-                
-                define MAX = 100
-            `,
-            '/project/main.ccs': `
-                command main() {
-                    helper()  // Direct access, no utils.helper()
-                    ROM[0] = MAX  // Direct access to constant
-                }
-            `,
+    describe('reloading', () => {
+        it('should rebind importers when an imported file changes', async () => {
+            const fs = createFileSystem({
+                '/project/utils.ccs': 'command helper() { }',
+                '/project/main.ccs': 'import utils\ncommand main() { helper() new_helper() }',
+            });
+
+            const program = createProgram(fs);
+            await program.loadModule('/project/main.ccs');
+            expect(messages(program, '/project/main.ccs')).toEqual(["Undefined command 'new_helper'"]);
+
+            fs.addFile('/project/utils.ccs', 'command helper() { }\ncommand new_helper() { }');
+            await program.reloadModule('/project/utils.ccs');
+
+            expect(messages(program, '/project/main.ccs')).toEqual([]);
         });
 
-        const program = new Program({
-            fileSystem: fs,
-            rootPath: '/project',
-            includeStdLibs: false,
+        it('should drop declarations removed from a reloaded import', async () => {
+            const fs = createFileSystem({
+                '/project/utils.ccs': 'command helper() { }',
+                '/project/main.ccs': 'import utils\ncommand main() { helper() }',
+            });
+
+            const program = createProgram(fs);
+            await program.loadModule('/project/main.ccs');
+
+            // Reload several times, as the LSP does on every edit
+            await program.reloadModule('/project/utils.ccs');
+            await program.reloadModule('/project/utils.ccs');
+            expect(program.getAllModules()).toHaveLength(2);
+
+            fs.addFile('/project/utils.ccs', 'command other() { }');
+            await program.reloadModule('/project/utils.ccs');
+
+            expect(messages(program, '/project/main.ccs')).toEqual(["Undefined command 'helper'"]);
         });
 
-        await program.loadModule('/project/utils.ccs');
-        await program.loadModule('/project/main.ccs');
+        it('should rebind qualified references when the referenced file changes', async () => {
+            const fs = createFileSystem({
+                '/project/utils.ccs': 'command helper() { }',
+                '/project/main.ccs': 'command main() { utils.renamed() }',
+            });
 
-        const mainModule = program.getModule('/project/main.ccs');
-        const diagnostics = mainModule!.binding?.diagnostics || [];
+            const program = createProgram(fs);
+            await program.loadModule('/project/main.ccs');
+            expect(messages(program, '/project/main.ccs')).toEqual(["'utils' has no member 'renamed'"]);
 
-        // Both helper() and MAX should resolve directly
-        expect(diagnostics).toHaveLength(0);
-    });
+            fs.addFile('/project/utils.ccs', 'command renamed() { }');
+            await program.reloadModule('/project/utils.ccs');
 
-    it('should handle multiple sibling files', async () => {
-        const fs = createFileSystem({
-            '/game/file1.ccs': 'command cmd1() { }',
-            '/game/file2.ccs': 'command cmd2() { }',
-            '/game/file3.ccs': 'command cmd3() { }',
-            '/game/main.ccs': `
-                command main() {
-                    cmd1()
-                    cmd2()
-                    cmd3()
-                }
-            `,
+            expect(messages(program, '/project/main.ccs')).toEqual([]);
         });
 
-        const program = new Program({
-            fileSystem: fs,
-            rootPath: '/game',
-            includeStdLibs: false,
+        it('should point importers at the reloaded module', async () => {
+            const fs = createFileSystem({
+                '/project/lib/utils.ccs': 'command helper() { }',
+                '/project/src/main.ccs': 'import "lib/utils.ccs"\ncommand main() { helper() }',
+            });
+
+            const program = createProgram(fs);
+            await program.loadModule('/project/src/main.ccs');
+            await program.reloadModule('/project/lib/utils.ccs');
+
+            const main = program.getModule('/project/src/main.ccs')!;
+            expect(main.dependencies[0]).toBe(program.getModule('/project/lib/utils.ccs'));
         });
 
-        // Load all files
-        await program.loadModule('/game/file1.ccs');
-        await program.loadModule('/game/file2.ccs');
-        await program.loadModule('/game/file3.ccs');
-        await program.loadModule('/game/main.ccs');
+        it('should not accumulate import diagnostics across reloads', async () => {
+            const fs = createFileSystem({
+                '/project/main.ccs': 'import missing',
+            });
 
-        const mainModule = program.getModule('/game/main.ccs');
-        const diagnostics = mainModule!.binding?.diagnostics || [];
+            const program = createProgram(fs);
+            await program.loadModule('/project/main.ccs');
+            await program.reloadModule('/project/main.ccs');
+            await program.reloadModule('/project/main.ccs');
+            expect(program.getDiagnostics()).toHaveLength(1);
 
-        // All three commands should resolve
-        expect(diagnostics).toHaveLength(0);
-    });
-
-    it('should automatically invalidate siblings when a file is reloaded', async () => {
-        const fs = createFileSystem({
-            '/project/utils.ccs': 'command helper() { }',
-            '/project/main.ccs': `
-                command main() {
-                    helper()
-                }
-            `,
+            fs.addFile('/project/main.ccs', 'define x = 1');
+            await program.reloadModule('/project/main.ccs');
+            expect(program.getDiagnostics()).toHaveLength(0);
         });
-
-        const program = new Program({
-            fileSystem: fs,
-            rootPath: '/project',
-            includeStdLibs: false,
-        });
-
-        // Initial load
-        await program.loadModule('/project/utils.ccs');
-        await program.loadModule('/project/main.ccs');
-
-        // Verify helper() resolves
-        let mainModule = program.getModule('/project/main.ccs');
-        let diagnostics = mainModule!.binding?.diagnostics || [];
-        expect(diagnostics).toHaveLength(0);
-
-        // Update utils.ccs to add a new command
-        fs.addFile('/project/utils.ccs', `
-            command helper() { }
-            command new_helper() { }
-        `);
-
-        // Update main.ccs to use the new command
-        fs.addFile('/project/main.ccs', `
-            command main() {
-                helper()
-                new_helper()  // Should resolve after reload
-            }
-        `);
-
-        // Reload utils.ccs - should auto-invalidate main.ccs
-        await program.reloadModule('/project/utils.ccs');
-
-        // Reload main.ccs to pick up the new file content
-        await program.reloadModule('/project/main.ccs');
-
-        // Verify both commands now resolve
-        mainModule = program.getModule('/project/main.ccs');
-        diagnostics = mainModule!.binding?.diagnostics || [];
-        expect(diagnostics).toHaveLength(0);
-    });
-
-    it('should drop declarations removed from a reloaded sibling', async () => {
-        const fs = createFileSystem({
-            '/project/utils.ccs': 'command helper() { }',
-            '/project/main.ccs': 'command main() { helper() }',
-        });
-
-        const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
-        await program.loadModule('/project/utils.ccs');
-        await program.loadModule('/project/main.ccs');
-
-        // Reload several times, as the LSP does on every edit
-        await program.reloadModule('/project/utils.ccs');
-        await program.reloadModule('/project/utils.ccs');
-        expect(program.getModule('/project/main.ccs')!.group!.modules).toHaveLength(2);
-
-        fs.addFile('/project/utils.ccs', 'command other() { }');
-        await program.reloadModule('/project/utils.ccs');
-
-        const diagnostics = program.getModule('/project/main.ccs')!.binding?.diagnostics || [];
-        expect(diagnostics.some(d => d.message.includes('helper'))).toBe(true);
-    });
-
-    it('should rebind importers in other directories against the reloaded module', async () => {
-        const fs = createFileSystem({
-            '/project/lib/utils.ccs': 'command helper() { }',
-            '/project/src/main.ccs': `
-                import "lib/utils.ccs"
-                command main() { renamed() }
-            `,
-        });
-
-        const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
-        await program.loadModule('/project/src/main.ccs');
-        expect(program.getModule('/project/src/main.ccs')!.binding!.diagnostics.length).toBeGreaterThan(0);
-
-        fs.addFile('/project/lib/utils.ccs', 'command renamed() { }');
-        await program.reloadModule('/project/lib/utils.ccs');
-
-        const main = program.getModule('/project/src/main.ccs')!;
-        expect(main.dependencies[0]).toBe(program.getModule('/project/lib/utils.ccs'));
-        expect(main.binding!.diagnostics).toHaveLength(0);
-    });
-
-    it('should not accumulate import diagnostics across reloads', async () => {
-        const fs = createFileSystem({
-            '/project/main.ccs': 'import missing',
-        });
-
-        const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
-        await program.loadModule('/project/main.ccs');
-        await program.reloadModule('/project/main.ccs');
-        await program.reloadModule('/project/main.ccs');
-        expect(program.getDiagnostics()).toHaveLength(1);
-
-        fs.addFile('/project/main.ccs', 'define x = 1');
-        await program.reloadModule('/project/main.ccs');
-        expect(program.getDiagnostics()).toHaveLength(0);
     });
 
     it('should record which file each referenced symbol was declared in', async () => {
         const fs = createFileSystem({
             '/project/utils.ccs': 'command helper() { }',
-            '/project/main.ccs': 'define LOCAL = 1\ncommand main() { helper() LOCAL }',
+            '/project/main.ccs': 'import utils\ndefine LOCAL = 1\ncommand main() { helper() LOCAL }',
         });
 
-        const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
+        const program = createProgram(fs);
         const main = await program.loadModule('/project/main.ccs');
 
         const referenced = [...main!.binding!.references.values()];
@@ -304,18 +186,18 @@ describe('Program - Sibling Module Imports', () => {
     });
 
     describe('sibling discovery', () => {
-        it('should resolve symbols from siblings that were never loaded explicitly', async () => {
+        it('should load same-directory files so qualified references to them resolve', async () => {
             const fs = createFileSystem({
-                '/project/helpers.ccs': 'command helper() { }\ndefine MAX = 10',
-                '/project/main.ccs': 'command main() { helper() MAX }',
+                '/project/helpers.ccs': 'command helper() { }',
+                '/project/main.ccs': 'command main() { helpers.helper() }',
                 '/other/unrelated.ccs': 'command unrelated() { }',
             });
 
-            const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
-            const main = await program.loadModule('/project/main.ccs');
+            const program = createProgram(fs);
+            await program.loadModule('/project/main.ccs');
 
-            expect(main!.binding!.diagnostics).toHaveLength(0);
-            expect(program.getModule('/project/helpers.ccs')).toBeDefined();
+            expect(messages(program, '/project/main.ccs')).toEqual([]);
+            expect(program.getModule('/project/helpers.ccs')!.binding).toBeDefined();
             expect(program.getModule('/other/unrelated.ccs')).toBeUndefined();
         });
 
@@ -325,34 +207,32 @@ describe('Program - Sibling Module Imports', () => {
                 '/project/other.ccs': 'import main\ncommand other() { main() }',
             });
 
-            const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
+            const program = createProgram(fs);
             await program.loadModule('/project/main.ccs');
 
             expect(program.getDiagnostics()).toHaveLength(0);
-            expect(program.getModule('/project/other.ccs')!.binding!.diagnostics).toHaveLength(0);
+            expect(messages(program, '/project/other.ccs')).toEqual([]);
         });
 
         it('should bind siblings that import each other', async () => {
             const fs = createFileSystem({
-                '/project/a.ccs': 'command a() { b() }',
+                '/project/a.ccs': 'import b\ncommand a() { b() }',
                 '/project/b.ccs': 'import a\ncommand b() { a() }',
-                '/project/c.ccs': 'import b\ncommand c() { a() b() }',
+                '/project/c.ccs': 'import a\nimport b\ncommand c() { a() b() }',
             });
 
-            const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
+            const program = createProgram(fs);
             await program.loadModule('/project/a.ccs');
 
             for (const name of ['a', 'b', 'c']) {
-                const module = program.getModule(`/project/${name}.ccs`)!;
-                expect(module.binding).toBeDefined();
-                expect(module.binding!.diagnostics).toHaveLength(0);
+                expect(messages(program, `/project/${name}.ccs`)).toEqual([]);
             }
         });
 
-        it('should load std lib directory siblings without waiting on themselves', async () => {
+        it('should implicitly import std libs into every module, including std lib siblings', async () => {
             const fs = createFileSystem({
-                '/lib/std.ccs': 'command std_cmd() { }',
-                '/lib/stdarg.ccs': 'command stdarg_cmd() { }',
+                '/lib/std.ccs': 'command std_cmd() { stdarg_cmd() }',
+                '/lib/stdarg.ccs': 'command stdarg_cmd() { std_cmd() }',
                 '/lib/extra.ccs': 'command extra() { std_cmd() }',
                 '/project/main.ccs': 'command main() { std_cmd() stdarg_cmd() }',
             });
@@ -363,17 +243,18 @@ describe('Program - Sibling Module Imports', () => {
                 includeStdLibs: true,
                 stdLibPaths: { std: '/lib/std.ccs', stdarg: '/lib/stdarg.ccs' },
             });
-            const main = await program.loadModule('/project/main.ccs');
+            await program.loadModule('/project/main.ccs');
 
-            expect(main!.binding!.diagnostics).toHaveLength(0);
-            expect(program.getModule('/lib/extra.ccs')!.binding!.diagnostics).toHaveLength(0);
+            for (const path of ['/project/main.ccs', '/lib/std.ccs', '/lib/stdarg.ccs', '/lib/extra.ccs']) {
+                expect(messages(program, path)).toEqual([]);
+            }
             expect(program.getDiagnostics()).toHaveLength(0);
         });
 
         it('should not discover siblings when disabled', async () => {
             const fs = createFileSystem({
                 '/project/helpers.ccs': 'command helper() { }',
-                '/project/main.ccs': 'command main() { helper() }',
+                '/project/main.ccs': 'command main() { helpers.helper() }',
             });
 
             const program = new Program({
@@ -385,9 +266,11 @@ describe('Program - Sibling Module Imports', () => {
             await program.loadModule('/project/main.ccs');
 
             expect(program.getModule('/project/helpers.ccs')).toBeUndefined();
+            expect(messages(program, '/project/main.ccs')).toEqual(["Unknown module 'helpers'"]);
+
             const siblings = await program.loadSiblingFiles('/project/main.ccs');
             expect(siblings.map(m => m.name)).toEqual(['helpers']);
-            expect(program.getModule('/project/main.ccs')!.binding!.diagnostics).toHaveLength(0);
+            expect(messages(program, '/project/main.ccs')).toEqual([]);
         });
     });
 });

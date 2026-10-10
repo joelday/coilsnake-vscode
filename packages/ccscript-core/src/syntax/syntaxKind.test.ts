@@ -72,11 +72,6 @@ describe('SyntaxKind', () => {
         });
 
 
-
-        it('should have boolean literals', () => {
-            expect(SyntaxKind.TrueKeyword).toBeDefined();
-            expect(SyntaxKind.FalseKeyword).toBeDefined();
-        });
     });
 
     describe('Node kinds', () => {
@@ -101,7 +96,6 @@ describe('SyntaxKind', () => {
         it('should have expression kinds', () => {
             expect(SyntaxKind.NumericLiteralExpression).toBeDefined();
             expect(SyntaxKind.StringLiteralExpression).toBeDefined();
-            expect(SyntaxKind.BooleanLiteralExpression).toBeDefined();
             expect(SyntaxKind.IdentifierExpression).toBeDefined();
             expect(SyntaxKind.QualifiedNameExpression).toBeDefined();
             expect(SyntaxKind.CallExpression).toBeDefined();

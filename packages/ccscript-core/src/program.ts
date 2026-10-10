@@ -20,23 +20,6 @@ import { Binder, BindingResult, BindingContext } from './semantic/binder';
 import { SymbolTable, SymbolKind } from './semantic/symbol';
 
 /**
- * Modules in same directory form a compilation group.
- * CCScript's compilation model: files in the same directory share a global namespace.
- */
-export interface CompilationGroup {
-    /** Directory path */
-    directory: string;
-    /** Modules in this directory */
-    modules: Module[];
-    /** Shared symbol table for all modules in group (collected from all modules) */
-    sharedDeclarations: SymbolTable;
-    /** Track which groups this group depends on */
-    dependsOn: Set<CompilationGroup>;
-    /** Track which groups depend on this group */
-    dependents: Set<CompilationGroup>;
-}
-
-/**
  * Represents a loaded module/source file in the program
  */
 export interface Module {
@@ -50,9 +33,7 @@ export interface Module {
     readonly imports: string[];
     /** Resolved modules that this module imports */
     readonly dependencies: Module[];
-    /** The compilation group this module belongs to */
-    group?: CompilationGroup;
-    /** Semantic analysis result (bound against group + dependencies) */
+    /** Semantic analysis result (bound against the module's imports) */
     binding?: BindingResult;
 }
 
@@ -75,7 +56,7 @@ export interface ProgramOptions {
     };
     /**
      * Load every .ccs file in a module's directory the first time that directory is seen,
-     * since files in the same directory share a namespace (default: true)
+     * so `module.member` references to them resolve (default: true)
      */
     loadSiblings?: boolean;
     /** Receives diagnostic trace messages (silent by default) */
@@ -96,16 +77,23 @@ export interface ImportDiagnostic extends Diagnostic {
  * Program manages multiple source files and their dependencies.
  * Entry point for multi-file CCScript compilation and analysis.
  *
- * ## Sibling File Imports
- * In CCScript, files in the same directory implicitly share a namespace.
- * Symbols from sibling files are available without explicit imports.
- * The first time a directory is seen, all of its .ccs files are loaded
- * (disable with `loadSiblings: false` and call loadSiblingFiles() instead).
+ * ## Name resolution
+ * Matches the CCScript compiler (ccscript_legacy, as used by CoilSnake builds):
+ * - Unqualified names resolve to the module's own declarations, then the top-level
+ *   declarations of the modules it imports (std.ccs/stdarg.ccs are imported implicitly).
+ *   Imports aren't transitive, and files in the same directory don't share names.
+ * - `module.member` resolves against any loaded module, imported or not.
+ *
+ * ## Sibling files
+ * A CoilSnake build compiles every .ccs file in the project's ccscript directory, so any
+ * of them can be referenced as `module.member`. To approximate that, the first time a
+ * directory is seen all of its .ccs files are loaded (disable with `loadSiblings: false`
+ * and call loadSiblingFiles() instead).
  *
  * ## Binding
- * Loading only parses. When a public load call finishes, every compilation group it
- * touched, plus groups that depend on them, is rebound in dependency order, so each
- * module's `binding` is current when loadModule()/reloadModule() resolves.
+ * Loading only parses. When a public load call finishes, every module it loaded or
+ * changed is bound, along with modules that import or qualify-reference those modules,
+ * so each module's `binding` is current when loadModule()/reloadModule() resolves.
  *
  * @example
  * ```typescript
@@ -114,19 +102,20 @@ export interface ImportDiagnostic extends Diagnostic {
  *
  * // LSP: When a document changes
  * await program.reloadModule(documentUri.fsPath);
- * // Its group and dependent groups have been rebound
+ * // It and the modules that depend on it have been rebound
  * ```
  */
 export class Program {
     private readonly options: Required<ProgramOptions>;
     private readonly modules = new Map<string, Module>();
     private readonly modulesByName = new Map<string, Module>();
-    private readonly groups = new Map<string, CompilationGroup>();  // Key: directory path
     private diagnostics: ImportDiagnostic[] = [];
-    /** Groups with modules added or changed since they were last bound */
-    private readonly dirtyGroups = new Set<CompilationGroup>();
-    /** Module names each group referenced as `module.member` in its last binding */
-    private readonly qualifiedReferences = new Map<CompilationGroup, Set<string>>();
+    /** Directories whose sibling files have been loaded */
+    private readonly discoveredDirectories = new Set<string>();
+    /** Paths of modules loaded or changed since they were last bound */
+    private readonly dirtyModules = new Set<string>();
+    /** Module names each module (by path) referenced as `module.member` in its last binding */
+    private readonly qualifiedReferences = new Map<string, Set<string>>();
     /** Import symbol tables keyed by dependency paths, for the current and previous bind pass */
     private importedSymbolsCache = new Map<string, { trees: SyntaxTree[]; table: SymbolTable }>();
     private previousImportedSymbolsCache = new Map<string, { trees: SyntaxTree[]; table: SymbolTable }>();
@@ -134,8 +123,6 @@ export class Program {
     private readonly declarationCache = new WeakMap<SyntaxTree, SymbolTable>();
     /** Loads that have started but not yet registered their module */
     private readonly inFlightLoads = new Map<string, Promise<Module | null>>();
-    /** Resolves once the auto-included standard libraries have finished loading */
-    private stdLibsLoaded: Promise<void> = Promise.resolve();
 
     constructor(options: ProgramOptions) {
         this.options = {
@@ -149,7 +136,7 @@ export class Program {
 
         // Auto-load standard libraries if enabled
         if (this.options.includeStdLibs) {
-            this.stdLibsLoaded = this.loadStandardLibraries().catch(err => {
+            this.loadStandardLibraries().catch(err => {
                 this.log(`Failed to load standard libraries: ${err}`);
             });
         }
@@ -180,7 +167,7 @@ export class Program {
      */
     async loadModule(filePath: string, reload = false): Promise<Module | null> {
         const module = await this.load(filePath, reload);
-        this.bindDirtyGroups();
+        this.bindDirtyModules();
         return module;
     }
 
@@ -235,7 +222,7 @@ export class Program {
             return null;
         }
 
-        // Parse syntax only (semantic analysis happens per group in bindDirtyGroups)
+        // Parse syntax only (semantic analysis happens in bindDirtyModules)
         const tree = SyntaxTree.parse(content, normalizedPath);
         const name = this.getModuleName(normalizedPath);
 
@@ -259,7 +246,6 @@ export class Program {
             imports: this.extractImports(tree),
             dependencies: [],
             binding: undefined,
-            group: undefined,
         };
 
         // Register module before processing imports, so import cycles terminate at the cache.
@@ -267,32 +253,21 @@ export class Program {
         this.modules.set(normalizedPath, module);
         this.modulesByName.set(name, module);
 
-        // Add to compilation group
-        const dir = this.options.fileSystem.dirname(normalizedPath);
-        const isNewGroup = !this.groups.has(dir);
-        const group = this.getOrCreateGroup(dir);
-        const existingIndex = group.modules.findIndex(m => m.filePath === normalizedPath);
-        if (existingIndex >= 0) {
-            group.modules[existingIndex] = module;
-        } else {
-            group.modules.push(module);
-        }
-        (module as { group?: CompilationGroup }).group = group;
-
-        // Rebind groups that refer to this module by name (`name.member`)
-        for (const [referencingGroup, names] of this.qualifiedReferences) {
+        // Rebind modules that refer to this module by name (`name.member`)
+        for (const [referencingPath, names] of this.qualifiedReferences) {
             if (names.has(name)) {
-                this.dirtyGroups.add(referencingGroup);
+                this.dirtyModules.add(referencingPath);
             }
         }
 
-        // Point importers of a reloaded module at the new instance
+        // Point importers of a reloaded module at the new instance, and rebind them
         if (reload) {
             for (const other of this.modules.values()) {
                 const deps = other.dependencies as Module[];
                 const index = deps.findIndex(d => d.filePath === normalizedPath);
                 if (index >= 0) {
                     deps[index] = module;
+                    this.dirtyModules.add(other.filePath);
                 }
             }
         }
@@ -300,14 +275,14 @@ export class Program {
         // Process imports recursively
         await this.processImports(module);
 
-        // Pull in the rest of the directory so sibling symbols resolve
-        if (isNewGroup && this.options.loadSiblings) {
-            await this.loadGroupSiblings(group);
+        // Pull in the rest of the directory so `sibling.member` references resolve
+        if (this.options.loadSiblings) {
+            await this.loadDirectory(this.options.fileSystem.dirname(normalizedPath));
         }
 
         // Mark after imports are processed, so a concurrent bind pass can't consume
         // the mark while this module's dependencies are still incomplete
-        this.dirtyGroups.add(group);
+        this.dirtyModules.add(normalizedPath);
 
         return module;
     }
@@ -360,105 +335,48 @@ export class Program {
     }
 
     /**
-     * Bind an entire compilation group using two-phase binding.
-     * PHASE 1: Collect declarations from all modules in group (O(n))
-     * PHASE 2: Bind each module against shared declarations + dependencies (O(n))
+     * Bind a module against its imports.
      */
-    private bindGroup(group: CompilationGroup): void {
-        this.log(`Binding group: ${group.directory} (${group.modules.length} modules)`);
-
-        // PHASE 1: Collect declarations from all modules in group
-        group.sharedDeclarations.clear();
-
-        for (const module of group.modules) {
-            group.sharedDeclarations.merge(this.getDeclarations(module));
-        }
-
-        // PHASE 2: Bind each module against shared declarations + dependencies
+    private bindModule(module: Module): void {
         const referencedModules = new Set<string>();
-        this.qualifiedReferences.set(group, referencedModules);
-        for (const module of group.modules) {
-            const importedSymbols = this.getImportedSymbols(module);
+        this.qualifiedReferences.set(module.filePath, referencedModules);
 
-            // Create binding context
-            const context: BindingContext = {
-                filePath: module.filePath,
-                sharedSymbols: group.sharedDeclarations,
-                importedSymbols,
-                resolveModule: name => {
-                    referencedModules.add(name);
-                    const target = this.modulesByName.get(name);
-                    return target && this.getDeclarations(target);
-                },
-            };
+        const context: BindingContext = {
+            filePath: module.filePath,
+            importedSymbols: this.getImportedSymbols(module),
+            resolveModule: name => {
+                referencedModules.add(name);
+                const target = this.modulesByName.get(name);
+                return target && this.getDeclarations(target);
+            },
+        };
 
-            // Bind this module
-            const binding = Binder.bindReferences(module.tree.getRoot(), context);
+        const binding = Binder.bindReferences(module.tree.getRoot(), context);
+        (module as { binding?: BindingResult }).binding = binding;
 
-            // Store binding result on module (cast to writable)
-            (module as { binding?: BindingResult }).binding = binding;
-
-            this.log(`  ${module.name}: ${binding.diagnostics.length} diagnostics`);
-        }
+        this.log(`Bound ${module.name}: ${binding.diagnostics.length} diagnostics`);
     }
 
     /**
-     * Bind every dirty group, plus the groups that (transitively) depend on them,
-     * with dependencies bound before their dependents.
+     * Bind every module loaded or changed since the last pass. Imports and qualified names
+     * resolve against modules' parsed declarations, not their bindings, so order doesn't matter.
      */
-    private bindDirtyGroups(): void {
-        if (this.dirtyGroups.size === 0) {
+    private bindDirtyModules(): void {
+        if (this.dirtyModules.size === 0) {
             return;
         }
-
-        const pending = new Set<CompilationGroup>();
-        const addWithDependents = (group: CompilationGroup) => {
-            if (pending.has(group)) return;
-            pending.add(group);
-            for (const dependent of group.dependents) {
-                addWithDependents(dependent);
-            }
-        };
-        for (const group of this.dirtyGroups) {
-            this.updateGroupDependencies(group);
-        }
-        for (const group of this.dirtyGroups) {
-            addWithDependents(group);
-        }
-        this.dirtyGroups.clear();
 
         // Keep only import tables that this pass uses
         this.previousImportedSymbolsCache = this.importedSymbolsCache;
         this.importedSymbolsCache = new Map();
 
-        // Topological order: dependencies first
-        const ordered: CompilationGroup[] = [];
-        const visited = new Set<CompilationGroup>();
-        const visit = (group: CompilationGroup) => {
-            if (visited.has(group)) return;
-            visited.add(group);
-            for (const dep of group.dependsOn) {
-                if (pending.has(dep)) visit(dep);
+        const paths = [...this.dirtyModules];
+        this.dirtyModules.clear();
+        for (const path of paths) {
+            const module = this.modules.get(path);
+            if (module) {
+                this.bindModule(module);
             }
-            ordered.push(group);
-        };
-        for (const group of pending) {
-            visit(group);
-        }
-
-        const bound = new Set<CompilationGroup>();
-        const boundTooEarly: CompilationGroup[] = [];
-        for (const group of ordered) {
-            if ([...group.dependsOn].some(dep => pending.has(dep) && !bound.has(dep))) {
-                boundTooEarly.push(group);
-            }
-            this.bindGroup(group);
-            bound.add(group);
-        }
-
-        // Groups in a cycle were bound before one of their dependencies; bind them again
-        for (const group of boundTooEarly) {
-            this.bindGroup(group);
         }
     }
 
@@ -503,47 +421,8 @@ export class Program {
     }
 
     /**
-     * Get or create a compilation group for a directory.
-     */
-    private getOrCreateGroup(directory: string): CompilationGroup {
-        let group = this.groups.get(directory);
-        if (!group) {
-            group = {
-                directory,
-                modules: [],
-                sharedDeclarations: new SymbolTable(),
-                dependsOn: new Set(),
-                dependents: new Set(),
-            };
-            this.groups.set(directory, group);
-        }
-        return group;
-    }
-
-    /**
-     * Update dependency tracking between groups.
-     */
-    private updateGroupDependencies(group: CompilationGroup): void {
-        // Clear old dependencies
-        for (const dep of group.dependsOn) {
-            dep.dependents.delete(group);
-        }
-        group.dependsOn.clear();
-
-        // Add new dependencies
-        for (const module of group.modules) {
-            for (const dep of module.dependencies) {
-                if (dep.group && dep.group !== group) {
-                    group.dependsOn.add(dep.group);
-                    dep.group.dependents.add(group);
-                }
-            }
-        }
-    }
-
-    /**
      * Reload a module when its file changes (e.g., on edit in LSP).
-     * Rebinds its compilation group and any groups that depend on it.
+     * Rebinds it and the modules that import or qualify-reference it.
      * @param filePath Absolute path to the changed file
      * @returns The reloaded module, or null if reload failed
      */
@@ -558,55 +437,58 @@ export class Program {
      * @returns Array of loaded sibling modules (excluding the file itself)
      */
     async loadSiblingFiles(filePath: string): Promise<Module[]> {
-        const normalizedPath = this.options.fileSystem.normalize(filePath);
-        const group = this.getOrCreateGroup(this.options.fileSystem.dirname(normalizedPath));
+        const fs = this.options.fileSystem;
+        const normalizedPath = fs.normalize(filePath);
+        const dir = fs.dirname(normalizedPath);
 
-        await this.loadGroupSiblings(group);
-        this.bindDirtyGroups();
+        await this.loadDirectory(dir);
+        this.bindDirtyModules();
 
-        return group.modules.filter(m => m.filePath !== normalizedPath);
+        return this.getAllModules().filter(m => fs.dirname(m.filePath) === dir && m.filePath !== normalizedPath);
     }
 
     /**
-     * Load every .ccs file in a group's directory (without binding).
+     * Load every .ccs file in a directory, once (without binding).
      */
-    private async loadGroupSiblings(group: CompilationGroup): Promise<void> {
+    private async loadDirectory(dir: string): Promise<void> {
+        if (this.discoveredDirectories.has(dir)) {
+            return;
+        }
+        this.discoveredDirectories.add(dir);
+
         const fs = this.options.fileSystem;
-        const files = (await fs.readDirectory(group.directory))
+        const files = (await fs.readDirectory(dir))
             .map(f => fs.normalize(f))
             .filter(f => f.toLowerCase().endsWith('.ccs') && !this.modules.has(f));
 
-        if (files.length === 0) {
-            return;
+        if (files.length > 0) {
+            this.log(`Loading ${files.length} sibling(s) in ${dir}`);
         }
-
-        this.log(`Loading ${files.length} sibling(s) in ${group.directory}`);
         for (const file of files) {
             await this.load(file, false);
         }
-        this.dirtyGroups.add(group);
     }
 
     /**
-     * Invalidate the semantic cache for a module by rebinding its compilation group.
-     * This forces re-binding for the module and all siblings in the same directory.
+     * Rebind a module.
      * @param filePath Path to the module to invalidate
-     * @param invalidateDependents If true, also rebind groups that depend on this group
+     * @param invalidateDependents If true, also rebind modules that import it
      */
     invalidateModule(filePath: string, invalidateDependents = false): void {
         const normalizedPath = this.options.fileSystem.normalize(filePath);
-        const module = this.modules.get(normalizedPath);
-
-        if (!module || !module.group) {
+        if (!this.modules.has(normalizedPath)) {
             return;
         }
 
+        this.dirtyModules.add(normalizedPath);
         if (invalidateDependents) {
-            this.dirtyGroups.add(module.group);
-            this.bindDirtyGroups();
-        } else {
-            this.bindGroup(module.group);
+            for (const other of this.modules.values()) {
+                if (other.dependencies.some(d => d.filePath === normalizedPath)) {
+                    this.dirtyModules.add(other.filePath);
+                }
+            }
         }
+        this.bindDirtyModules();
     }
 
     /**
@@ -676,17 +558,13 @@ export class Program {
     private async processImports(module: Module): Promise<void> {
         const importPaths = [...module.imports];
 
-        // Auto-include standard libraries, except into the standard library directories
-        // themselves (their files share a namespace, and waiting on them would deadlock)
-        const fs = this.options.fileSystem;
-        const stdLibPaths = [this.options.stdLibPaths.stdarg, this.options.stdLibPaths.std]
-            .filter((p): p is string => !!p)
-            .map(p => fs.normalize(p));
-        const stdLibDirs = stdLibPaths.map(p => fs.dirname(p));
-        if (this.options.includeStdLibs && !stdLibDirs.includes(fs.dirname(module.filePath))) {
-            // They're loaded asynchronously from the constructor; wait so they aren't
-            // still on the loading stack (which would be misreported as a circular import)
-            await this.stdLibsLoaded;
+        // Like the compiler, implicitly import the standard libraries into every module
+        // (ahead of explicit imports), except into themselves
+        if (this.options.includeStdLibs) {
+            const stdLibPaths = [this.options.stdLibPaths.stdarg, this.options.stdLibPaths.std]
+                .filter((p): p is string => !!p)
+                .map(p => this.options.fileSystem.normalize(p))
+                .filter(p => p !== module.filePath);
             importPaths.unshift(...stdLibPaths);
         }
 

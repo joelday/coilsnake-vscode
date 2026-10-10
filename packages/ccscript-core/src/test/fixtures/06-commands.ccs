@@ -12,7 +12,7 @@ command greet(name, age) {
 
 // Command with complex body
 command initialize_game(difficulty, player_name) {
-    rom[0x1000] = difficulty
+    ROM[0x1000] = difficulty
     set flag 100
     
     if difficulty > 2 {

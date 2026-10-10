@@ -45,16 +45,24 @@ describe('Scanner', () => {
             ['flag', SyntaxKind.FlagKeyword],
             ['if', SyntaxKind.IfKeyword],
             ['import', SyntaxKind.ImportKeyword],
+            ['insertbin', SyntaxKind.InsertbinKeyword],
             ['long', SyntaxKind.LongKeyword],
             ['menu', SyntaxKind.MenuKeyword],
             ['not', SyntaxKind.NotKeyword],
             ['or', SyntaxKind.OrKeyword],
-            ['rom', SyntaxKind.ROMKeyword],
-            ['romtbl', SyntaxKind.ROMTBLKeyword],
+            ['ROM', SyntaxKind.ROMKeyword],
+            ['ROMTBL', SyntaxKind.ROMTBLKeyword],
             ['short', SyntaxKind.ShortKeyword],
-            ['true', SyntaxKind.TrueKeyword],
-            ['false', SyntaxKind.FalseKeyword],
         ];
+
+        // Like the compiler's lexer, keywords are case-sensitive and there are no
+        // var/true/false keywords
+        ['Command', 'IF', 'rom', 'romtbl', 'var', 'true', 'false'].forEach(text => {
+            it(`should treat '${text}' as an identifier`, () => {
+                const scanner = new Scanner(text);
+                expect(scanner.scanTokens()[0].kind).toBe(SyntaxKind.Identifier);
+            });
+        });
 
         keywords.forEach(([text, kind]) => {
             it(`should recognize '${text}' as keyword`, () => {
@@ -62,12 +70,6 @@ describe('Scanner', () => {
                 const tokens = scanner.scanTokens();
                 expect(tokens[0].kind).toBe(kind);
                 expect(tokens[0].text).toBe(text);
-            });
-
-            it(`should recognize '${text}' in uppercase`, () => {
-                const scanner = new Scanner((text as string).toUpperCase());
-                const tokens = scanner.scanTokens();
-                expect(tokens[0].kind).toBe(kind);
             });
         });
     });
@@ -273,7 +275,7 @@ describe('Scanner', () => {
         });
 
         it('should scan ROM access', () => {
-            const scanner = new Scanner('rom[0x1000] = 0xFF');
+            const scanner = new Scanner('ROM[0x1000] = 0xFF');
             const tokens = scanner.scanTokens();
 
             expect(tokens[0].kind).toBe(SyntaxKind.ROMKeyword);

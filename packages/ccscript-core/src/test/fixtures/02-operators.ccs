@@ -14,9 +14,9 @@ define check5 = 5 >= 5
 define check6 = 3 <= 7
 
 // Logical operators
-define logic1 = true and false
-define logic2 = true or false
-define logic3 = not true
+define logic1 = 1 and 0
+define logic2 = 1 or 0
+define logic3 = not 1
 
 // Bitwise operators
 define bits1 = 0xFF & 0x0F

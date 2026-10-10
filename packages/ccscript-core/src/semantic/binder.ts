@@ -8,7 +8,6 @@ import { SyntaxKind } from '../syntax/syntaxKind';
 import { Symbol, SymbolKind, SymbolTable } from './symbol';
 import { Scope, ScopeKind, ScopeManager } from './scope';
 import { Type, Types } from './types';
-import type { Module } from '../program';
 
 /**
  * Diagnostic message from semantic analysis.
@@ -25,19 +24,12 @@ export interface SemanticDiagnostic {
 }
 
 /**
- * Function to resolve imported modules
- */
-export type ModuleResolver = (moduleName: string) => Module | undefined;
-
-/**
- * Context for binding - provides pre-computed symbols from group and dependencies
+ * Context for binding - provides pre-computed symbols from the module's imports
  */
 export interface BindingContext {
     /** File path for symbol IDs */
     filePath: string;
-    /** Shared symbols from modules in same directory */
-    sharedSymbols: SymbolTable;
-    /** Imported symbols from explicit imports (other directories) */
+    /** Top-level declarations of the module's imports (including implicit std libs) */
     importedSymbols: SymbolTable;
     /**
      * Resolves `module.member` qualifiers to that module's top-level declarations.
@@ -81,14 +73,8 @@ export class Binder {
         this.currentScope = this.scopes.getGlobalScope();
         this.context = context;
 
-        // See through to imported and same-directory symbols without copying them.
-        // Explicit imports take priority over shared ones; this file's own symbols win over both.
-        // (The shared table also holds this file's declarations from phase 1; those are skipped
-        // so they're only seen once, as this file's own.)
-        this.symbols = new SymbolTable([
-            { table: context.importedSymbols },
-            { table: context.sharedSymbols, filter: s => s.modulePath !== context.filePath },
-        ]);
+        // See through to imported symbols without copying them; this file's own symbols win
+        this.symbols = new SymbolTable([{ table: context.importedSymbols }]);
     }
 
     /**
@@ -101,7 +87,6 @@ export class Binder {
     static collectDeclarations(root: RedNode, filePath: string): SymbolTable {
         const context: BindingContext = {
             filePath,
-            sharedSymbols: new SymbolTable(),
             importedSymbols: new SymbolTable(),
         };
         const binder = new Binder(context);
@@ -134,35 +119,6 @@ export class Binder {
         };
     }
 
-    /**
-     * Legacy bind method for backwards compatibility (will be removed).
-     * @deprecated Use Binder.collectDeclarations() and Binder.bindReferences() instead
-     */
-    static bind(root: RedNode, filePath: string, moduleResolver?: ModuleResolver, siblingModules?: Module[]): BindingResult {
-        // For backwards compatibility, simulate old behavior
-        const context: BindingContext = {
-            filePath,
-            sharedSymbols: new SymbolTable(),
-            importedSymbols: new SymbolTable(),
-        };
-        
-        // Import sibling symbols if provided
-        if (siblingModules) {
-            for (const sibling of siblingModules) {
-                if (sibling.binding) {
-                    for (const symbol of sibling.binding.symbols.getAllSymbols()) {
-                        // Only import global scope symbols
-                        const scope = sibling.binding.scopes.getScope(symbol.scopeId);
-                        if (scope?.kind === ScopeKind.Global) {
-                            context.sharedSymbols.add(symbol);
-                        }
-                    }
-                }
-            }
-        }
-
-        return Binder.bindReferences(root, context);
-    }
 
     /**
      * Adds a diagnostic message.
@@ -891,7 +847,7 @@ export class Binder {
     private isExpression(node: RedNode): boolean {
         return node.kind === SyntaxKind.NumericLiteralExpression ||
             node.kind === SyntaxKind.StringLiteralExpression ||
-            node.kind === SyntaxKind.BooleanLiteralExpression ||
+            node.kind === SyntaxKind.InsertbinExpression ||
             node.kind === SyntaxKind.IdentifierExpression ||
             node.kind === SyntaxKind.CallExpression ||
             node.kind === SyntaxKind.BinaryExpression ||

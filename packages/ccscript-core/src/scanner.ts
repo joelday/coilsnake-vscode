@@ -403,7 +403,8 @@ export class Scanner {
      * Get keyword kind from identifier text
      */
     private getKeywordKind(text: string): SyntaxKind {
-        switch (text.toLowerCase()) {
+        // Keywords are case-sensitive, matching the CCScript compiler's lexer (ccscript_legacy 1.500)
+        switch (text) {
             case 'and': return SyntaxKind.AndKeyword;
             case 'byte': return SyntaxKind.ByteKeyword;
             case 'command': return SyntaxKind.CommandKeyword;
@@ -411,20 +412,18 @@ export class Scanner {
             case 'default': return SyntaxKind.DefaultKeyword;
             case 'define': return SyntaxKind.DefineKeyword;
             case 'else': return SyntaxKind.ElseKeyword;
-            case 'false': return SyntaxKind.FalseKeyword;
             case 'flag': return SyntaxKind.FlagKeyword;
             case 'if': return SyntaxKind.IfKeyword;
             case 'import': return SyntaxKind.ImportKeyword;
+            case 'insertbin': return SyntaxKind.InsertbinKeyword;
             case 'long': return SyntaxKind.LongKeyword;
             case 'menu': return SyntaxKind.MenuKeyword;
             case 'not': return SyntaxKind.NotKeyword;
             case 'or': return SyntaxKind.OrKeyword;
-            case 'rom': return SyntaxKind.ROMKeyword;
-            case 'romtbl': return SyntaxKind.ROMTBLKeyword;
+            case 'ROM': return SyntaxKind.ROMKeyword;
+            case 'ROMTBL': return SyntaxKind.ROMTBLKeyword;
             case 'setcount': return SyntaxKind.SetcountKeyword;
             case 'short': return SyntaxKind.ShortKeyword;
-            case 'true': return SyntaxKind.TrueKeyword;
-            case 'var': return SyntaxKind.VarKeyword;
             default: return SyntaxKind.Identifier;
         }
     }
