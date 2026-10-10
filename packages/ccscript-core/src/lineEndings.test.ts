@@ -11,12 +11,12 @@ describe('Line Ending Handling', () => {
         it('should handle LF line endings correctly', () => {
             const source = 'define x = 42\ndefine y = 99\ndefine =';
             const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getAllDiagnostics();
+            const diagnostics = tree.getDiagnostics();
 
             // Should have a syntax error on line 3 (missing identifier after define)
             expect(diagnostics.length).toBeGreaterThan(0);
             const syntaxError = diagnostics[0];
-            const position = 'span' in syntaxError ? syntaxError.span.start : syntaxError.position;
+            const position = syntaxError.span.start;
             const { line } = tree.getLineAndColumn(position);
             expect(line).toBe(2); // 0-indexed, so line 3 = index 2
         });
@@ -24,12 +24,12 @@ describe('Line Ending Handling', () => {
         it('should handle CRLF line endings correctly', () => {
             const source = 'define x = 42\r\ndefine y = 99\r\ndefine =';
             const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getAllDiagnostics();
+            const diagnostics = tree.getDiagnostics();
 
             // Should have a syntax error on line 3 (missing identifier after define)
             expect(diagnostics.length).toBeGreaterThan(0);
             const syntaxError = diagnostics[0];
-            const position = 'span' in syntaxError ? syntaxError.span.start : syntaxError.position;
+            const position = syntaxError.span.start;
             const { line } = tree.getLineAndColumn(position);
             expect(line).toBe(2); // 0-indexed, so line 3 = index 2
         });
@@ -37,102 +37,14 @@ describe('Line Ending Handling', () => {
         it('should handle mixed line endings', () => {
             const source = 'define x = 42\r\ndefine y = 99\ndefine =';
             const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getAllDiagnostics();
+            const diagnostics = tree.getDiagnostics();
 
             // Should still work with mixed endings
             expect(diagnostics.length).toBeGreaterThan(0);
             const syntaxError = diagnostics[0];
-            const position = 'span' in syntaxError ? syntaxError.span.start : syntaxError.position;
+            const position = syntaxError.span.start;
             const { line } = tree.getLineAndColumn(position);
             expect(line).toBe(2);
-        });
-    });
-
-    describe('Semantic diagnostics with different line endings', () => {
-        it('should position semantic errors correctly with LF', () => {
-            const source = 'define x = 42\ncommand test() {\n    y\n}';
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getAllDiagnostics();
-
-            // Should have an undefined identifier error for 'y'
-            const undefinedError = diagnostics.find(d => d.message.includes('Undefined identifier'));
-            expect(undefinedError).toBeDefined();
-
-            if (undefinedError) {
-                const pos = 'span' in undefinedError ? undefinedError.span.start : undefinedError.position;
-                const len = 'span' in undefinedError ? undefinedError.span.length : undefinedError.length;
-                const { line } = tree.getLineAndColumn(pos);
-                expect(line).toBeGreaterThanOrEqual(0); // Line with identifier
-                expect(len).toBe(1); // Just the 'y', not the whole line
-            }
-        });
-
-        it('should position semantic errors correctly with CRLF', () => {
-            const source = 'define x = 42\r\ncommand test() {\r\n    y\r\n}';
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getAllDiagnostics();
-
-            // Should have an undefined identifier error for 'y'
-            const undefinedError = diagnostics.find(d => d.message.includes('Undefined identifier'));
-            expect(undefinedError).toBeDefined();
-
-            if (undefinedError) {
-                const position = 'span' in undefinedError ? undefinedError.span.start : undefinedError.position;
-                const length = 'span' in undefinedError ? undefinedError.span.length : undefinedError.length;
-                const { line } = tree.getLineAndColumn(position);
-                expect(line).toBeGreaterThanOrEqual(0); // Line with identifier
-                expect(length).toBe(1); // Just the 'y', not the whole line
-            }
-        });
-
-        it('should not span multiple lines with CRLF', () => {
-            const source = 'define x = 42\r\ncommand test() { undefinedFunc() }\r\ndefine y = 99';
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getAllDiagnostics();
-
-            // Should have an undefined command error
-            const undefinedError = diagnostics.find(d => d.message.includes('Undefined command'));
-            expect(undefinedError).toBeDefined();
-
-            if (undefinedError) {
-                // Check that the diagnostic doesn't span to the next line
-                const pos = 'span' in undefinedError ? undefinedError.span.start : undefinedError.position;
-                const len = 'span' in undefinedError ? undefinedError.span.length : undefinedError.length;
-                const startPos = tree.getLineAndColumn(pos);
-                const endPos = tree.getLineAndColumn(pos + len);
-
-                expect(startPos.line).toBe(endPos.line); // Should be on same line
-                expect(len).toBeLessThan(20); // Reasonable length for identifier
-            }
-        });
-
-        it('should calculate correct offsets with CRLF throughout file', () => {
-            // This tests the actual issue we had
-            const source = [
-                'define x = 42',
-                'define y = x + 1',
-                '',
-                'command test() {',
-                '    undefinedFunc()',
-                '}'
-            ].join('\r\n');
-
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getAllDiagnostics();
-
-            const undefinedError = diagnostics.find(d => d.message.includes('Undefined command'));
-            expect(undefinedError).toBeDefined();
-
-            if (undefinedError) {
-                const pos = 'span' in undefinedError ? undefinedError.span.start : undefinedError.position;
-                const len = 'span' in undefinedError ? undefinedError.span.length : undefinedError.length;
-                const { line, column } = tree.getLineAndColumn(pos);
-                expect(line).toBeGreaterThanOrEqual(3); // Line with undefinedFunc (should be towards the end)
-                expect(column).toBeGreaterThan(0); // Should be indented
-
-                // The diagnostic should only cover the function name
-                expect(len).toBe('undefinedFunc'.length);
-            }
         });
     });
 

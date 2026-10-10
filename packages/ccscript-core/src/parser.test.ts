@@ -648,7 +648,7 @@ describe('Parser', () => {
                     expect(expr.parts.length).toBeGreaterThan(1);
                     // Should have: "Hello, ", {name}, "!"
                     const hasTemplateExpr = expr.parts.some(
-                        (p: any) => p.kind === SyntaxKind.StringTemplateExpression
+                        (p) => p.kind === SyntaxKind.StringTemplateExpression
                     );
                     expect(hasTemplateExpr).toBe(true);
                 }
@@ -664,7 +664,7 @@ describe('Parser', () => {
                 expect(expr.kind).toBe(SyntaxKind.TemplateStringExpression);
                 if (expr.kind === SyntaxKind.TemplateStringExpression) {
                     const templateExpr = expr.parts.find(
-                        (p: any) => 'expression' in p && p.kind === SyntaxKind.StringTemplateExpression
+                        (p) => 'expression' in p && p.kind === SyntaxKind.StringTemplateExpression
                     );
                     expect(templateExpr).toBeDefined();
                     if (templateExpr && 'expression' in templateExpr) {
@@ -683,7 +683,7 @@ describe('Parser', () => {
                 expect(expr.kind).toBe(SyntaxKind.TemplateStringExpression);
                 if (expr.kind === SyntaxKind.TemplateStringExpression) {
                     const templateExprs = expr.parts.filter(
-                        (p: any) => p.kind === SyntaxKind.StringTemplateExpression
+                        (p) => p.kind === SyntaxKind.StringTemplateExpression
                     );
                     expect(templateExprs.length).toBe(2);
                 }
@@ -699,7 +699,7 @@ describe('Parser', () => {
                 expect(expr.kind).toBe(SyntaxKind.TemplateStringExpression);
                 if (expr.kind === SyntaxKind.TemplateStringExpression) {
                     const templateExpr = expr.parts.find(
-                        (p: any) => 'expression' in p && p.kind === SyntaxKind.StringTemplateExpression
+                        (p) => 'expression' in p && p.kind === SyntaxKind.StringTemplateExpression
                     );
                     expect(templateExpr).toBeDefined();
                     if (templateExpr && 'expression' in templateExpr) {
@@ -718,7 +718,7 @@ describe('Parser', () => {
                 expect(expr.kind).toBe(SyntaxKind.TemplateStringExpression);
                 if (expr.kind === SyntaxKind.TemplateStringExpression) {
                     const templateExpr = expr.parts.find(
-                        (p: any) => 'expression' in p && p.kind === SyntaxKind.StringTemplateExpression
+                        (p) => 'expression' in p && p.kind === SyntaxKind.StringTemplateExpression
                     );
                     expect(templateExpr).toBeDefined();
                     if (templateExpr && 'expression' in templateExpr) {
@@ -742,7 +742,7 @@ describe('Parser', () => {
                 if (expr.kind === SyntaxKind.TemplateStringExpression) {
                     // Should have just text parts, no template expressions
                     const templateExprs = expr.parts.filter(
-                        (p: any) => p.kind === SyntaxKind.StringTemplateExpression
+                        (p) => p.kind === SyntaxKind.StringTemplateExpression
                     );
                     expect(templateExprs.length).toBe(0);
                 }

@@ -2,39 +2,51 @@
  * Integration tests for semantic analysis with real-world scenarios
  */
 
-import { SyntaxTree } from './syntaxTree';
-import { SymbolKind, Symbol } from './semantic/symbol';
-import { SemanticDiagnostic } from './semantic/binder';
-import { SyntaxKind } from './syntax/syntaxKind';
+import { Program } from './program';
+import { MemoryFileSystem } from './fileSystem';
+import { SymbolKind } from './semantic/symbol';
+
+function createProgram(source: string, filePath = '/test.ccs'): Promise<Program> {
+    const fs = new MemoryFileSystem();
+    fs.addFile(filePath, source);
+    const program = new Program({
+        fileSystem: fs,
+        rootPath: '/',
+        includeStdLibs: false,
+    });
+    return Promise.resolve(program);
+}
 
 describe('Semantic Analysis Integration', () => {
     describe('Command Parameters', () => {
-        it('should resolve parameter references in simple command', () => {
+        it('should resolve parameter references in simple command', async () => {
             const source = `
                 command greet(name) {
                     name
                 }
             `;
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getSemanticDiagnostics();
+            const program = await createProgram(source);
+            const module = await program.loadModule('/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
             expect(diagnostics).toHaveLength(0);
         });
 
-        it('should resolve multiple parameters', () => {
+        it('should resolve multiple parameters', async () => {
             const source = `
                 command add(x, y) {
                     x
                     y
                 }
             `;
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getSemanticDiagnostics();
+            const program = await createProgram(source);
+            const module = await program.loadModule('/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
             expect(diagnostics).toHaveLength(0);
         });
 
-        it('should resolve parameters in nested scopes', () => {
+        it('should resolve parameters in nested scopes', async () => {
             const source = `
                 command process(value) {
                     {
@@ -42,13 +54,14 @@ describe('Semantic Analysis Integration', () => {
                     }
                 }
             `;
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getSemanticDiagnostics();
+            const program = await createProgram(source);
+            const module = await program.loadModule('/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
             expect(diagnostics).toHaveLength(0);
         });
 
-        it('should resolve parameters in conditional expressions', () => {
+        it('should resolve parameters in conditional expressions', async () => {
             const source = `
                 command check(flag_num) {
                     if flag flag_num {
@@ -56,91 +69,97 @@ describe('Semantic Analysis Integration', () => {
                     }
                 }
             `;
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getSemanticDiagnostics();
+            const program = await createProgram(source);
+            const module = await program.loadModule('/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
             expect(diagnostics).toHaveLength(0);
         });
     });
 
-    describe('Module Imports and Qualified Names', () => {
-        it('should accept qualified names when module is imported', () => {
-            const source = `
-                import std
+    describe('Module Imports and Dependencies', () => {
+        it('should resolve imports from sibling files', async () => {
+            const fs = new MemoryFileSystem();
+            fs.addFile('/lib/helper.ccs', 'command wait() { }');
+            fs.addFile('/lib/test.ccs', `
+                import "helper.ccs"
                 
                 command test() {
-                    std.wait()
+                    wait()
                 }
-            `;
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getSemanticDiagnostics();
+            `);
+
+            const program = new Program({
+                fileSystem: fs,
+                rootPath: '/lib',
+                includeStdLibs: false,
+            });
+
+            const module = await program.loadModule('/lib/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
             expect(diagnostics).toHaveLength(0);
         });
 
-        it('should error on qualified names when module is not imported', () => {
+        it('should error on undefined imported commands', async () => {
             const source = `
                 command test() {
-                    std.wait()
+                    wait()
                 }
             `;
-            // No module resolver - std won't be available
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getSemanticDiagnostics();
+            const program = await createProgram(source);
+            const module = await program.loadModule('/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
-            // Should get error about unknown module std
-            // (Module symbol was never created because no import statement)
+            // Should get error about undefined command
             expect(diagnostics.length).toBeGreaterThan(0);
-            const hasModuleError = diagnostics.some((d: SemanticDiagnostic) =>
-                d.message.includes('Unknown module') || d.message.includes('std')
+            const hasError = diagnostics.some((d) =>
+                d.message.includes('Undefined') || d.message.includes('wait')
             );
-            expect(hasModuleError).toBe(true);
+            expect(hasError).toBe(true);
         });
 
-        it('should allow multiple module imports with resolver', () => {
-            // Create fake imported modules
-            const stdTree = SyntaxTree.parse('command wait() { }');
-            const gameTree = SyntaxTree.parse('command save() { }');
-
-            const moduleResolver = (name: string) => {
-                if (name === 'std') {
-                    return { name: 'std', filePath: 'std.ccs', tree: stdTree, imports: [], dependencies: [] };
-                }
-                if (name === 'game') {
-                    return { name: 'game', filePath: 'game.ccs', tree: gameTree, imports: [], dependencies: [] };
-                }
-                return undefined;
-            };
-
-            const source = `
-                import std
-                import game
+        it('should allow imports from multiple files', async () => {
+            const fs = new MemoryFileSystem();
+            fs.addFile('/game/std.ccs', 'command wait() { }');
+            fs.addFile('/game/save.ccs', 'command save() { }');
+            fs.addFile('/game/test.ccs', `
+                import "std.ccs"
+                import "save.ccs"
                 
                 command test() {
                     wait()
                     save()
                 }
-            `;
-            const tree = SyntaxTree.parse(source, moduleResolver);
-            const diagnostics = tree.getSemanticDiagnostics();
+            `);
+
+            const program = new Program({
+                fileSystem: fs,
+                rootPath: '/game',
+                includeStdLibs: false,
+            });
+
+            const module = await program.loadModule('/game/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
             expect(diagnostics).toHaveLength(0);
         });
     });
 
     describe('Complex Real-World Scenarios', () => {
-        it('should handle std.ccs-style command definition with string template', () => {
+        it('should handle command definition with string template', async () => {
             const source = `
                 command set(num) "[04 {short num}]"
             `;
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getSemanticDiagnostics();
+            const program = await createProgram(source);
+            const module = await program.loadModule('/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
             // Should have no semantic errors (parameter 'num' is used in template)
             expect(diagnostics).toHaveLength(0);
         });
 
-        it('should handle command calling another command with parameters', () => {
+        it('should handle command calling another command with parameters', async () => {
             const source = `
                 command helper(x) {
                     x
@@ -150,14 +169,19 @@ describe('Semantic Analysis Integration', () => {
                     helper(value)
                 }
             `;
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getSemanticDiagnostics();
+            const program = await createProgram(source);
+            const module = await program.loadModule('/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
             expect(diagnostics).toHaveLength(0);
         });
 
-        it('should handle std.ccs-style command with nested conditionals', () => {
+        it('should handle command with nested conditionals', async () => {
             const source = `
+                command isset(num) { num }
+                command unset(num) { num }
+                command set(num) { num }
+                
                 command toggle(num) {
                     if isset(num) {
                         unset(num)
@@ -166,20 +190,15 @@ describe('Semantic Analysis Integration', () => {
                     }
                 }
             `;
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getSemanticDiagnostics();
+            const program = await createProgram(source);
+            const module = await program.loadModule('/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
-            // isset, unset, and set are undefined (not imported), but num should resolve
-            const undefinedIdentifiers = diagnostics.filter((d: SemanticDiagnostic) =>
-                d.message.includes('Undefined')
-            );
-
-            // Should have 3 undefined command errors (isset, unset, set)
-            // but NOT an undefined identifier error for 'num'
-            expect(undefinedIdentifiers.every((d: SemanticDiagnostic) => !d.message.includes('num'))).toBe(true);
+            // All commands are defined, num parameter should resolve
+            expect(diagnostics).toHaveLength(0);
         });
 
-        it('should handle constants visible across command scopes', () => {
+        it('should handle constants visible across command scopes', async () => {
             const source = `
                 define MAX_ITEMS = 100
                 
@@ -193,17 +212,18 @@ describe('Semantic Analysis Integration', () => {
                     MAX_ITEMS
                 }
             `;
-            const tree = SyntaxTree.parse(source);
-            const diagnostics = tree.getSemanticDiagnostics();
+            const program = await createProgram(source);
+            const module = await program.loadModule('/test.ccs');
+            const diagnostics = module!.binding?.diagnostics || [];
 
             expect(diagnostics).toHaveLength(0);
         });
     });
 
     describe('Symbol Table Integration', () => {
-        it('should correctly classify all symbol types', () => {
+        it('should correctly classify all symbol types', async () => {
             const source = `
-                import std
+                import "std.ccs"
                 define CONSTANT = 42
                 
                 command myCommand(param1, param2) {
@@ -212,26 +232,31 @@ describe('Semantic Analysis Integration', () => {
                 
                 myLabel:
             `;
-            const tree = SyntaxTree.parse(source);
-            const symbols = tree.getSymbolTable();
+            const fs = new MemoryFileSystem();
+            fs.addFile('/std.ccs', '');
+            fs.addFile('/test.ccs', source);
+            const program = new Program({
+                fileSystem: fs,
+                rootPath: '/',
+                includeStdLibs: false,
+            });
 
+            const module = await program.loadModule('/test.ccs');
+            const symbols = module!.binding!.symbols;
             const allSymbols = symbols.getAllSymbols();
 
-            const modules = allSymbols.filter((s: Symbol) => s.kind === SymbolKind.Module);
-            const constants = allSymbols.filter((s: Symbol) => s.kind === SymbolKind.Constant);
-            const commands = allSymbols.filter((s: Symbol) => s.kind === SymbolKind.Command);
-            const parameters = allSymbols.filter((s: Symbol) => s.kind === SymbolKind.Parameter);
-            const labels = allSymbols.filter((s: Symbol) => s.kind === SymbolKind.Label);
+            const constants = allSymbols.filter((s) => s.kind === SymbolKind.Constant);
+            const commands = allSymbols.filter((s) => s.kind === SymbolKind.Command);
+            const parameters = allSymbols.filter((s) => s.kind === SymbolKind.Parameter);
+            const labels = allSymbols.filter((s) => s.kind === SymbolKind.Label);
 
-            // Module symbols are created even without resolver (just can't import actual symbols)
-            expect(modules.length).toBeGreaterThanOrEqual(1);
             expect(constants).toHaveLength(1);
             expect(commands).toHaveLength(1);
             expect(parameters).toHaveLength(2);
             expect(labels).toHaveLength(1);
         });
 
-        it('should track symbol usage correctly', () => {
+        it('should track symbol usage correctly', async () => {
             const source = `
                 define USED = 1
                 define UNUSED = 2
@@ -240,8 +265,9 @@ describe('Semantic Analysis Integration', () => {
                     USED
                 }
             `;
-            const tree = SyntaxTree.parse(source);
-            const symbols = tree.getSymbolTable();
+            const program = await createProgram(source);
+            const module = await program.loadModule('/test.ccs');
+            const symbols = module!.binding!.symbols;
 
             const usedSymbol = symbols.getAll('USED')[0];
             const unusedSymbol = symbols.getAll('UNUSED')[0];

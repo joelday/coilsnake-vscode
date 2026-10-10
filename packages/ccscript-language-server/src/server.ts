@@ -19,7 +19,6 @@ import {
     Hover,
     MarkupKind,
     Location,
-    SemanticTokensBuilder,
     Diagnostic,
     DiagnosticSeverity as LspDiagnosticSeverity,
     DocumentSymbol,
@@ -27,7 +26,6 @@ import {
     Range,
     TextEdit,
     SignatureHelp,
-    SignatureInformation,
     ParameterInformation,
 } from 'vscode-languageserver/node';
 
@@ -179,11 +177,17 @@ async function getOrParseDocument(document: TextDocument): Promise<SyntaxTree> {
 // Validate document and send diagnostics
 async function validateDocument(document: TextDocument): Promise<void> {
     const tree = await getOrParseDocument(document);
-    const allDiagnostics = tree.getAllDiagnostics();
+    const filePath = uriToPath(document.uri);
+    const module = program?.getModule(filePath);
+    
+    // Combine syntax and semantic diagnostics
+    const syntaxDiagnostics = tree.getDiagnostics();
+    const semanticDiagnostics = module?.binding?.diagnostics || [];
+    const allDiagnostics = [...syntaxDiagnostics, ...semanticDiagnostics];
 
     connection.console.log(`Validating: ${allDiagnostics.length} diagnostics found`);
 
-    const diagnostics: Diagnostic[] = allDiagnostics.map((diag, idx: number) => {
+    const diagnostics: Diagnostic[] = allDiagnostics.map((diag: typeof syntaxDiagnostics[0] | typeof semanticDiagnostics[0], idx: number) => {
         // Type guard: SemanticDiagnostic has 'position', Diagnostic has 'span'
         const isSemanticDiag = 'position' in diag;
 
@@ -252,10 +256,31 @@ connection.onCompletion(async (params: TextDocumentPositionParams): Promise<Comp
     }
 
     const tree = await getOrParseDocument(document);
+    const filePath = uriToPath(document.uri);
+    const module = program?.getModule(filePath);
+    const binding = module?.binding;
+    if (!binding) {
+        return [];
+    }
+    
     const offset = document.offsetAt(params.position);
-
-    // Get only symbols visible at the cursor position (scope-aware, includes imports)
-    const visibleSymbols = tree.getVisibleSymbolsAt(offset);
+    const node = tree.getNodeAtPosition(offset);
+    const scopeId = binding.nodeScopes.get(node.position);
+    
+    // Get visible symbols at this scope
+    let visibleSymbols: import('ccscript-core').Symbol[] = [];
+    if (scopeId !== undefined) {
+        const scope = binding.scopes.getScope(scopeId);
+        if (scope) {
+            const visibleScopes = binding.scopes.getVisibleScopes(scope);
+            visibleSymbols = binding.symbols.getVisibleSymbols(visibleScopes);
+        }
+    } else {
+        // Fallback to global scope
+        const globalScope = binding.scopes.getGlobalScope();
+        const visibleScopes = binding.scopes.getVisibleScopes(globalScope);
+        visibleSymbols = binding.symbols.getVisibleSymbols(visibleScopes);
+    }
 
     const completions: CompletionItem[] = [];
 
@@ -322,6 +347,13 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
     }
 
     const tree = await getOrParseDocument(document);
+    const filePath = uriToPath(document.uri);
+    const module = program?.getModule(filePath);
+    const binding = module?.binding;
+    if (!binding) {
+        return null;
+    }
+    
     const offset = document.offsetAt(params.position);
     const node = tree.getNodeAtPosition(offset);
 
@@ -330,8 +362,7 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
     }
 
     // Check if we're on a symbol declaration (pass filePath to filter imported symbols)
-    const filePath = uriToPath(document.uri);
-    const symbol = tree.getSymbolAt(offset, filePath);
+    const symbol = binding.symbols.getSymbolAt(offset, filePath);
     if (symbol) {
         const content: string[] = [];
 
@@ -343,7 +374,7 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
 
         // Build signature for commands
         if (symbol.kind === SymbolKind.Command && symbol.parameters && symbol.parameters.length > 0) {
-            const paramStr = symbol.parameters.map(p => `${p.name}`).join(', ');
+            const paramStr = symbol.parameters.map((p: import('ccscript-core').Symbol) => `${p.name}`).join(', ');
             content.push(`\`\`\`ccscript\ncommand ${symbol.name}(${paramStr})\n\`\`\``);
         } else {
             content.push(`**${symbol.name}**`);
@@ -374,7 +405,7 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
     let currentNode: RedNode | null = node;
     while (currentNode) {
         // Check if this node has a symbol reference
-        const refSymbol = tree.getReferencedSymbol(currentNode);
+        const refSymbol = binding.references.get(currentNode);
         if (refSymbol) {
             const content: string[] = [];
 
@@ -386,7 +417,7 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
 
             // Build signature for commands
             if (refSymbol.kind === SymbolKind.Command && refSymbol.parameters && refSymbol.parameters.length > 0) {
-                const paramStr = refSymbol.parameters.map(p => `${p.name}`).join(', ');
+                const paramStr = refSymbol.parameters.map((p: import('ccscript-core').Symbol) => `${p.name}`).join(', ');
                 content.push(`\`\`\`ccscript\ncommand ${refSymbol.name}(${paramStr})\n\`\`\``);
             } else {
                 content.push(`**${refSymbol.name}**`);
@@ -423,7 +454,7 @@ connection.onHover(async (params: TextDocumentPositionParams): Promise<Hover | n
     }
 
     // Show type information
-    const type = tree.getTypeOf(node);
+    const type = binding.types.get(node);
     if (type) {
         return {
             contents: {
@@ -444,10 +475,17 @@ connection.onSignatureHelp(async (params: TextDocumentPositionParams): Promise<S
     }
 
     const tree = await getOrParseDocument(document);
+    const filePath = uriToPath(document.uri);
+    const module = program?.getModule(filePath);
+    const binding = module?.binding;
+    if (!binding) {
+        return null;
+    }
+    
     const offset = document.offsetAt(params.position);
 
     // Find the closest call expression by walking up from cursor position
-    let node = tree.getNodeAtPosition(offset);
+    const node = tree.getNodeAtPosition(offset);
     if (!node) {
         return null;
     }
@@ -475,7 +513,7 @@ connection.onSignatureHelp(async (params: TextDocumentPositionParams): Promise<S
     }
 
     // Look up the symbol for this identifier
-    const symbol = tree.getReferencedSymbol(identifierNode);
+    const symbol = binding.references.get(identifierNode);
     if (!symbol || symbol.kind !== SymbolKind.Command || !symbol.parameters) {
         return null;
     }
@@ -483,7 +521,7 @@ connection.onSignatureHelp(async (params: TextDocumentPositionParams): Promise<S
     // Build signature information
     const paramLabels: string[] = [];
     const paramInfos: ParameterInformation[] = [];
-    
+
     for (const param of symbol.parameters) {
         const label = param.name;
         paramLabels.push(label);
@@ -511,7 +549,7 @@ connection.onSignatureHelp(async (params: TextDocumentPositionParams): Promise<S
     } else {
         const relativeOffset = offset - callStart;
         const textBeforeCursor = callText.substring(openParenIndex + 1, relativeOffset);
-        
+
         // Count commas (simple approach - doesn't handle nested calls, but good enough for now)
         activeParameter = (textBeforeCursor.match(/,/g) || []).length;
     }
@@ -545,6 +583,13 @@ connection.onDefinition(async (params: TextDocumentPositionParams): Promise<Loca
     }
 
     const tree = await getOrParseDocument(document);
+    const filePath = uriToPath(document.uri);
+    const module = program?.getModule(filePath);
+    const binding = module?.binding;
+    if (!binding) {
+        return null;
+    }
+    
     const offset = document.offsetAt(params.position);
     let node: RedNode | null = tree.getNodeAtPosition(offset);
 
@@ -554,7 +599,7 @@ connection.onDefinition(async (params: TextDocumentPositionParams): Promise<Loca
 
     // Walk up the tree to find a node with a symbol reference
     while (node) {
-        const refSymbol = tree.getReferencedSymbol(node);
+        const refSymbol = binding.references.get(node);
         if (refSymbol) {
             // Check if symbol is from another module
             let targetUri = params.textDocument.uri;
@@ -604,8 +649,14 @@ connection.onReferences(async (params): Promise<Location[]> => {
     }
 
     const tree = await getOrParseDocument(document);
-    const offset = document.offsetAt(params.position);
     const filePath = uriToPath(document.uri);
+    const module = program?.getModule(filePath);
+    const binding = module?.binding;
+    if (!binding) {
+        return [];
+    }
+    
+    const offset = document.offsetAt(params.position);
     let node: RedNode | null = tree.getNodeAtPosition(offset);
 
     if (!node) {
@@ -613,12 +664,12 @@ connection.onReferences(async (params): Promise<Location[]> => {
     }
 
     // Try to find a symbol - either declaration or reference
-    let symbol = tree.getSymbolAt(offset, filePath);
+    let symbol = binding.symbols.getSymbolAt(offset, filePath);
 
     // If not a declaration, walk up to find a reference
     if (!symbol) {
         while (node) {
-            symbol = tree.getReferencedSymbol(node);
+            symbol = binding.references.get(node);
             if (symbol) {
                 break;
             }
@@ -633,14 +684,17 @@ connection.onReferences(async (params): Promise<Location[]> => {
     const locations: Location[] = [];
 
     // Helper to add location from a tree
-    const addLocationsFromTree = (targetTree: SyntaxTree, targetUri: string) => {
+    const addLocationsFromTree = (targetTree: SyntaxTree, targetUri: string, targetModule: import('ccscript-core').Module | undefined) => {
         const targetDoc = documents.get(targetUri);
         const targetFilePath = uriToPath(targetUri);
-        const targetSymbolTable = targetTree.getSymbolTable();
+        const targetBinding = targetModule?.binding;
+        if (!targetBinding) {
+            return;
+        }
 
         // Look up the symbol by its unique ID in this tree
         // Imported symbols preserve the original ID, so this works across files
-        const targetSymbol = targetSymbolTable.getById(symbol!.id);
+        const targetSymbol = targetBinding.symbols.getById(symbol!.id);
 
         if (!targetSymbol) {
             return; // Symbol not visible in this file
@@ -671,7 +725,13 @@ connection.onReferences(async (params): Promise<Location[]> => {
         }
 
         // Add all references in this file to the target symbol
-        const references = targetTree.findReferences(targetSymbol);
+        // Find all references by iterating through the binding.references Map
+        const references: RedNode[] = [];
+        for (const [node, sym] of targetBinding.references) {
+            if (sym.id === targetSymbol.id) {
+                references.push(node);
+            }
+        }
         for (const ref of references) {
             if (targetDoc) {
                 const start = targetDoc.positionAt(ref.position);
@@ -694,7 +754,7 @@ connection.onReferences(async (params): Promise<Location[]> => {
     };
 
     // Search in current file
-    addLocationsFromTree(tree, params.textDocument.uri);
+    addLocationsFromTree(tree, params.textDocument.uri, module);
 
     // If we have a program, search in all modules for references
     if (program) {
@@ -708,7 +768,7 @@ connection.onReferences(async (params): Promise<Location[]> => {
             // Search in all other modules for references to this symbol
             // The symbol might be imported/accessible via sibling imports
             const moduleUri = URI.file(module.filePath).toString();
-            addLocationsFromTree(module.tree, moduleUri);
+            addLocationsFromTree(module.tree, moduleUri, module);
         }
     }
 
@@ -722,13 +782,17 @@ connection.onDocumentSymbol(async (params): Promise<DocumentSymbol[]> => {
         return [];
     }
 
-    const tree = await getOrParseDocument(document);
+    await getOrParseDocument(document); // Ensure tree is parsed
     const filePath = uriToPath(document.uri);
-    const symbolTable = tree.getSymbolTable();
+    const module = program?.getModule(filePath);
+    const binding = module?.binding;
+    if (!binding) {
+        return [];
+    }
     const documentSymbols: DocumentSymbol[] = [];
 
     // Get all symbols for this file (filter out imported symbols from other modules)
-    const allSymbols = symbolTable.getAllSymbols().filter(s =>
+    const allSymbols = binding.symbols.getAllSymbols().filter((s: import('ccscript-core').Symbol) =>
         !s.modulePath || s.modulePath === filePath
     );
 
@@ -788,6 +852,11 @@ connection.onRenameRequest(async (params): Promise<{ changes: { [uri: string]: T
     const tree = await getOrParseDocument(document);
     const offset = document.offsetAt(params.position);
     const filePath = uriToPath(document.uri);
+    const module = program?.getModule(filePath);
+    const binding = module?.binding;
+    if (!binding) {
+        return null;
+    }
     let node: RedNode | null = tree.getNodeAtPosition(offset);
 
     if (!node) {
@@ -795,12 +864,12 @@ connection.onRenameRequest(async (params): Promise<{ changes: { [uri: string]: T
     }
 
     // Try to find a symbol - either declaration or reference
-    let symbol = tree.getSymbolAt(offset, filePath);
+    let symbol = binding.symbols.getSymbolAt(offset, filePath);
 
     // If not a declaration, walk up to find a reference
     if (!symbol) {
         while (node) {
-            symbol = tree.getReferencedSymbol(node);
+            symbol = binding.references.get(node);
             if (symbol) {
                 break;
             }
@@ -815,14 +884,17 @@ connection.onRenameRequest(async (params): Promise<{ changes: { [uri: string]: T
     const changes: { [uri: string]: import('vscode-languageserver').TextEdit[] } = {};
 
     // Helper to add edits from a tree
-    const addEditsFromTree = (targetTree: SyntaxTree, targetUri: string) => {
+    const addEditsFromTree = (targetTree: SyntaxTree, targetUri: string, targetModule: import('ccscript-core').Module | undefined) => {
         const targetDoc = documents.get(targetUri);
         const targetFilePath = uriToPath(targetUri);
-        const targetSymbolTable = targetTree.getSymbolTable();
+        const targetBinding = targetModule?.binding;
+        if (!targetBinding) {
+            return;
+        }
         const edits: TextEdit[] = [];
 
         // Look up the symbol by its unique ID in this tree
-        const targetSymbol = targetSymbolTable.getById(symbol!.id);
+        const targetSymbol = targetBinding.symbols.getById(symbol!.id);
 
         if (!targetSymbol) {
             return; // Symbol not visible in this file
@@ -850,7 +922,13 @@ connection.onRenameRequest(async (params): Promise<{ changes: { [uri: string]: T
         }
 
         // Add edits for all references in this file to the target symbol
-        const references = targetTree.findReferences(targetSymbol);
+        // Find all references by iterating through the binding.references Map
+        const references: RedNode[] = [];
+        for (const [node, sym] of targetBinding.references) {
+            if (sym.id === targetSymbol.id) {
+                references.push(node);
+            }
+        }
         for (const ref of references) {
             if (targetDoc) {
                 const start = targetDoc.positionAt(ref.position);
@@ -877,7 +955,7 @@ connection.onRenameRequest(async (params): Promise<{ changes: { [uri: string]: T
     };
 
     // Rename in current file
-    addEditsFromTree(tree, params.textDocument.uri);
+    addEditsFromTree(tree, params.textDocument.uri, module);
 
     // If we have a program, rename in all modules
     if (program) {
@@ -890,7 +968,7 @@ connection.onRenameRequest(async (params): Promise<{ changes: { [uri: string]: T
 
             // Rename in all other modules that might reference this symbol
             const moduleUri = URI.file(module.filePath).toString();
-            addEditsFromTree(module.tree, moduleUri);
+            addEditsFromTree(module.tree, moduleUri, module);
         }
     }
 

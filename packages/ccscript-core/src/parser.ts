@@ -885,7 +885,7 @@ export class Parser {
 
                 // Find matching closing brace
                 let depth = 1;
-                let exprStart = pos + 1;
+                const exprStart = pos + 1;
                 let exprEnd = exprStart;
 
                 while (exprEnd < content.length && depth > 0) {

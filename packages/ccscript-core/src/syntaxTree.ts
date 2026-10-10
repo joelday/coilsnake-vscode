@@ -11,10 +11,6 @@ import { Parser } from './parser';
 import { createRedTree, RedSourceFile, RedNode, RedToken, isRedToken } from './redNode';
 import { SyntaxKind } from './syntax/syntaxKind';
 import { GreenSourceFile, Diagnostic } from './syntax/types';
-import { Binder, BindingResult, SemanticDiagnostic, ModuleResolver } from './semantic/binder';
-import { Symbol, SymbolTable } from './semantic/symbol';
-import { Type } from './semantic/types';
-import type { Module } from './program';
 
 /**
  * Represents a parsed CCScript source file with full syntax information
@@ -23,39 +19,29 @@ export class SyntaxTree {
     private readonly scanner: Scanner;
     private readonly parser: Parser;
     private readonly greenRoot: GreenSourceFile;
-    private readonly moduleResolver?: ModuleResolver;
-    private readonly siblingModules?: Module[];
     private redRootCache?: RedSourceFile;
     private diagnosticsCache?: readonly Diagnostic[];
-    private bindingCache?: BindingResult;
-    private isBinding = false; // Prevent re-entry during sibling imports
 
     private constructor(
         public readonly source: string,
         public readonly filePath: string,
         scanner: Scanner,
-        parser: Parser,
-        moduleResolver?: ModuleResolver,
-        siblingModules?: Module[]
+        parser: Parser
     ) {
         this.scanner = scanner;
         this.parser = parser;
         this.greenRoot = parser.parseSourceFile();
-        this.moduleResolver = moduleResolver;
-        this.siblingModules = siblingModules;
     }
 
     /**
-     * Parse source code into a syntax tree
+     * Parse source code into a syntax tree (syntax only, no semantics)
      * @param source The source code to parse
-     * @param filePath Optional file path for symbol IDs (defaults to empty string for standalone parsing)
-     * @param moduleResolver Optional function to resolve imported modules
-     * @param siblingModules Optional array of modules in the same directory (implicitly imported)
+     * @param filePath Optional file path (defaults to empty string for standalone parsing)
      */
-    static parse(source: string, filePath = '', moduleResolver?: ModuleResolver, siblingModules?: Module[]): SyntaxTree {
+    static parse(source: string, filePath = ''): SyntaxTree {
         const scanner = new Scanner(source);
         const parser = new Parser(source);
-        return new SyntaxTree(source, filePath, scanner, parser, moduleResolver, siblingModules);
+        return new SyntaxTree(source, filePath, scanner, parser);
     }
 
     /**
@@ -76,7 +62,7 @@ export class SyntaxTree {
     }
 
     /**
-     * Get all diagnostics (scanner + parser errors)
+     * Get all diagnostics (scanner + parser errors only)
      */
     getDiagnostics(): readonly Diagnostic[] {
         if (!this.diagnosticsCache) {
@@ -89,171 +75,7 @@ export class SyntaxTree {
     }
 
     /**
-     * Get semantic analysis result (lazy evaluation)
-     */
-    private getBinding(): BindingResult {
-        if (!this.bindingCache) {
-            // Prevent infinite recursion during sibling imports
-            if (this.isBinding) {
-                console.log('[CCScript:SyntaxTree] Already binding, returning empty result');
-                return {
-                    symbols: new SymbolTable(),
-                    // eslint-disable-next-line @typescript-eslint/no-require-imports -- need to fix why this is a circular dependency in the first place
-                    scopes: new (require('./semantic/scope').ScopeManager)(),
-                    nodeScopes: new Map(),
-                    references: new Map(),
-                    diagnostics: [],
-                    types: new Map()
-                };
-            }
-
-            this.isBinding = true;
-            console.log(`[CCScript:SyntaxTree] Running semantic binding (${this.siblingModules?.length ?? 0} siblings)`);
-            try {
-                this.bindingCache = Binder.bind(this.getRoot(), this.filePath, this.moduleResolver, this.siblingModules);
-                console.log('[CCScript:SyntaxTree] Binding complete');
-            } finally {
-                this.isBinding = false;
-            }
-        }
-        return this.bindingCache;
-    }
-
-    /**
-     * Get all diagnostics including semantic errors
-     */
-    getAllDiagnostics(): readonly (Diagnostic | SemanticDiagnostic)[] {
-        return [
-            ...this.getDiagnostics(),
-            ...this.getSemanticDiagnostics(),
-        ];
-    }
-
-    /**
-     * Get semantic diagnostics only
-     */
-    getSemanticDiagnostics(): readonly SemanticDiagnostic[] {
-        return this.getBinding().diagnostics;
-    }
-
-    /**
-     * Get the symbol table
-     */
-    getSymbolTable(): SymbolTable {
-        return this.getBinding().symbols;
-    }
-
-    /**
-     * Get the scope manager
-     */
-    getScopeManager(): import('./semantic/scope').ScopeManager {
-        return this.getBinding().scopes;
-    }
-
-    /**
-     * Clear the semantic binding cache.
-     * Call this to force re-binding, useful when sibling modules change in LSP context.
-     */
-    invalidateBinding(): void {
-        console.log('[CCScript:SyntaxTree] Invalidating binding cache');
-        this.bindingCache = undefined;
-        this.isBinding = false;
-    }
-
-    /**
-     * Get the symbol at a specific position
-     * @param position The position to query
-     * @param filePath Optional file path to filter imported symbols
-     */
-    getSymbolAt(position: number, filePath?: string): Symbol | undefined {
-        return this.getSymbolTable().getSymbolAt(position, filePath);
-    }
-
-    /**
-     * Get the type of a node
-     */
-    getTypeOf(node: RedNode): Type | undefined {
-        return this.getBinding().types.get(node);
-    }
-
-    /**
-     * Get the symbol that an identifier references
-     */
-    getReferencedSymbol(node: RedNode): Symbol | undefined {
-        return this.getBinding().references.get(node);
-    }
-
-    /**
-     * Get the scope ID for a node
-     */
-    getScopeAt(position: number): number | undefined {
-        const node = this.getNodeAtPosition(position);
-        return this.getBinding().nodeScopes.get(node.position);
-    }
-
-    /**
-     * Get all symbols visible at a specific position.
-     * Filters by scope visibility. Includes imported symbols from sibling modules.
-     */
-    getVisibleSymbolsAt(position: number): Symbol[] {
-        const node = this.getNodeAtPosition(position);
-        const scopeId = this.getBinding().nodeScopes.get(node.position);
-
-        if (scopeId === undefined) {
-            // Fallback to global scope if no scope info
-            const globalScope = this.getScopeManager().getGlobalScope();
-            const visibleScopes = this.getScopeManager().getVisibleScopes(globalScope);
-            return this.getSymbolTable().getVisibleSymbols(visibleScopes);
-        }
-
-        const scope = this.getScopeManager().getScope(scopeId);
-        if (!scope) {
-            return [];
-        }
-
-        const visibleScopes = this.getScopeManager().getVisibleScopes(scope);
-        return this.getSymbolTable().getVisibleSymbols(visibleScopes);
-    }
-
-    /**
-     * Find all references to a symbol
-     */
-    findReferences(symbol: Symbol): RedNode[] {
-        const references: RedNode[] = [];
-        const refMap = this.getBinding().references;
-
-        for (const [node, refSymbol] of refMap.entries()) {
-            if (refSymbol === symbol) {
-                references.push(node);
-            }
-        }
-
-        return references;
-    }
-
-    /**
-     * Find all usages of an identifier (declaration + references)
-     */
-    findUsages(name: string): RedNode[] {
-        const usages: RedNode[] = [];
-        const symbols = this.getSymbolTable();
-        const matchingSymbols = symbols.getAll(name);
-
-        // Add declarations
-        for (const symbol of matchingSymbols) {
-            usages.push(symbol.declaration);
-        }
-
-        // Add references
-        for (const symbol of matchingSymbols) {
-            usages.push(...this.findReferences(symbol));
-        }
-
-        return usages;
-    }
-
-    /**
-     * Check if the tree has any errors
+     * Check if the tree has any parse errors
      */
     hasErrors(): boolean {
         return this.getDiagnostics().length > 0;
@@ -484,22 +306,18 @@ export class SyntaxTree {
     }
 
     /**
-     * Get tree statistics
+     * Get tree statistics (syntax only)
      */
     getStatistics(): TreeStatistics {
         const root = this.getRoot();
         const tokens = this.getTokens();
         const diagnostics = this.getDiagnostics();
-        const semanticDiagnostics = this.getSemanticDiagnostics();
-        const symbols = this.getSymbolTable();
 
         return {
             totalNodes: root.getDescendants().length + 1,
             totalTokens: tokens.length,
             totalStatements: this.getStatements().length,
             totalDiagnostics: diagnostics.length,
-            totalSemanticDiagnostics: semanticDiagnostics.length,
-            totalSymbols: symbols.getAllSymbols().length,
             sourceLength: this.source.length,
             hasErrors: this.hasErrors(),
         };
@@ -522,8 +340,6 @@ export interface TreeStatistics {
     totalTokens: number;
     totalStatements: number;
     totalDiagnostics: number;
-    totalSemanticDiagnostics: number;
-    totalSymbols: number;
     sourceLength: number;
     hasErrors: boolean;
 }

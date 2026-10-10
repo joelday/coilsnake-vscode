@@ -43,7 +43,7 @@ describe('Program - Sibling Module Imports', () => {
         const mainModule = program.getModule('/project/main.ccs');
         expect(mainModule).toBeDefined();
 
-        const diagnostics = mainModule!.tree.getSemanticDiagnostics();
+        const diagnostics = mainModule!.binding?.diagnostics || [];
 
         // Should have no errors - helper() should resolve
         expect(diagnostics).toHaveLength(0);
@@ -71,7 +71,7 @@ describe('Program - Sibling Module Imports', () => {
         await program.loadModule('/game/player.ccs');
 
         const playerModule = program.getModule('/game/player.ccs');
-        const diagnostics = playerModule!.tree.getSemanticDiagnostics();
+        const diagnostics = playerModule!.binding?.diagnostics || [];
 
         expect(diagnostics).toHaveLength(0);
     });
@@ -100,11 +100,11 @@ describe('Program - Sibling Module Imports', () => {
         await program.loadModule('/project/src/main.ccs');
 
         const mainModule = program.getModule('/project/src/main.ccs');
-        const diagnostics = mainModule!.tree.getSemanticDiagnostics();
+        const diagnostics = mainModule!.binding?.diagnostics || [];
 
         // Should have an error about undefined command
         expect(diagnostics.length).toBeGreaterThan(0);
-        expect(diagnostics.some(d => d.message.includes('Undefined') || d.message.includes('lib_helper')))
+        expect(diagnostics.some((d) => d.message.includes('Undefined') || d.message.includes('lib_helper')))
             .toBe(true);
     });
 
@@ -136,7 +136,7 @@ describe('Program - Sibling Module Imports', () => {
         await program.loadModule('/project/main.ccs');
 
         const mainModule = program.getModule('/project/main.ccs');
-        const diagnostics = mainModule!.tree.getSemanticDiagnostics();
+        const diagnostics = mainModule!.binding?.diagnostics || [];
 
         // Both helper() and MAX should resolve directly
         expect(diagnostics).toHaveLength(0);
@@ -169,7 +169,7 @@ describe('Program - Sibling Module Imports', () => {
         await program.loadModule('/game/main.ccs');
 
         const mainModule = program.getModule('/game/main.ccs');
-        const diagnostics = mainModule!.tree.getSemanticDiagnostics();
+        const diagnostics = mainModule!.binding?.diagnostics || [];
 
         // All three commands should resolve
         expect(diagnostics).toHaveLength(0);
@@ -197,7 +197,7 @@ describe('Program - Sibling Module Imports', () => {
 
         // Verify helper() resolves
         let mainModule = program.getModule('/project/main.ccs');
-        let diagnostics = mainModule!.tree.getSemanticDiagnostics();
+        let diagnostics = mainModule!.binding?.diagnostics || [];
         expect(diagnostics).toHaveLength(0);
 
         // Update utils.ccs to add a new command
@@ -222,7 +222,7 @@ describe('Program - Sibling Module Imports', () => {
 
         // Verify both commands now resolve
         mainModule = program.getModule('/project/main.ccs');
-        diagnostics = mainModule!.tree.getSemanticDiagnostics();
+        diagnostics = mainModule!.binding?.diagnostics || [];
         expect(diagnostics).toHaveLength(0);
     });
 });

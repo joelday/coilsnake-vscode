@@ -4,7 +4,7 @@
  */
 
 import { Type } from './types';
-import { RedNode } from '../redNode';
+import { RedNode, RedToken } from '../redNode';
 
 /**
  * Symbol kinds for different declaration types.
@@ -39,7 +39,7 @@ export interface Symbol {
     /** The AST node where the symbol is declared */
     declaration: RedNode;
     /** The identifier token for this symbol (authoritative reference) */
-    identifierNode: import('../redNode').RedToken;
+    identifierNode: RedToken;
     /** The position in the source where the symbol's identifier starts (after leading trivia) */
     position: number;
     /** The length of the identifier */
@@ -64,10 +64,22 @@ export class SymbolTable {
     /** All symbols in declaration order */
     private allSymbols: Symbol[] = [];
 
+    /** Set of symbol IDs to prevent duplicates */
+    private symbolIds: Set<string> = new Set();
+
     /**
      * Adds a symbol to the table.
+     * Only adds if the symbol ID is not already present (prevents duplicates).
      */
     add(symbol: Symbol): void {
+        // Check if this symbol ID already exists
+        if (this.symbolIds.has(symbol.id)) {
+            return; // Already present, don't duplicate
+        }
+
+        // Mark this ID as added
+        this.symbolIds.add(symbol.id);
+
         const existing = this.symbols.get(symbol.name);
         if (existing) {
             existing.push(symbol);
@@ -82,8 +94,9 @@ export class SymbolTable {
      * Searches scopes from innermost to outermost (proper shadowing).
      * @param name The symbol name to look up
      * @param scopeOrder Array of scope IDs from innermost to outermost
+     * @param kind If provided, only symbols of this kind are considered
      */
-    lookup(name: string, scopeOrder: number[]): Symbol | undefined {
+    lookup(name: string, scopeOrder: number[], kind?: SymbolKind): Symbol | undefined {
         const candidates = this.symbols.get(name);
         if (!candidates) {
             return undefined;
@@ -94,7 +107,7 @@ export class SymbolTable {
             // Find the most recently declared symbol in this specific scope
             for (let i = candidates.length - 1; i >= 0; i--) {
                 const symbol = candidates[i];
-                if (symbol.scopeId === scopeId) {
+                if (symbol.scopeId === scopeId && (kind === undefined || symbol.kind === kind)) {
                     return symbol;
                 }
             }
@@ -168,5 +181,27 @@ export class SymbolTable {
     clear(): void {
         this.symbols.clear();
         this.allSymbols = [];
+        this.symbolIds.clear();
+    }
+
+    /**
+     * Creates a shallow copy of this symbol table.
+     */
+    clone(): SymbolTable {
+        const newTable = new SymbolTable();
+        for (const symbol of this.allSymbols) {
+            newTable.add(symbol);
+        }
+        return newTable;
+    }
+
+    /**
+     * Merges another symbol table into this one.
+     * Adds all symbols from the other table.
+     */
+    merge(other: SymbolTable): void {
+        for (const symbol of other.getAllSymbols()) {
+            this.add(symbol);
+        }
     }
 }
