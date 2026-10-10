@@ -1,0 +1,10 @@
+{
+    // Opens the MaternalBound-Redux submodule's CoilSnake project for trying the extension
+    // on a real project, with the standard library from the CoilSnake submodule.
+    "folders": [
+        { "path": "MaternalBound-Redux/Project" }
+    ],
+    "settings": {
+        "ccscript.stdLibPath": "${workspaceFolder}/../../coilsnake/coilsnake/assets/mobile-sprout/lib"
+    }
+}
