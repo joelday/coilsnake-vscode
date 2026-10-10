@@ -3,12 +3,13 @@ import {
     CodeActionKind,
     CodeActionParams,
     Diagnostic,
-    Position,
     Range,
     TextEdit,
 } from 'vscode-languageserver/node';
-import { Module, SymbolKind, SyntaxKind } from 'ccscript-core';
+import { SymbolKind, SyntaxKind } from 'ccscript-core';
 import { DiagnosticCodes } from './diagnostics';
+import { importInsertion, importPath } from '../imports';
+import { provideConvertActions } from './convertControlCodes';
 import { Analysis, Workspace } from '../workspace';
 
 const MAX_IMPORT_SUGGESTIONS = 5;
@@ -43,23 +44,6 @@ function similarNames(name: string, candidates: Iterable<string>): string[] {
         .sort((a, b) => a.distance - b.distance || a.candidate.localeCompare(b.candidate))
         .slice(0, MAX_SPELLING_SUGGESTIONS)
         .map(c => c.candidate);
-}
-
-/**
- * Where to insert a new import: after the last import, or at the top of the file.
- */
-function importInsertion(analysis: Analysis): { position: Position; prefix: string; suffix: string } {
-    const imports = analysis.tree.getStatements().filter(s => s.kind === SyntaxKind.ImportStatement);
-    if (imports.length > 0) {
-        const last = imports[imports.length - 1];
-        return { position: analysis.document.positionAt(last.span.start + last.span.length), prefix: '\n', suffix: '' };
-    }
-    return { position: Position.create(0, 0), prefix: '', suffix: '\n' };
-}
-
-function importPath(workspace: Workspace, analysis: Analysis, target: Module): string {
-    const fs = workspace.fileSystem;
-    return fs.relative(fs.dirname(analysis.filePath), target.filePath).replace(/\\/g, '/');
 }
 
 function fixUndefinedName(workspace: Workspace, analysis: Analysis, diagnostic: Diagnostic, name: string): CodeAction[] {
@@ -142,7 +126,9 @@ function fixUnknownMember(workspace: Workspace, analysis: Analysis, diagnostic: 
 
 export function provideCodeActions(workspace: Workspace, analysis: Analysis, params: CodeActionParams): CodeAction[] {
     const actions: CodeAction[] = [];
-    for (const diagnostic of params.context.diagnostics) {
+    const only = params.context.only;
+    const wantsQuickFixes = !only || only.some(o => CodeActionKind.QuickFix === o || CodeActionKind.QuickFix.startsWith(`${o}.`));
+    for (const diagnostic of wantsQuickFixes ? params.context.diagnostics : []) {
         if (diagnostic.source !== 'ccscript') {
             continue;
         }
@@ -155,5 +141,6 @@ export function provideCodeActions(workspace: Workspace, analysis: Analysis, par
             if (match) actions.push(...fixUnknownMember(workspace, analysis, diagnostic, match[1], match[2]));
         }
     }
+    actions.push(...provideConvertActions(workspace, analysis, params.range, params.context.only));
     return actions;
 }

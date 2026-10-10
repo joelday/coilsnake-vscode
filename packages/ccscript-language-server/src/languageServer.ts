@@ -13,6 +13,7 @@ import {
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { provideCodeActions } from './features/codeActions';
+import { CONVERT_FILE_KIND, resolveConvertFileAction } from './features/convertControlCodes';
 import { provideCompletion } from './features/completion';
 import { provideHover } from './features/hover';
 import { provideInlayHints } from './features/inlayHints';
@@ -79,7 +80,10 @@ export function startServer(connection: Connection, options: ServerOptions = {})
                 semanticTokensProvider: { legend: semanticTokensLegend, full: true },
                 foldingRangeProvider: true,
                 documentLinkProvider: { resolveProvider: false },
-                codeActionProvider: { codeActionKinds: [CodeActionKind.QuickFix] },
+                codeActionProvider: {
+                    codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.RefactorRewrite, CONVERT_FILE_KIND],
+                    resolveProvider: true,
+                },
                 inlayHintProvider: true,
             },
         };
@@ -117,6 +121,12 @@ export function startServer(connection: Connection, options: ServerOptions = {})
         analysis => provideDocumentLinks(workspace, analysis)));
     connection.languages.inlayHint.on(params => withAnalysis(params.textDocument.uri, [],
         analysis => provideInlayHints(workspace, analysis, params)));
+    connection.onCodeActionResolve(action => {
+        const uri = (action.data as { uri?: string } | undefined)?.uri;
+        return uri && action.kind === CONVERT_FILE_KIND
+            ? withAnalysis(uri, action, analysis => resolveConvertFileAction(workspace, analysis, action))
+            : action;
+    });
     connection.onCodeAction(params => withAnalysis(params.textDocument.uri, [],
         analysis => provideCodeActions(workspace, analysis, params)));
 

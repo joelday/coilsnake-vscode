@@ -1,5 +1,5 @@
-import { Hover, InlayHint, MarkupContent, Range } from 'vscode-languageserver-protocol';
-import { TestClient, positionOf, textInRange } from './testClient';
+import { CodeAction, CodeActionKind, Hover, InlayHint, MarkupContent, Position, Range, TextEdit } from 'vscode-languageserver-protocol';
+import { TestClient, positionOf, textInRange, uri } from './testClient';
 
 const STD = {
     'std.ccs': [
@@ -85,6 +85,17 @@ describe('Control code hover', () => {
         expect((await hover('intro: "Hello [03]"\n', 'ello')).value).toBe('');
     });
 
+    it('ignores machine code macros, even for bytes in the control code range', async () => {
+        // An assembler file defines opcodes across 00-FF, some of which overlap control codes
+        const asm = 'command DEY "[88]"\ncommand PHD "[0B]"\n';
+        client = await TestClient.start({ files: { ...FILES, '/project/ccscript/asm.ccs': asm, [PATH]: 'import asm\nintro: "[0B][88]"\n' }, stdLib: STD });
+        await client.open(PATH);
+        for (const search of ['0B', '88']) {
+            const result = await client.request<Hover | null>('textDocument/hover', PATH, positionOf(client.text(PATH), search));
+            expect((result?.contents as MarkupContent).value).not.toMatch(/PHD|DEY/);
+        }
+    });
+
     it('only uses commands whose body is entirely control codes', async () => {
         // window_open's body is a block, so it isn't a pattern
         expect((await hover('intro: "[18 01 02]"\n', '18')).value).toContain('no loaded command');
@@ -134,5 +145,130 @@ describe('Control code inlay hints', () => {
         await client.open(PATH);
         await client.waitForDiagnostics(PATH);
         expect(await client.request<InlayHint[]>('textDocument/inlayHint', PATH, undefined, { range: Range.create(0, 0, 2, 0) })).toEqual([]);
+    });
+});
+
+describe('Converting control codes to commands', () => {
+    function apply(text: string, edits: TextEdit[]): string {
+        const lines = text.split('\n');
+        const offset = (p: Position) => lines.slice(0, p.line).reduce((sum, l) => sum + l.length + 1, 0) + p.character;
+        return [...edits]
+            .sort((a, b) => offset(b.range.start) - offset(a.range.start))
+            .reduce((result, e) => result.slice(0, offset(e.range.start)) + e.newText + result.slice(offset(e.range.end)), text);
+    }
+
+    async function convertAt(text: string, search: string, path = PATH): Promise<string | undefined> {
+        client = await TestClient.start({ files: { ...FILES, [PATH]: text }, stdLib: STD });
+        await client.open(path);
+        const position = positionOf(client.text(path), search);
+        const actions = await client.request<CodeAction[]>('textDocument/codeAction', path, undefined, {
+            range: Range.create(position, position),
+            context: { diagnostics: [] },
+        });
+        const convert = actions.find(a => a.kind === CodeActionKind.RefactorRewrite);
+        return convert && apply(client.text(path), convert.edit!.changes![uri(path)]);
+    }
+
+    it('converts the group under the cursor, preferring the standard library', async () => {
+        expect(await convertAt('intro: "Hi [1C 02 03] and [03]!"\n', '02 03'))
+            .toBe('intro: "Hi {name(3)} and [03]!"\n');
+    });
+
+    it('keeps codes no command produces as raw bytes', async () => {
+        expect(await convertAt('intro: "[1C 05 02 19 02 03]"\n', '1C'))
+            .toBe('intro: "{itemname(2)}[19 02]{next}"\n');
+    });
+
+    it('imports the module of a command the file doesn\'t see', async () => {
+        expect(await convertAt('intro: "[1F 61]"\n', '1F')).toBe('import "missing.ccs"\nintro: "{wait_for_movement}"\n');
+        expect(await convertAt('import missing\nintro: "[1F 61]"\n', '1F')).toBe('import missing\nintro: "{wait_for_movement}"\n');
+    });
+
+    it('qualifies the command instead when importing would change what names mean', async () => {
+        // The file has its own wait_for_movement
+        expect(await convertAt('wait_for_movement:\nintro: "[1F 61]"\n', '1F'))
+            .toBe('wait_for_movement:\nintro: "{missing.wait_for_movement}"\n');
+
+        // The file uses party_member_name from another import, which would become ambiguous
+        const tools = { '/project/ccscript/tools.ccs': 'define party_member_name = 5\n' };
+        const text = 'import tools\nintro: party_member_name "[1F 61]"\n';
+        client = await TestClient.start({ files: { ...FILES, ...tools, [PATH]: text }, stdLib: STD });
+        await client.open(PATH);
+        const position = positionOf(text, '1F');
+        const actions = await client.request<CodeAction[]>('textDocument/codeAction', PATH, undefined, {
+            range: Range.create(position, position), context: { diagnostics: [] },
+        });
+        const convert = actions.find(a => a.kind === CodeActionKind.RefactorRewrite)!;
+        expect(apply(text, convert.edit!.changes![uri(PATH)])).toBe('import tools\nintro: party_member_name "{missing.wait_for_movement}"\n');
+    });
+
+    it('reassembles multi-byte arguments', async () => {
+        expect(await convertAt('intro: "[1E 09 01 10 27 00][08 11 37 C5 00]"\n', '1E'))
+            .toBe('intro: "{boost_exp(1, 10000)}[08 11 37 C5 00]"\n');
+        expect(await convertAt('intro: "[08 11 37 C5 00]"\n', '08')).toBe('intro: "{call(0xC53711)}"\n');
+    });
+
+    it('leaves command definitions alone, but converts strings in command bodies', async () => {
+        client = await TestClient.start({ files: FILES, stdLib: STD });
+        await client.open('/project/ccscript/missing.ccs');
+        const position = positionOf(client.text('/project/ccscript/missing.ccs'), '1F 61');
+        const actions = await client.request<CodeAction[]>('textDocument/codeAction', '/project/ccscript/missing.ccs', undefined, {
+            range: Range.create(position, position), context: { diagnostics: [] },
+        });
+        expect(actions.filter(a => a.kind === CodeActionKind.RefactorRewrite)).toEqual([]);
+        client.dispose();
+
+        expect(await convertAt('command greet() {\n    "Hi[03]"\n}\n', '03')).toBe('command greet() {\n    "Hi{next}"\n}\n');
+    });
+
+    it('offers nothing for groups with no known codes', async () => {
+        expect(await convertAt('intro: "[19 02]"\n', '19')).toBeUndefined();
+    });
+
+    it('converts a whole file when the source action is chosen', async () => {
+        const text = 'intro: "Hi [1C 02 03]! [03][19 02]"\n    "[1F 61]" next\n';
+        client = await TestClient.start({ files: { ...FILES, [PATH]: text }, stdLib: STD });
+        await client.open(PATH);
+        const actions = await client.request<CodeAction[]>('textDocument/codeAction', PATH, undefined, {
+            range: Range.create(0, 0, 0, 0),
+            context: { diagnostics: [], only: [CodeActionKind.Source] },
+        });
+        expect(actions.map(a => a.title)).toEqual(['Convert all control codes in this file to commands']);
+        expect(actions[0].edit).toBeUndefined(); // Computed on resolve
+
+        const resolved = await client.connection.sendRequest<CodeAction>('codeAction/resolve', actions[0]);
+        const converted = apply(text, resolved.edit!.changes![uri(PATH)]);
+        expect(converted).toBe('import "missing.ccs"\nintro: "Hi {name(3)}! {next}[19 02]"\n    "{wait_for_movement}" next\n');
+
+        // The result is valid
+        await client.change(PATH, converted);
+        expect(await client.waitForDiagnostics(PATH)).toEqual([]);
+    });
+});
+
+describe('Converting a whole file', () => {
+    it('skips strings that look like binary data', async () => {
+        const text = [
+            'intro: "Hi[03]"',
+            'table:',
+            '    "[00 00 00 00 00 00]"', // Repeated codes
+            '    "[00 00]"', // One code repeated
+            '    "[03 AC 2F 01]"', // Bytes no command produces
+            '    "[1F 61][03]"', // Script-like: converted
+            '    "[03 02][02][A3 A4]"', // Another group has bytes no command produces
+            'title: "Mom[00]"', // A terminator
+            'command f(x) "[0E {byte x}]"',
+            'other: f("[03]")', // An argument
+            'ROM[0xC00000] = "[03]"', // Written to the ROM
+            '',
+        ].join('\n');
+        client = await TestClient.start({ files: { ...FILES, '/project/ccscript/main.ccs': text }, stdLib: { ...STD, 'std.ccs': `${STD['std.ccs']}\ncommand linebreak "[00]"` } });
+        await client.open('/project/ccscript/main.ccs');
+        const [action] = await client.request<CodeAction[]>('textDocument/codeAction', '/project/ccscript/main.ccs', undefined, {
+            range: Range.create(0, 0, 0, 0), context: { diagnostics: [], only: [CodeActionKind.Source] },
+        });
+        const resolved = await client.connection.sendRequest<CodeAction>('codeAction/resolve', action);
+        expect(resolved.edit!.changes![uri('/project/ccscript/main.ccs')].map(e => e.newText))
+            .toEqual(['{next}', '{wait_for_movement}', '{next}', 'import "missing.ccs"\n']);
     });
 });

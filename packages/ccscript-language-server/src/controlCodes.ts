@@ -4,7 +4,7 @@
  * `command itemname(item) "[1C 05 {byte item}]"` as patterns.
  */
 
-import { Module, Symbol, SymbolKind, SyntaxKind, SyntaxTree, isRedToken } from 'ccscript-core';
+import { Module, RedNode, Symbol, SymbolKind, SyntaxKind, SyntaxTree, isRedToken } from 'ccscript-core';
 import { getParameterNames } from './symbols';
 import { Workspace } from './workspace';
 
@@ -78,6 +78,11 @@ export function controlCodePatterns(workspace: Workspace): ControlCodePattern[] 
                 .filter(s => s.kind === SymbolKind.Command && s.scopeId === 0)
                 .map(s => patternOf(s, module.tree.source))
                 .filter((p): p is ControlCodePattern => !!p);
+            // Text control codes are 00-1F. A module with byte commands from 20 up is machine
+            // code macros (like a 65816 assembler's opcodes, which also use 00-1F), not text.
+            if (patterns.some(p => (p.elements[0] as { value: number }).value >= 0x20)) {
+                patterns = [];
+            }
             patternsByTree.set(module.tree, patterns);
         }
         return patterns;
@@ -227,6 +232,50 @@ export function controlCodeGroupsIn(source: string, start: number, end: number):
         const open = start + found.index!;
         const group = readGroup(source, open, open + found[0].length - 1);
         if (group) groups.push(group);
+    }
+    return groups;
+}
+
+export interface StringControlCodeGroup extends ControlCodeGroup {
+    /** The command declaration the string is in, if any */
+    command?: RedNode;
+    /** Where the string containing the group starts */
+    stringStart: number;
+    /** Whether the string is nothing but bracketed bytes (no text or {expressions}) */
+    onlyBytes: boolean;
+    /** Whether the string is a command argument, or written to the ROM (so it's data) */
+    isArgument: boolean;
+    isRomWrite: boolean;
+    /** Whether the group is the last thing in its string */
+    endsString: boolean;
+}
+
+/**
+ * Bracketed groups of raw control codes in the string text of a tree, optionally only those
+ * in strings overlapping [start, end].
+ */
+export function controlCodeGroupsInStrings(tree: SyntaxTree, start = 0, end = tree.source.length): StringControlCodeGroup[] {
+    const groups: StringControlCodeGroup[] = [];
+    for (const token of tree.getTokens()) {
+        const tokenEnd = token.span.start + token.span.length;
+        if (token.kind !== SyntaxKind.StringLiteral || !token.text.includes('[') ||
+            tokenEnd < start || token.span.start > end ||
+            token.parent?.kind === SyntaxKind.ImportStatement) {
+            continue;
+        }
+        const command = token.getAncestorOfKind(SyntaxKind.CommandDeclaration) ?? undefined;
+        // (A string's text can be split into several tokens around {expressions})
+        const string = token.getAncestorOfKind(SyntaxKind.StringLiteralExpression) ??
+            token.getAncestorOfKind(SyntaxKind.TemplateStringExpression) ?? token;
+        const stringText = tree.source.slice(string.span.start, string.span.start + string.span.length);
+        const onlyBytes = /^"?(\s*\[[0-9A-Fa-f\s]*\])*\s*"?$/.test(stringText);
+        const isArgument = string.parent?.kind === SyntaxKind.ArgumentList;
+        const isRomWrite = !!(token.getAncestorOfKind(SyntaxKind.ROMWriteStatement) ??
+            token.getAncestorOfKind(SyntaxKind.ROMTableWriteStatement));
+        for (const group of controlCodeGroupsIn(tree.source, token.span.start, tokenEnd)) {
+            const endsString = /^\s*"/.test(tree.source.slice(group.close + 1, group.close + 20));
+            groups.push({ ...group, command, stringStart: string.span.start, onlyBytes, isArgument, isRomWrite, endsString });
+        }
     }
     return groups;
 }
