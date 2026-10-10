@@ -104,7 +104,8 @@ export function activate(context: vscode.ExtensionContext) {
         // Register the server for CCScript documents
         documentSelector: [{ scheme: 'file', language: 'ccscript' }],
         synchronize: {
-            // Notify the server about file changes to '.ccs files contained in the workspace
+            // Send 'ccscript.*' setting changes, and changes to '.ccs' files on disk
+            configurationSection: 'ccscript',
             fileEvents: vscode.workspace.createFileSystemWatcher('**/*.ccs')
         },
         initializationOptions: {

@@ -3,7 +3,9 @@
     "composite": true,
     "module": "commonjs",
     "target": "ES2024",
-    "lib": ["ES2024"],
+    "lib": [
+      "ES2024"
+    ],
     "outDir": "out",
     "sourceMap": true,
     "rootDir": "src",
@@ -13,7 +15,18 @@
     "declaration": true,
     "declarationMap": true
   },
-  "references": [{ "path": "../ccscript-core" }],
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "out"]
+  "references": [
+    {
+      "path": "../ccscript-core"
+    }
+  ],
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "out",
+    "src/**/*.test.ts",
+    "src/test/**"
+  ]
 }

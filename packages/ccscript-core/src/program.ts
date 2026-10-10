@@ -413,6 +413,14 @@ export class Program {
     }
 
     /**
+     * Get a module's top-level declarations (commands, constants and labels), collected once
+     * per parse. These are what importers and `module.member` references see.
+     */
+    getModuleDeclarations(module: Module): SymbolTable {
+        return this.getDeclarations(module);
+    }
+
+    /**
      * Get a module's top-level declarations, collected once per parse.
      */
     private getDeclarations(module: Module): SymbolTable {
