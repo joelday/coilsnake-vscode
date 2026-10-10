@@ -22,11 +22,22 @@ import {
 } from 'ccscript-core';
 import { URI } from 'vscode-uri';
 import { DocumentFileSystem } from './documentFileSystem';
+import { ProjectCatalog, ProjectData } from './projectData';
 import { computeDiagnostics } from './features/diagnostics';
+
+export interface InlayHintSettings {
+    /** Parameter names before literal arguments */
+    parameterNames?: boolean;
+    /** What literal values refer to: items, characters, constants with the same value... */
+    values?: boolean;
+    /** Which project table entries use a label's text */
+    tableReferences?: boolean;
+}
 
 export interface Settings {
     /** Directory containing std.ccs and stdarg.ccs */
     stdLibPath?: string;
+    inlayHints?: InlayHintSettings;
 }
 
 export interface ServerOptions {
@@ -62,12 +73,15 @@ export class Workspace {
     settings: Settings = {};
 
     readonly fileSystem: FileSystem;
+    /** CoilSnake project reference data (tables, build summary) */
+    readonly projects: ProjectCatalog;
     private readonly diskFileSystem: FileSystem;
     private readonly validationDelay: number;
     private readonly pendingSyncs = new Map<string, { text: string; promise: Promise<void> }>();
     private readonly textDocuments = new WeakMap<SyntaxTree, TextDocument>();
     private validationTimer: ReturnType<typeof setTimeout> | undefined;
     private hasConfigurationCapability = false;
+    private supportsInlayHintRefresh = false;
     private warnedAboutStdLib = false;
 
     constructor(
@@ -78,6 +92,7 @@ export class Workspace {
         this.diskFileSystem = options.diskFileSystem ?? new NodeFileSystem();
         this.fileSystem = new AggregatedFileSystem(new DocumentFileSystem(documents), this.diskFileSystem);
         this.validationDelay = options.validationDelay ?? 150;
+        this.projects = new ProjectCatalog(this.diskFileSystem);
         this.program = this.createProgram();
     }
 
@@ -86,6 +101,7 @@ export class Workspace {
         this.rootPath = root ? uriToPath(root) : '';
         this.settings = this.resolveSettings(params.initializationOptions as Settings | undefined);
         this.hasConfigurationCapability = !!params.capabilities.workspace?.configuration;
+        this.supportsInlayHintRefresh = !!params.capabilities.workspace?.inlayHint?.refreshSupport;
         this.program = this.createProgram();
     }
 
@@ -115,6 +131,13 @@ export class Workspace {
     }
 
     /**
+     * The CoilSnake project a file belongs to, if any.
+     */
+    projectFor(filePath: string): Promise<ProjectData | undefined> {
+        return this.projects.forFile(filePath);
+    }
+
+    /**
      * Whether a file is one of the configured standard library files.
      */
     isStandardLibrary(filePath: string): boolean {
@@ -140,8 +163,14 @@ export class Workspace {
         const filePath = this.fileSystem.normalize(uriToPath(uri));
         for (let attempt = 0; attempt < 3; attempt++) {
             const text = document.getText();
+            const pending = this.pendingSyncs.get(filePath);
+            if (pending) {
+                await pending.promise;
+            }
             let module = this.program.getModule(filePath);
-            if (!module || module.tree.source !== text) {
+            // (A module can be parsed but not yet bound while a load that found it, e.g. of its
+            // directory, is still running; reloading it binds it.)
+            if (!module || !module.binding || module.tree.source !== text) {
                 await this.sync(filePath, text);
                 module = this.program.getModule(filePath);
             }
@@ -222,6 +251,12 @@ export class Workspace {
             }
 
             const filePath = this.fileSystem.normalize(uriToPath(change.uri));
+            if (!filePath.toLowerCase().endsWith('.ccs')) {
+                // A project table, build summary or Project.snake
+                this.projects.fileChanged(filePath);
+                this.refreshInlayHints();
+                continue;
+            }
             if (change.type === FileChangeType.Deleted) {
                 await this.program.removeModule(filePath);
             } else if (this.program.getModule(filePath)) {
@@ -257,17 +292,29 @@ export class Workspace {
             return;
         }
         const resolved = this.resolveSettings(section);
-        if (resolved.stdLibPath === this.settings.stdLibPath) {
+        const stdLibChanged = resolved.stdLibPath !== this.settings.stdLibPath;
+        this.settings = { ...this.settings, ...resolved };
+        this.refreshInlayHints();
+        if (!stdLibChanged) {
             return;
         }
 
-        this.settings = { ...this.settings, ...resolved };
         this.warnedAboutStdLib = false;
         this.program = this.createProgram();
         for (const document of this.documents.all()) {
             await this.program.loadModule(uriToPath(document.uri));
         }
         this.scheduleValidation();
+    }
+
+    inlayHintsEnabled(kind: keyof InlayHintSettings): boolean {
+        return this.settings.inlayHints?.[kind] ?? true;
+    }
+
+    private refreshInlayHints(): void {
+        if (this.supportsInlayHintRefresh) {
+            void this.connection.languages.inlayHint.refresh().catch(() => undefined);
+        }
     }
 
     // ========== Diagnostics ==========
@@ -282,11 +329,33 @@ export class Workspace {
         }, this.validationDelay);
     }
 
+    /**
+     * Report why a document couldn't be loaded (e.g. its module name collides with another's).
+     * If it's just still changing, a later validation covers it.
+     */
+    private publishLoadFailure(document: TextDocument): void {
+        const filePath = this.fileSystem.normalize(uriToPath(document.uri));
+        const problems = this.program.getDiagnostics().filter(d => d.filePath === filePath && !d.importPath);
+        if (problems.length > 0 && !this.program.getModule(filePath)) {
+            this.connection.sendDiagnostics({
+                uri: document.uri,
+                version: document.version,
+                diagnostics: problems.map(d => ({
+                    range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+                    severity: 1,
+                    message: d.message,
+                    source: 'ccscript',
+                })),
+            });
+        }
+    }
+
     private async validateOpenDocuments(): Promise<void> {
         for (const document of this.documents.all()) {
             const analysis = await this.getAnalysis(document.uri);
             if (!analysis) {
-                continue; // Still changing; a later validation will cover it
+                this.publishLoadFailure(document);
+                continue;
             }
 
             const version = document.version;

@@ -104,12 +104,18 @@ export function activate(context: vscode.ExtensionContext) {
         // Register the server for CCScript documents
         documentSelector: [{ scheme: 'file', language: 'ccscript' }],
         synchronize: {
-            // Send 'ccscript.*' setting changes, and changes to '.ccs' files on disk
+            // Send 'ccscript.*' setting changes, and changes to scripts and CoilSnake project data
+            // (tables, Project.snake and the build's ccscript/summary.txt) on disk
             configurationSection: 'ccscript',
-            fileEvents: vscode.workspace.createFileSystemWatcher('**/*.ccs')
+            fileEvents: [
+                vscode.workspace.createFileSystemWatcher('**/*.ccs'),
+                vscode.workspace.createFileSystemWatcher('**/*.{yml,snake}'),
+                vscode.workspace.createFileSystemWatcher('**/ccscript/summary.txt')
+            ]
         },
         initializationOptions: {
-            stdLibPath: stdLibPath || undefined
+            stdLibPath: stdLibPath || undefined,
+            inlayHints: config.get('inlayHints')
         }
     };
 

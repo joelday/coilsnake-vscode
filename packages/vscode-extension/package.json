@@ -42,6 +42,21 @@
                     "type": "string",
                     "default": "",
                     "markdownDescription": "Path to the CCScript standard library directory containing `std.ccs` and `stdarg.ccs`. If not set, standard library support will be disabled.\n\nExample: `/path/to/ccscript13/lib`"
+                },
+                "ccscript.inlayHints.parameterNames": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Show parameter names before literal arguments, e.g. `give(character: 1, item: 18)`."
+                },
+                "ccscript.inlayHints.values": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Show what literal values refer to: item, character, PSI, enemy and teleport names and NPC dialogue from the CoilSnake project's tables, and constants that name an address."
+                },
+                "ccscript.inlayHints.tableReferences": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Show which CoilSnake project table entries (items, NPCs, enemies...) use a label's text."
                 }
             }
         },

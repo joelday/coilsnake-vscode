@@ -62,6 +62,8 @@ export interface TestClientOptions {
     rootPath?: string;
     stdLib?: Record<string, string> | false;
     snippetSupport?: boolean;
+    /** Delay file reads by this many milliseconds, like a real disk */
+    readDelay?: number;
 }
 
 export class TestClient {
@@ -77,6 +79,14 @@ export class TestClient {
     private constructor(options: TestClientOptions) {
         for (const [path, content] of Object.entries(options.files ?? {})) {
             this.fs.addFile(path, content);
+        }
+        if (options.readDelay) {
+            const readFile = this.fs.readFile.bind(this.fs);
+            const delay = options.readDelay;
+            this.fs.readFile = async (path: string) => {
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return readFile(path);
+            };
         }
         if (options.stdLib !== false) {
             const stdLib = options.stdLib ?? {

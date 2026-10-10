@@ -11,7 +11,7 @@ import { Analysis, Workspace } from '../workspace';
 /**
  * The innermost call whose argument list contains the offset (after its '(' and up to its ')').
  */
-function findCall(analysis: Analysis, offset: number): { call: RedNode; argumentList: RedNode } | undefined {
+export function findCall(analysis: Analysis, offset: number): { call: RedNode; argumentList: RedNode } | undefined {
     for (const position of [offset, offset - 1]) {
         if (position < 0) continue;
         for (let node: RedNode | null = analysis.tree.getNodeAtPosition(position); node; node = node.parent) {

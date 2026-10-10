@@ -15,6 +15,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { provideCodeActions } from './features/codeActions';
 import { provideCompletion } from './features/completion';
 import { provideHover } from './features/hover';
+import { provideInlayHints } from './features/inlayHints';
 import {
     prepareRename,
     provideDefinition,
@@ -65,7 +66,8 @@ export function startServer(connection: Connection, options: ServerOptions = {})
         return {
             capabilities: {
                 textDocumentSync: TextDocumentSyncKind.Incremental,
-                completionProvider: { triggerCharacters: ['.', '"', '/'] },
+                // '(' and ',' only offer game data (items, characters...) for arguments that take it
+                completionProvider: { triggerCharacters: ['.', '"', '/', '(', ','] },
                 hoverProvider: true,
                 signatureHelpProvider: { triggerCharacters: ['(', ','], retriggerCharacters: [')'] },
                 definitionProvider: true,
@@ -78,6 +80,7 @@ export function startServer(connection: Connection, options: ServerOptions = {})
                 foldingRangeProvider: true,
                 documentLinkProvider: { resolveProvider: false },
                 codeActionProvider: { codeActionKinds: [CodeActionKind.QuickFix] },
+                inlayHintProvider: true,
             },
         };
     });
@@ -112,6 +115,8 @@ export function startServer(connection: Connection, options: ServerOptions = {})
         analysis => provideFoldingRanges(analysis)));
     connection.onDocumentLinks(params => withAnalysis(params.textDocument.uri, [],
         analysis => provideDocumentLinks(workspace, analysis)));
+    connection.languages.inlayHint.on(params => withAnalysis(params.textDocument.uri, [],
+        analysis => provideInlayHints(workspace, analysis, params)));
     connection.onCodeAction(params => withAnalysis(params.textDocument.uri, [],
         analysis => provideCodeActions(workspace, analysis, params)));
 

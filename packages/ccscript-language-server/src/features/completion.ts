@@ -2,10 +2,14 @@ import {
     CompletionItem,
     CompletionItemKind,
     CompletionParams,
+    CompletionTriggerKind,
     InsertTextFormat,
     MarkupKind,
 } from 'vscode-languageserver/node';
 import { Symbol, SymbolKind, SyntaxKind, isRedToken } from 'ccscript-core';
+import { labelTextResolver } from '../gameData';
+import { DOMAIN_TITLES, domainOfParameter } from '../projectData';
+import { findCall } from './signatureHelp';
 import { describeSymbol, getDocComment, getParameterNames } from '../symbols';
 import { Analysis, Workspace } from '../workspace';
 
@@ -127,6 +131,15 @@ export async function provideCompletion(
         }));
     }
 
+    // An argument that refers to game data (an item, character...): offer the project's entries,
+    // by name, inserting their number
+    const dataItems = await gameDataCompletions(workspace, analysis, offset);
+    const triggeredByPunctuation = params.context?.triggerKind === CompletionTriggerKind.TriggerCharacter &&
+        (params.context.triggerCharacter === '(' || params.context.triggerCharacter === ',');
+    if (triggeredByPunctuation) {
+        return dataItems;
+    }
+
     // `module.member`
     const linePrefix = document.getText({ start: { line: params.position.line, character: 0 }, end: params.position });
     const qualified = linePrefix.match(/([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z0-9_]*)$/);
@@ -177,5 +190,33 @@ export async function provideCompletion(
         items.push({ label: keyword, kind: CompletionItemKind.Keyword, sortText: `4${keyword}` });
     }
 
-    return items;
+    return [...dataItems, ...items];
+}
+
+async function gameDataCompletions(workspace: Workspace, analysis: Analysis, offset: number): Promise<CompletionItem[]> {
+    const found = findCall(analysis, offset);
+    const command = found && analysis.binding.references.get(found.call.getChildren()[0]);
+    if (!found || !command || command.kind !== SymbolKind.Command) {
+        return [];
+    }
+    const index = found.argumentList.getChildren()
+        .filter(c => c.kind === SyntaxKind.CommaToken && c.span.start < offset).length;
+    const parameter = getParameterNames(command)[index];
+    const domain = parameter && domainOfParameter(parameter);
+    const project = domain ? await workspace.projectFor(analysis.filePath) : undefined;
+    if (!domain || !project) {
+        return [];
+    }
+
+    const title = DOMAIN_TITLES[domain];
+    return (await project.entries(domain, labelTextResolver(workspace)))
+        .filter(entry => entry.name)
+        .map(entry => ({
+            label: entry.name!,
+            kind: CompletionItemKind.EnumMember,
+            detail: `${title} ${entry.id}`,
+            insertText: String(entry.id),
+            filterText: `${entry.name} ${entry.id}`,
+            sortText: `!${String(entry.id).padStart(6, '0')}`,
+        }));
 }

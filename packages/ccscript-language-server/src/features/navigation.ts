@@ -13,7 +13,8 @@ import {
     TextEdit,
     WorkspaceEdit,
 } from 'vscode-languageserver/node';
-import { Symbol } from 'ccscript-core';
+import { Symbol, SymbolKind } from 'ccscript-core';
+import { entryForArgument, numericLiteralAt } from '../gameData';
 import {
     declarationOf,
     findOccurrences,
@@ -21,15 +22,27 @@ import {
     toLocation,
     toRange,
 } from '../symbols';
-import { Analysis, Workspace } from '../workspace';
+import { Analysis, Workspace, pathToUri } from '../workspace';
 
 const KEYWORDS = new Set([
     'if', 'else', 'menu', 'default', 'define', 'command', 'or', 'and', 'not', 'flag', 'byte',
     'short', 'long', 'ROM', 'ROMTBL', 'import', 'count', 'setcount', 'insertbin',
 ]);
 
-export function provideDefinition(workspace: Workspace, analysis: Analysis, params: DefinitionParams): Location | null {
-    const target = findTarget(workspace, analysis, analysis.document.offsetAt(params.position));
+export async function provideDefinition(workspace: Workspace, analysis: Analysis, params: DefinitionParams): Promise<Location | null> {
+    const offset = analysis.document.offsetAt(params.position);
+
+    // A number passed as an item, character, etc.: its entry in the project's table
+    const literal = numericLiteralAt(analysis, offset);
+    if (literal) {
+        const project = await workspace.projectFor(analysis.filePath);
+        const found = await entryForArgument(workspace, project, analysis, literal);
+        return found?.entry
+            ? Location.create(pathToUri(found.entry.file), Range.create(found.entry.line, 0, found.entry.line, 0))
+            : null;
+    }
+
+    const target = findTarget(workspace, analysis, offset);
     if (!target) {
         return null;
     }
@@ -40,14 +53,25 @@ export function provideDefinition(workspace: Workspace, analysis: Analysis, para
     return declaration ? toLocation(workspace, declaration.module, declaration.span) : null;
 }
 
-export function provideReferences(workspace: Workspace, analysis: Analysis, params: ReferenceParams): Location[] {
+export async function provideReferences(workspace: Workspace, analysis: Analysis, params: ReferenceParams): Promise<Location[]> {
     const target = findTarget(workspace, analysis, analysis.document.offsetAt(params.position));
     if (!target || target.kind !== 'symbol') {
         return [];
     }
-    return findOccurrences(workspace, target.symbol)
+    const locations = findOccurrences(workspace, target.symbol)
         .filter(o => params.context.includeDeclaration || !o.isDeclaration)
         .map(o => toLocation(workspace, o.module, o.span));
+
+    // Project tables that point at a label's text
+    const declaration = declarationOf(workspace, target.symbol);
+    if (target.symbol.kind === SymbolKind.Label && target.symbol.scopeId === 0 && declaration) {
+        const project = await workspace.projectFor(declaration.module.filePath);
+        const uses = project && (await project.tableReferences()).get(`${declaration.module.name}.${target.symbol.name}`);
+        for (const use of uses ?? []) {
+            locations.push(Location.create(pathToUri(use.file), Range.create(use.line, 0, use.line, 0)));
+        }
+    }
+    return locations;
 }
 
 export function provideDocumentHighlights(workspace: Workspace, analysis: Analysis, params: DocumentHighlightParams): DocumentHighlight[] {

@@ -121,6 +121,28 @@ describe('Editing', () => {
             .toEqual(["Undefined command 'helper'"]);
     });
 
+    it('publishes diagnostics when files load slowly (as from a real disk)', async () => {
+        // Opening a file loads its whole directory; validation can run before that finishes
+        const files: Record<string, string> = { '/project/main.ccs': 'command main() { next nope }' };
+        for (let i = 0; i < 20; i++) {
+            files[`/project/sibling_${i}.ccs`] = `command c${i}() { next }`;
+        }
+        client = await TestClient.start({ files, readDelay: 5 });
+        await client.open('/project/main.ccs');
+        expect(messages(await client.waitForDiagnostics('/project/main.ccs'))).toEqual(["Undefined identifier 'nope'"]);
+    });
+
+    it('reports files that can\'t be loaded', async () => {
+        client = await TestClient.start({
+            files: { '/project/a/util.ccs': 'command a() { }', '/project/b/util.ccs': 'command b() { }' },
+        });
+        await client.open('/project/a/util.ccs');
+        await client.waitForDiagnostics('/project/a/util.ccs');
+        await client.open('/project/b/util.ccs');
+        expect(messages(await client.waitForDiagnostics('/project/b/util.ccs')))
+            .toEqual(["Module name collision: 'util' already loaded from /project/a/util.ccs"]);
+    });
+
     it('warns once when the standard library is not configured', async () => {
         client = await TestClient.start({ stdLib: false, files: { '/project/main.ccs': 'command main() { next }' } });
         await client.open('/project/main.ccs');
@@ -164,6 +186,7 @@ describe('Stress', () => {
                 '/project/lib.ccs': '// Helps\ncommand helper(a, b) { }\ndefine MAX = 3',
                 '/project/main.ccs': `import lib\n${source}`,
             },
+            readDelay: 1,
         });
         await client.open('/project/main.ccs');
 
