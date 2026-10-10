@@ -1,14 +1,16 @@
 import { Hover, HoverParams, MarkupKind } from 'vscode-languageserver/node';
-import { RedNode, Symbol, SymbolKind, isRedToken } from 'ccscript-core';
+import { RedNode, Symbol, SymbolKind, SyntaxKind, isRedToken } from 'ccscript-core';
+import { controlCodeGroupAt, controlCodePatterns, decodeControlCodes } from '../controlCodes';
 import {
     constantsByValue,
     entryForArgument,
     formatHex,
+    labelTextResolver,
     numericLiteralAt,
     numericValue,
 } from '../gameData';
-import { DOMAIN_TITLES, ProjectData, tableTitle } from '../projectData';
-import { describeSymbol, findTarget, getDocComment, symbolKindName } from '../symbols';
+import { DOMAIN_TITLES, ProjectData, domainOfParameter, tableTitle } from '../projectData';
+import { describeSymbol, findTarget, getDocComment, getParameterNames, symbolKindName } from '../symbols';
 import { Analysis, Workspace, pathToUri } from '../workspace';
 
 function fileLink(file: string, line: number, text: string): string {
@@ -76,9 +78,82 @@ async function labelLines(workspace: Workspace, project: ProjectData | undefined
     return lines;
 }
 
+const hexBytes = (bytes: number[]) => bytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+
+/**
+ * A raw control code in a string, e.g. the `1C 05 12` in "[1C 05 12]": the command that
+ * produces it, and what its arguments refer to.
+ */
+async function hoverControlCode(workspace: Workspace, project: ProjectData | undefined, analysis: Analysis, offset: number): Promise<Hover | null> {
+    const group = controlCodeGroupAt(analysis.tree.source, offset);
+    if (!group) {
+        return null;
+    }
+    const codes = decodeControlCodes(group.bytes, controlCodePatterns(workspace));
+    const endOf = (index: number) => group.offsets[index] + 2;
+    // The code under the cursor (on the brackets, the first or last code)
+    const code = codes.find(c => offset < endOf(c.start + c.length - 1)) ?? codes[codes.length - 1];
+    const bytes = group.bytes.slice(code.start, code.start + code.length);
+    const range = {
+        start: analysis.document.positionAt(group.offsets[code.start]),
+        end: analysis.document.positionAt(endOf(code.start + code.length - 1)),
+    };
+
+    const best = code.matches[0];
+    if (!best) {
+        // Control codes are 00-1F; anything else in brackets is a raw text byte
+        const value = bytes[0] >= 0x20
+            ? `\`${hexBytes(bytes)}\` · raw text byte, not a control code`
+            : `\`${hexBytes(bytes)}\` · no loaded command produces this control code`;
+        return { contents: { kind: MarkupKind.Markdown, value }, range };
+    }
+
+    const { command } = best.pattern;
+    const parameters = getParameterNames(command);
+    const format = (value: number) => value >= 0x10000 ? formatHex(value) : String(value);
+    const call = parameters.length > 0
+        ? `${command.name}(${parameters.map(p => format(best.arguments.get(p) ?? 0)).join(', ')})`
+        : command.name;
+    const parts = [`\`\`\`ccscript\n${call}\n\`\`\``];
+
+    // What the arguments refer to
+    for (const parameter of parameters) {
+        const domain = domainOfParameter(parameter);
+        const value = best.arguments.get(parameter);
+        if (!domain || !project || !value) continue;
+        const entry = await project.entry(domain, value, labelTextResolver(workspace));
+        if (entry?.name) {
+            parts.push(`${DOMAIN_TITLES[domain]} ${value}: **${entry.name}** · ` +
+                fileLink(entry.file, entry.line, entry.file.replace(/^.*[\\/]/, '')));
+        }
+    }
+
+    const declaringModule = command.modulePath ? workspace.program.getModule(command.modulePath) : undefined;
+    const docs = getDocComment(command, declaringModule?.tree.source);
+    if (docs) {
+        parts.push(docs);
+    }
+
+    const where = !declaringModule ? undefined
+        : workspace.isStandardLibrary(declaringModule.filePath) ? 'the standard library'
+            : workspace.fileSystem.relative(workspace.fileSystem.dirname(analysis.filePath), declaringModule.filePath).replace(/\\/g, '/');
+    parts.push(`*\`${hexBytes(bytes)}\` · \`${describeSymbol(command, declaringModule?.tree.source)}\`${where ? ` from ${where}` : ''}*`);
+    if (code.matches.length > 1) {
+        parts.push(`Also produced by ${code.matches.slice(1, 6).map(m => `\`${m.pattern.command.name}\``).join(', ')}`);
+    }
+
+    return { contents: { kind: MarkupKind.Markdown, value: parts.join('\n\n') }, range };
+}
+
 export async function provideHover(workspace: Workspace, analysis: Analysis, params: HoverParams): Promise<Hover | null> {
     const offset = analysis.document.offsetAt(params.position);
     const project = await workspace.projectFor(analysis.filePath);
+
+    // Inside string text: control codes
+    const token = analysis.tree.getTokenAtPosition(offset);
+    if (token?.kind === SyntaxKind.StringLiteral && token.span.start < offset) {
+        return hoverControlCode(workspace, project, analysis, offset);
+    }
     const rangeOf = (node: RedNode) => ({
         start: analysis.document.positionAt(node.span.start),
         end: analysis.document.positionAt(node.span.start + node.span.length),
