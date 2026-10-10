@@ -225,4 +225,63 @@ describe('Program - Sibling Module Imports', () => {
         diagnostics = mainModule!.binding?.diagnostics || [];
         expect(diagnostics).toHaveLength(0);
     });
+
+    it('should drop declarations removed from a reloaded sibling', async () => {
+        const fs = createFileSystem({
+            '/project/utils.ccs': 'command helper() { }',
+            '/project/main.ccs': 'command main() { helper() }',
+        });
+
+        const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
+        await program.loadModule('/project/utils.ccs');
+        await program.loadModule('/project/main.ccs');
+
+        // Reload several times, as the LSP does on every edit
+        await program.reloadModule('/project/utils.ccs');
+        await program.reloadModule('/project/utils.ccs');
+        expect(program.getModule('/project/main.ccs')!.group!.modules).toHaveLength(2);
+
+        fs.addFile('/project/utils.ccs', 'command other() { }');
+        await program.reloadModule('/project/utils.ccs');
+
+        const diagnostics = program.getModule('/project/main.ccs')!.binding?.diagnostics || [];
+        expect(diagnostics.some(d => d.message.includes('helper'))).toBe(true);
+    });
+
+    it('should rebind importers in other directories against the reloaded module', async () => {
+        const fs = createFileSystem({
+            '/project/lib/utils.ccs': 'command helper() { }',
+            '/project/src/main.ccs': `
+                import "lib/utils.ccs"
+                command main() { renamed() }
+            `,
+        });
+
+        const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
+        await program.loadModule('/project/src/main.ccs');
+        expect(program.getModule('/project/src/main.ccs')!.binding!.diagnostics.length).toBeGreaterThan(0);
+
+        fs.addFile('/project/lib/utils.ccs', 'command renamed() { }');
+        await program.reloadModule('/project/lib/utils.ccs');
+
+        const main = program.getModule('/project/src/main.ccs')!;
+        expect(main.dependencies[0]).toBe(program.getModule('/project/lib/utils.ccs'));
+        expect(main.binding!.diagnostics).toHaveLength(0);
+    });
+
+    it('should not accumulate import diagnostics across reloads', async () => {
+        const fs = createFileSystem({
+            '/project/main.ccs': 'import missing',
+        });
+
+        const program = new Program({ fileSystem: fs, rootPath: '/project', includeStdLibs: false });
+        await program.loadModule('/project/main.ccs');
+        await program.reloadModule('/project/main.ccs');
+        await program.reloadModule('/project/main.ccs');
+        expect(program.getDiagnostics()).toHaveLength(1);
+
+        fs.addFile('/project/main.ccs', 'define x = 1');
+        await program.reloadModule('/project/main.ccs');
+        expect(program.getDiagnostics()).toHaveLength(0);
+    });
 });

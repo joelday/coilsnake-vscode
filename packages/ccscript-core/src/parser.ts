@@ -15,7 +15,6 @@ import { SyntaxKind } from './syntax/syntaxKind';
 import {
     GreenNode,
     GreenToken,
-    GreenTrivia,
     GreenSourceFile,
     GreenStatement,
     GreenExpression,

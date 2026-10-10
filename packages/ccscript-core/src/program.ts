@@ -1,7 +1,7 @@
 /**
  * Program/Project management for CCScript multi-file compilation.
  * Handles import resolution, dependency graph, and module loading.
- * 
+ *
  * Architecture based on CCScript 1337 compiler's ProcessImports() in compiler.cpp:
  * - Start with explicitly loaded modules
  * - Process each module's imports recursively
@@ -74,6 +74,8 @@ export interface ProgramOptions {
         std?: string;
         stdarg?: string;
     };
+    /** Receives diagnostic trace messages (silent by default) */
+    log?: (message: string) => void;
 }
 
 /**
@@ -89,25 +91,24 @@ export interface ImportDiagnostic extends Diagnostic {
 /**
  * Program manages multiple source files and their dependencies.
  * Entry point for multi-file CCScript compilation and analysis.
- * 
+ *
  * ## Sibling File Imports
  * In CCScript, files in the same directory implicitly share a namespace.
  * Symbols from sibling files are available without explicit imports.
- * 
+ *
  * ### For Batch Compilation:
  * Load all files in order - each file will automatically see previously loaded siblings.
- * 
+ *
  * ### For LSP/Language Server:
  * When a document is opened:
  * 1. Use workspace.findFiles() to discover all .ccs files in the same directory
  * 2. Call loadModule() for each file in the directory
  * 3. This ensures all siblings are loaded before semantic analysis
- * 
+ *
  * When a file is saved/changed:
- * 1. Call reloadModule(path) - this automatically invalidates all siblings
- * 2. Next semantic query on any sibling will re-bind with updated symbols
- * 3. No manual invalidation needed - happens automatically!
- * 
+ * 1. Call reloadModule(path) - this rebinds its compilation group and dependent groups
+ * 2. Each module's `binding` is updated immediately; no manual invalidation needed
+ *
  * @example
  * ```typescript
  * // LSP: When opening a document
@@ -116,10 +117,10 @@ export interface ImportDiagnostic extends Diagnostic {
  * for (const file of siblingFiles) {
  *   await program.loadModule(file.fsPath);
  * }
- * 
+ *
  * // LSP: When a document is saved
  * await program.reloadModule(documentUri.fsPath);
- * // All siblings are automatically invalidated and will re-bind on next use
+ * // All siblings and dependent groups have been rebound
  * ```
  */
 export class Program {
@@ -127,7 +128,7 @@ export class Program {
     private readonly modules = new Map<string, Module>();
     private readonly modulesByName = new Map<string, Module>();
     private readonly groups = new Map<string, CompilationGroup>();  // Key: directory path
-    private readonly diagnostics: ImportDiagnostic[] = [];
+    private diagnostics: ImportDiagnostic[] = [];
     /** Resolves once the auto-included standard libraries have finished loading */
     private stdLibsLoaded: Promise<void> = Promise.resolve();
 
@@ -137,12 +138,13 @@ export class Program {
             libPaths: options.libPaths ?? [],
             includeStdLibs: options.includeStdLibs ?? true,
             stdLibPaths: options.stdLibPaths ?? {},
+            log: options.log ?? (() => {}),
         };
 
         // Auto-load standard libraries if enabled
         if (this.options.includeStdLibs) {
             this.stdLibsLoaded = this.loadStandardLibraries().catch(err => {
-                console.error('[CCScript:Program] Failed to load standard libraries:', err);
+                this.log(`Failed to load standard libraries: ${err}`);
             });
         }
     }
@@ -154,23 +156,14 @@ export class Program {
         const stdPaths = this.options.stdLibPaths;
 
         if (stdPaths.std) {
-            console.log(`[CCScript:Program] Loading std.ccs from: ${stdPaths.std}`);
             await this.loadModule(stdPaths.std);
         }
 
         if (stdPaths.stdarg) {
-            console.log(`[CCScript:Program] Loading stdarg.ccs from: ${stdPaths.stdarg}`);
             await this.loadModule(stdPaths.stdarg);
         }
     }
 
-    /**
-     * Load a module from a file path.
-     * Recursively loads all imported modules.
-     * @param filePath Absolute path to the module file
-     * @param reload If true, re-parse even if already loaded (for LSP file changes)
-     * @returns The loaded module, or null if loading failed
-     */
     /**
      * Load a module from a file path.
      * Recursively loads all imported modules.
@@ -182,16 +175,18 @@ export class Program {
     async loadModule(filePath: string, reload = false): Promise<Module | null> {
         const normalizedPath = this.options.fileSystem.normalize(filePath);
 
-        console.log(`[CCScript:Program] ${reload ? 'Reloading' : 'Loading'} module: ${normalizedPath}`);
+        this.log(`${reload ? 'Reloading' : 'Loading'} module: ${normalizedPath}`);
 
         // Check if already loaded (unless reload requested)
         if (this.modules.has(normalizedPath) && !reload) {
-            console.log('[CCScript:Program] Module already loaded, returning cached');
             return this.modules.get(normalizedPath)!;
         }
 
         // Add to loading stack for cycle detection
         this.loadingStack.add(normalizedPath);
+
+        // Drop import diagnostics from any previous load of this file
+        this.diagnostics = this.diagnostics.filter(d => d.filePath !== normalizedPath);
 
         try {
             // Check if file exists
@@ -246,7 +241,23 @@ export class Program {
             // Add to compilation group
             const dir = this.options.fileSystem.dirname(normalizedPath);
             const group = this.getOrCreateGroup(dir);
-            group.modules.push(module);
+            const existingIndex = group.modules.findIndex(m => m.filePath === normalizedPath);
+            if (existingIndex >= 0) {
+                group.modules[existingIndex] = module;
+            } else {
+                group.modules.push(module);
+            }
+
+            // Point importers of a reloaded module at the new instance
+            if (reload) {
+                for (const other of this.modules.values()) {
+                    const deps = other.dependencies as Module[];
+                    const index = deps.findIndex(d => d.filePath === normalizedPath);
+                    if (index >= 0) {
+                        deps[index] = module;
+                    }
+                }
+            }
             (module as { group?: CompilationGroup }).group = group;
 
             // Process imports recursively (loads dependencies from OTHER directories)
@@ -323,25 +334,20 @@ export class Program {
      * PHASE 2: Bind each module against shared declarations + dependencies (O(n))
      */
     private bindGroup(group: CompilationGroup): void {
-        console.log(`[CCScript:Program] Binding group: ${group.directory} (${group.modules.length} modules)`);
-        
+        this.log(`Binding group: ${group.directory} (${group.modules.length} modules)`);
+
         // PHASE 1: Collect declarations from all modules in group
         group.sharedDeclarations.clear();
-        
+
         for (const module of group.modules) {
-            console.log(`[CCScript:Program]   Phase 1: Collecting declarations from ${module.name}`);
             const declarations = Binder.collectDeclarations(module.tree.getRoot(), module.filePath);
-            
+
             // Merge into shared table
             group.sharedDeclarations.merge(declarations);
         }
-        
-        console.log(`[CCScript:Program]   Collected ${group.sharedDeclarations.getAllSymbols().length} shared declarations`);
-        
+
         // PHASE 2: Bind each module against shared declarations + dependencies
         for (const module of group.modules) {
-            console.log(`[CCScript:Program]   Phase 2: Binding references in ${module.name}`);
-            
             // Get symbols from explicit dependencies (other directories)
             const importedSymbols = new SymbolTable();
             for (const dep of module.dependencies) {
@@ -355,26 +361,22 @@ export class Program {
                     }
                 }
             }
-            
-            console.log(`[CCScript:Program]     Imported ${importedSymbols.getAllSymbols().length} symbols from dependencies`);
-            
+
             // Create binding context
             const context: BindingContext = {
                 filePath: module.filePath,
                 sharedSymbols: group.sharedDeclarations,
                 importedSymbols
             };
-            
+
             // Bind this module
             const binding = Binder.bindReferences(module.tree.getRoot(), context);
-            
+
             // Store binding result on module (cast to writable)
             (module as { binding?: BindingResult }).binding = binding;
-            
-            console.log(`[CCScript:Program]     Bound ${binding.symbols.getAllSymbols().length} total symbols, ${binding.diagnostics.length} diagnostics`);
+
+            this.log(`  ${module.name}: ${binding.symbols.getAllSymbols().length} total symbols, ${binding.diagnostics.length} diagnostics`);
         }
-        
-        console.log('[CCScript:Program] Group binding complete');
     }
 
     /**
@@ -385,14 +387,13 @@ export class Program {
         for (const module of group.modules) {
             for (const dep of module.dependencies) {
                 if (!dep.binding) {
-                    console.log(`[CCScript:Program] Group not ready: ${module.name} depends on unbound ${dep.name}`);
+                    this.log(`Group not ready: ${module.name} depends on unbound ${dep.name}`);
                     return;  // Not ready yet
                 }
             }
         }
-        
+
         // All dependencies ready - bind the group
-        console.log(`[CCScript:Program] All dependencies ready, binding group: ${group.directory}`);
         this.bindGroup(group);
     }
 
@@ -400,14 +401,14 @@ export class Program {
      * Rebind a group and all groups that depend on it.
      */
     private rebindGroupAndDependents(group: CompilationGroup): void {
-        console.log(`[CCScript:Program] Rebinding group and dependents: ${group.directory}`);
-        
+        this.log(`Rebinding group and dependents: ${group.directory}`);
+
         // Rebind this group
         this.bindGroup(group);
-        
+
         // Find and rebind dependent groups
         for (const dependent of group.dependents) {
-            console.log(`[CCScript:Program]   Rebinding dependent group: ${dependent.directory}`);
+            this.log(`  Rebinding dependent group: ${dependent.directory}`);
             this.bindGroup(dependent);
         }
     }
@@ -439,7 +440,7 @@ export class Program {
             dep.dependents.delete(group);
         }
         group.dependsOn.clear();
-        
+
         // Add new dependencies
         for (const module of group.modules) {
             for (const dep of module.dependencies) {
@@ -452,17 +453,13 @@ export class Program {
     }
 
     /**
-
-     * Reload a module when its file changes (e.g., on save in LSP).
-     * Automatically invalidates all sibling modules to pick up symbol changes.
+     * Reload a module when its file changes (e.g., on edit in LSP).
+     * Rebinds its compilation group and any groups that depend on it.
      * @param filePath Absolute path to the changed file
      * @returns The reloaded module, or null if reload failed
      */
     async reloadModule(filePath: string): Promise<Module | null> {
-        console.log('[CCScript:Program] ═══ reloadModule called ═══');
-        const result = await this.loadModule(filePath, true);
-        console.log('[CCScript:Program] ═══ reloadModule finished ═══');
-        return result;
+        return this.loadModule(filePath, true);
     }
 
     /**
@@ -490,12 +487,6 @@ export class Program {
         return siblings;
     }
 
-    /**
-     * Invalidate the semantic cache for a module and optionally its siblings.
-     * This forces re-binding on next semantic query, useful when sibling files change.
-     * @param filePath Path to the module to invalidate
-     * @param invalidateSiblings If true, also invalidate all modules in same directory
-     */
     /**
      * Invalidate the semantic cache for a module by rebinding its compilation group.
      * This forces re-binding for the module and all siblings in the same directory.
@@ -643,46 +634,36 @@ export class Program {
     private async resolveImport(importPath: string, fromFile: string): Promise<string | null> {
         const fs = this.options.fileSystem;
 
-        console.log(`[CCScript:Program] Resolving import: "${importPath}" from "${fromFile}"`);
-
         // If absolute, check if it exists
         if (fs.isAbsolute(importPath)) {
             const exists = await fs.exists(importPath);
-            console.log(`[CCScript:Program]   Absolute path: ${exists ? '✓' : '✗'} ${importPath}`);
             return exists ? importPath : null;
         }
 
         // 1. Same directory as importing file
         const fromDir = fs.dirname(fromFile);
         const sameDirPath = fs.join(fromDir, importPath);
-        console.log(`[CCScript:Program]   Trying same dir: ${sameDirPath}`);
         if (await fs.exists(sameDirPath)) {
             const resolved = fs.normalize(sameDirPath);
-            console.log(`[CCScript:Program]   ✓ Found in same dir: ${resolved}`);
             return resolved;
         }
 
         // 2. Project root directory
         const rootPath = fs.join(this.options.rootPath, importPath);
-        console.log(`[CCScript:Program]   Trying root: ${rootPath}`);
         if (await fs.exists(rootPath)) {
             const resolved = fs.normalize(rootPath);
-            console.log(`[CCScript:Program]   ✓ Found in root: ${resolved}`);
             return resolved;
         }
 
         // 3. Library directories
         for (const libPath of this.options.libPaths) {
             const libFilePath = fs.join(libPath, importPath);
-            console.log(`[CCScript:Program]   Trying lib: ${libFilePath}`);
             if (await fs.exists(libFilePath)) {
                 const resolved = fs.normalize(libFilePath);
-                console.log(`[CCScript:Program]   ✓ Found in lib: ${resolved}`);
                 return resolved;
             }
         }
 
-        console.log('[CCScript:Program]   ✗ Could not resolve import');
         return null;
     }
 
@@ -706,6 +687,10 @@ export class Program {
         return this.loadingStack.has(normalized);
     }
 
+    private log(message: string): void {
+        this.options.log(`[CCScript:Program] ${message}`);
+    }
+
     /**
      * Get module name from file path (filename without extension)
      */
@@ -714,11 +699,6 @@ export class Program {
         return basename;
     }
 
-    /**
-     * Get all modules in the same directory as the given file path,
-     * plus standard library modules which are available to all files.
-     * These are implicitly imported in CCScript.
-     */
     /**
      * Add an import diagnostic
      */

@@ -87,7 +87,8 @@ connection.onInitialize((params: InitializeParams) => {
             stdLibPaths: settings.stdLibPath ? {
                 std: fileSystem.join(settings.stdLibPath, 'std.ccs'),
                 stdarg: fileSystem.join(settings.stdLibPath, 'stdarg.ccs')
-            } : undefined
+            } : undefined,
+            log: message => connection.console.log(message)
         });
         connection.console.log(`[CCScript:LSP] Initialized with workspace: ${workspaceRoot}`);
     } else {
@@ -185,9 +186,7 @@ async function validateDocument(document: TextDocument): Promise<void> {
     const semanticDiagnostics = module?.binding?.diagnostics || [];
     const allDiagnostics = [...syntaxDiagnostics, ...semanticDiagnostics];
 
-    connection.console.log(`Validating: ${allDiagnostics.length} diagnostics found`);
-
-    const diagnostics: Diagnostic[] = allDiagnostics.map((diag: typeof syntaxDiagnostics[0] | typeof semanticDiagnostics[0], idx: number) => {
+    const diagnostics: Diagnostic[] = allDiagnostics.map((diag: typeof syntaxDiagnostics[0] | typeof semanticDiagnostics[0]) => {
         // Type guard: SemanticDiagnostic has 'position', Diagnostic has 'span'
         const isSemanticDiag = 'position' in diag;
 
@@ -201,18 +200,6 @@ async function validateDocument(document: TextDocument): Promise<void> {
 
         const offset = isSemanticDiag ? diag.position : diag.span.start;
         const length = isSemanticDiag ? diag.length : diag.span.length;
-
-        // Debug: compare our position calculation vs TextDocument's
-        const ourPos = tree.getLineAndColumn(offset);
-        const theirPos = document.positionAt(offset);
-
-        connection.console.log(
-            `[${idx}] offset=${offset} length=${length} ` +
-            `ours=(${ourPos.line},${ourPos.column}) ` +
-            `theirs=(${theirPos.line},${theirPos.character}) ` +
-            `char="${document.getText().substring(offset, offset + 1)}" ` +
-            `msg="${diag.message}"`
-        );
 
         const start = document.positionAt(offset);
         const end = document.positionAt(offset + length);
@@ -232,7 +219,7 @@ async function validateDocument(document: TextDocument): Promise<void> {
 documents.onDidChangeContent((change) => {
     if (program) {
         const filePath = uriToPath(change.document.uri);
-        // Reload the module to invalidate siblings
+        // Reload the module so its group and dependent groups are rebound
         program.reloadModule(filePath).then(() => {
             validateDocument(change.document);
         }).catch((err: unknown) => {

@@ -614,7 +614,7 @@ export class Binder {
      * Binds a label declaration (pass 2).
      * Symbol already created during label collection phase.
      */
-    private bindLabelDeclaration(node: RedNode): void {
+    private bindLabelDeclaration(_node: RedNode): void {
         // Labels were already collected before binding started
         // Nothing to do here
     }
