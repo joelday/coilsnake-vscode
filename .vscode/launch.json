@@ -19,6 +19,22 @@
       "preLaunchTask": "build"
     },
     {
+      // Opens the MaternalBound-Redux submodule's CoilSnake project, to try the extension on a
+      // real project (set ccscript.stdLibPath to coilsnake/coilsnake/assets/mobile-sprout/lib)
+      "name": "Run Extension (MaternalBound-Redux)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-extension",
+        "${workspaceFolder}/MaternalBound-Redux/Project"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/packages/*/dist/**/*.js",
+        "${workspaceFolder}/packages/*/out/**/*.js"
+      ],
+      "preLaunchTask": "build"
+    },
+    {
       "name": "Debug Language Server",
       "type": "node",
       "request": "launch",

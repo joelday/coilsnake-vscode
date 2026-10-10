@@ -6,7 +6,7 @@
     "publisher": "joelday",
     "preview": true,
     "engines": {
-        "vscode": "^1.95.0"
+        "vscode": "^1.100.0"
     },
     "icon": "images/icon.png",
     "license": "MIT",
