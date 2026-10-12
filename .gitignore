@@ -20,3 +20,6 @@ ccscript-compiler/
 !eslint.config.mjs
 !**/out/**
 !**/dist/****/dist
+
+# Copied in by CI for the VSIX
+packages/vscode-extension/LICENSE

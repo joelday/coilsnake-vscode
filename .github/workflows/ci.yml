@@ -1,0 +1,175 @@
+name: CI
+
+# One workflow for everything built from this repo:
+#
+#   test   lint, build and unit tests for every workspace package, on Linux and
+#          Windows. The ccscript-core conformance tests read the CCScript 1.337
+#          reference compiler's test corpus, which is downloaded once and cached.
+#   vsix   the VS Code extension package. webpack bundles the extension and the
+#          language server into dist/, so vsce never walks node_modules.
+#
+# Every push to main is a preview: the VSIX is published to the Marketplace
+# pre-release channel as <year>.<month><day>.<run number>, e.g. 2026.1012.10.
+# Releases are cut manually by release.yml, which calls this workflow with a
+# version and then publishes the artifact it produced.
+#
+# Marketplace rule: a pre-release and a release never share a version, and VS
+# Code always moves a user to the highest version in their channel. Date-based
+# previews keep every preview above every X.Y.Z release, so pre-release users
+# stay on previews and release users only ever see releases.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        description: Version to stamp on the VSIX (X.Y.Z)
+        type: string
+        required: true
+      prerelease:
+        description: Package as a Marketplace pre-release
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  CCSCRIPT_URL: https://starmen.net/pkhack/ccscript/download/ccscript1337.zip
+
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - id: version
+        # Releases pass a version; pushes to main are previews; everything else is 0.0.0.
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+          IS_MAIN_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: |
+          if [[ -n "$INPUT_VERSION" ]]; then
+            echo "version=$INPUT_VERSION" >> "$GITHUB_OUTPUT"
+            echo "prerelease=$INPUT_PRERELEASE" >> "$GITHUB_OUTPUT"
+          elif [[ "$IS_MAIN_PUSH" == "true" ]]; then
+            # <year>.<month><day> without zero padding keeps the middle component
+            # numeric and monotonic within a year; the run number orders same-day builds.
+            echo "version=$(date -u +%Y.%-m%d).$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.0.0" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+          cat "$GITHUB_OUTPUT"
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Cache CCScript reference compiler
+        id: ccscript
+        uses: actions/cache@v4
+        with:
+          path: ccscript-compiler
+          key: ccscript1337
+          enableCrossOsArchive: true
+
+      - name: Download CCScript reference compiler
+        # Test corpus only; nothing from it ships. Same archive scripts/setup-ccscript-compiler.sh fetches.
+        if: steps.ccscript.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          mkdir -p ccscript-compiler
+          curl -fsSL --retry 3 -o ccscript-compiler/ccscript1337.zip "$CCSCRIPT_URL"
+          python3 -c "import zipfile; zipfile.ZipFile('ccscript-compiler/ccscript1337.zip').extractall('ccscript-compiler')"
+          test -d ccscript-compiler/ccscript13/src/tests
+
+      - run: npm run lint
+
+      - run: npm run build
+
+      - run: npm test
+
+  vsix:
+    name: VSIX
+    needs: [setup, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Copy license
+        run: cp LICENSE packages/vscode-extension/LICENSE
+
+      - name: Package
+        working-directory: packages/vscode-extension
+        env:
+          VERSION_ARGS: ${{ needs.setup.outputs.version != '0.0.0' && format('{0} --no-git-tag-version --no-update-package-json', needs.setup.outputs.version) || '' }}
+          PRERELEASE_ARG: ${{ needs.setup.outputs.prerelease == 'true' && '--pre-release' || '' }}
+        run: >-
+          npx vsce package --no-dependencies $VERSION_ARGS $PRERELEASE_ARG
+          --out coilsnake-vscode-${{ needs.setup.outputs.version }}.vsix
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: packages/vscode-extension/*.vsix
+          if-no-files-found: error
+
+  preview:
+    name: Publish preview
+    # Pushes to main only. PRs and release builds never reach this job.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [setup, vsix]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix
+          path: vsix
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Publish ${{ needs.setup.outputs.version }} to the pre-release channel
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_TOKEN }}
+        run: npx --yes @vscode/vsce@4 publish --pre-release --packagePath vsix/*.vsix

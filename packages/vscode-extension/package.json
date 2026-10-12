@@ -120,7 +120,7 @@
         "build:watch": "tsc -watch -p ./",
         "lint": "eslint .",
         "clean": "rm -rf out dist",
-        "vsce:package": "vsce package"
+        "vsce:package": "vsce package --no-dependencies"
     },
     "dependencies": {
         "ccscript-language-server": "^1.0.0",

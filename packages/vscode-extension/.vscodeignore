@@ -15,11 +15,10 @@ eslint.config.mjs
 
 # Source files (keep compiled dist only)
 **/*.ts
-!dist/**
+!dist/**/*.js
 
 # Maps
 **/*.map
-!dist/**
 
 # Misc
 **/.DS_Store
