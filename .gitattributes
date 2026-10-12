@@ -1,0 +1,9 @@
+# Check out text files with LF everywhere. Snapshot and editing tests depend on exact
+# line endings in the .ccs fixtures, and Windows runners default to autocrlf.
+* text=auto eol=lf
+*.png binary
+*.smc binary
+*.vsix binary
+
+# The CCScript 1.337 reference tests are kept byte-for-byte as distributed (CRLF).
+packages/ccscript-core/reference-tests/** -text

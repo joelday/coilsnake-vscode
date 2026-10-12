@@ -11,6 +11,7 @@ import {
     Position,
     Range,
 } from 'vscode-languageserver-protocol';
+import { URI } from 'vscode-uri';
 import { TestClient, messageText, positionOf } from './testClient';
 
 let client: TestClient;
@@ -140,8 +141,10 @@ describe('Editing', () => {
         await client.open('/project/a/util.ccs');
         await client.waitForDiagnostics('/project/a/util.ccs');
         await client.open('/project/b/util.ccs');
+        // The server reports the OS-native path (backslashes on Windows), as a user would see it.
+        const existing = URI.file('/project/a/util.ccs').fsPath;
         expect(messages(await client.waitForDiagnostics('/project/b/util.ccs')))
-            .toEqual(["Module name collision: 'util' already loaded from /project/a/util.ccs"]);
+            .toEqual([`Module name collision: 'util' already loaded from ${existing}`]);
     });
 
     it('warns once when the standard library is not configured', async () => {
