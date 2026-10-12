@@ -71,18 +71,8 @@ function serializeAST(node: RedNode, indent = 0): string {
 
 describe('lib_text.ccs AST Snapshot', () => {
     it('should match AST snapshot for lib_text.ccs', () => {
-        // Load lib_text.ccs from the CCScript compiler test directory
-        const libTextPath = path.join(
-            __dirname,
-            '..',
-            '..',
-            '..',
-            'ccscript-compiler',
-            'ccscript13',
-            'src',
-            'tests',
-            'lib_text.ccs'
-        );
+        // lib_text.ccs from the vendored CCScript 1.337 reference tests
+        const libTextPath = path.join(__dirname, '..', 'reference-tests', 'ccscript1337', 'lib_text.ccs');
 
         const content = fs.readFileSync(libTextPath, 'utf-8');
         const tree = SyntaxTree.parse(content);

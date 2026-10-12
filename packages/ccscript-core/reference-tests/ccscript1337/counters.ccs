@@ -1,0 +1,46 @@
+///@name: Counters Test
+///@desc: Tests counter expressions.
+///@expect:
+/// "[00 00 00 00][01 00 00 00][02 00 00 00]"
+/// "[00 00 00 00][01 00 00 00]"
+/// "[66 00 00 00][cb 00 00 00][12 00 00 00]"
+/// "[03 00 00 00][04 00 00 00]"
+/// "[00 00 00 00][01 00 00 00]"
+/// "[ff ff ff ff][00 00 00 00]"
+/// "[00 00 00 00][00 00 00 00][00 00 00 00]"
+
+
+//
+// General counter behavior
+//
+count("flags")		// 0
+count("flags")		// 1
+count("flags")		// 2
+count("pies")		// 0
+count("pies")		// 1
+
+count("pies",100)	// 102
+count("pies",200)	// 203
+count("pies",10,2)	// 18
+
+count("flags")		// 3
+count("flags")		// 4
+
+setcount("flags",0)
+count("flags")		// 0
+count("flags")		// 1
+
+setcount("pies",-1)
+count("pies")		// -1
+count("pies")		// 0
+
+
+//
+// Counters with define macros
+//
+define bar = count("bar")
+
+bar		// 0
+bar		// 0
+bar		// 0
+

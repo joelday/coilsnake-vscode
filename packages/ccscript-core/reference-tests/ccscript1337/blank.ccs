@@ -1,0 +1,4 @@
+///@name: blank
+///@desc: tests that a blank CCS file results in no output.
+///@expect: blank.smc
+

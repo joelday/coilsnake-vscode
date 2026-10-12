@@ -1,0 +1,40 @@
+///@name: Gameplay Library Test
+///@desc: Tests the gameplay control commands in the standard library.
+///@expect:
+/// 
+/// "Warp [1f 21 01]"
+/// "Teleport [1f 20 02 04]"
+/// "Set mouse [1f 68]"
+/// "Exit mouse [1f 69]"
+/// "Credits! [1f 41 0c]"
+/// "Town map [1f 41 07]"
+/// "Coffee! [1f 41 01]"
+/// "Learn Teleport B [1f 71 01 02]"
+/// "Learn Starstorm Omega [1f 71 04 04]"
+/// "Jeff joins [1f 11 03]"
+/// "Jeff leaves [1f 12 03]"
+/// "Savegame [1f b0]"
+/// "Hotspot on [1f 66 01 0c 00 80 c5 00]"
+/// "Hotspot off [1f 67 0c]"
+
+
+
+// NOTE: battle() uses conditional branching and is tested in lib_advanced.ccs
+
+"Warp " warp(1)
+"Teleport " teleport(2, TELEPORT_OMEGA)
+"Set mouse " anchor_set()
+"Exit mouse " anchor_warp()
+"Credits! " event(EVENT_CREDITS)
+"Town map " event(EVENT_TOWNMAP)
+"Coffee! " event(EVENT_COFFEE)
+"Learn Teleport B " learnpsi(1, 2)
+"Learn Starstorm Omega " learnpsi(4, 4)
+"Jeff joins " party_add(3)
+"Jeff leaves " party_remove(3)
+"Savegame " save()
+"Hotspot on " hotspot_on(1, 12, 0xC58000)
+"Hotspot off " hotspot_off(12)
+
+
+

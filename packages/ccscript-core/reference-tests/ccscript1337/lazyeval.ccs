@@ -1,0 +1,56 @@
+///@name: Lazy Eval Test
+///@desc: Tests lazy evaluation of command parameters.
+///@expect:  
+/// "global baz local baz"
+/// "global baz local baz"
+/// "global baz local baz"
+/// "global baz local baz"
+
+
+define baz = "global baz"
+define wibble = "{baz}"
+
+command foo(bar, baz)
+{
+	// The local baz shadows the global baz
+	
+	// You know, it occurs to me that if I wrote lines like the above
+	// in any discipline but software engineering, they'd probably
+	// lock me up.
+	
+	bar " "	baz
+}
+
+
+// The command foo takes two parameters and evalutes them in order.
+// One parameter name shadows a global definition.
+
+
+// If we pass the global baz, we expect it to be evaluated correctly.
+foo(baz, "local baz")
+
+// Result: "global baz local baz"
+
+
+// This one is a little trickier, but ultimately no different. We
+// pass a string containing a code section to evaluate -- the string
+// won't be evaluted until it is used in the invoked command, but
+// it is bound to its lexical scope so that when it does finally
+// evaluate the identifier 'baz', it will correctly associate it
+// with the global definition.
+foo("{baz}", "local baz")
+
+// Result: "global baz local baz"
+
+
+// Wibble refers to the global baz indirectly, but we should get the
+// same result.
+foo(wibble, "local baz")
+
+// Result: "global baz local baz"
+
+
+// Likewise when we refer to wibble itself indirectly.
+foo("{wibble}", "local baz")
+
+// Result: "global baz local baz"

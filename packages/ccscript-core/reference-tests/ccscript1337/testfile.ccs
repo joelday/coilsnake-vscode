@@ -1,0 +1,10 @@
+
+///@name: a test test
+///@desc: tests the ability to test tests
+///@expect:
+///"This is only a test.[13 02]"
+
+
+label:
+	"This is only a test."
+	end

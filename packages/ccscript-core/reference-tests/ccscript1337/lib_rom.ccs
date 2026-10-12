@@ -1,0 +1,40 @@
+///@name: ROM Library Test
+///@desc: Tests the ROM access commands in the standard library
+///@expect: lib_rom.smc
+/// 
+
+// Link some sprites
+sprite_link(1, 0xf00100)
+sprite_link(2, 0xf00200)
+sprite_link(3, 0xf00300)
+sprite_link(4, 0xf00400)
+sprite_link(5, 0xf00500)
+
+// Starting coordinates
+newgame_location(100, 100)
+
+// Initial text address
+newgame_startup(init)
+
+// Setup options
+setup_music(42)
+setup_music2(43)
+setup_background(44)
+
+
+// Other pointers
+on_refresh(refresh)
+on_check(check)
+
+init:		// $C0:0000
+	"Test."
+	end
+	
+refresh:	// $C0:0007
+	"Refresh."
+	end
+	
+check:		// $C0:0011
+	"Check-a-roony!"
+	end
+	

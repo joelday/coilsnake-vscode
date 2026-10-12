@@ -5,17 +5,7 @@ import * as path from 'path';
 
 describe('Semantic token encoding test', () => {
     it('should show semantic token encoding for shop_item parameters', () => {
-        const filePath = path.join(
-            __dirname,
-            '..',
-            '..',
-            '..',
-            'ccscript-compiler',
-            'ccscript13',
-            'src',
-            'tests',
-            'hack_shoptest.ccs'
-        );
+        const filePath = path.join(__dirname, '..', 'reference-tests', 'ccscript1337', 'hack_shoptest.ccs');
 
         const content = fs.readFileSync(filePath, 'utf-8');
         const tree = SyntaxTree.parse(content);

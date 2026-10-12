@@ -1,0 +1,27 @@
+///@name: Items/Money Library Test
+///@desc: Tests the item and money commands in the standard library.
+///@expect:
+/// "Give item:[1d 00 01 11]"
+/// "Take item:[1d 01 01 11]"
+/// "Has item:[1d 05 ff 2a]"
+/// "Not full:[1d 03 03]"
+/// "Give cash:[1d 08 39 05]"
+/// "Take cash:[1d 09 64 00]"
+/// "Deposit:[1d 06 50 c3 00 00]"
+/// "Withdraw:[1d 07 e7 03 00 00]"
+/// "Usable:[1f 81 02 40]"
+
+/* UPDATED 5 June 2009 -- hasitem changed due to a bugfix in std.ccs:
+	[1d 04 xx xx] -> [1d 05 xx xx] */
+
+"Give item:" give(1, 0x11)
+"Take item:" take(1, 0x11)
+"Has item:" hasitem(0xFF, 42)
+"Not full:" notfull(3)
+// NOTE: "full" uses boolean negation and is tested in lib_advanced.ccs
+"Give cash:" givemoney(1337)
+"Take cash:" takemoney(100)
+// NOTE: "hasmoney" uses boolean negation and is tested in lib_advanced.ccs
+"Deposit:" deposit(50000)
+"Withdraw:" withdraw(999)
+"Usable:" usable(2, 64)

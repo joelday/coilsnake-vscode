@@ -1,0 +1,32 @@
+///@name: Commands Test
+///@desc: Tests the declaration and invocation of simple commands.
+///@expect:
+/// "c3(c2(c1(c0())pie)cakeice cream)"
+
+
+command mycmd0() {
+	"c0()"
+}
+
+command mycmd1(arg1) {
+	"c1(" arg1 ")"
+}
+
+command mycmd2(arg1, arg2) {
+	"c2(" arg1 arg2 ")"
+}
+
+command mycmd3(arg1, arg2, arg3) {
+	"c3(" arg1 arg2 arg3 ")"
+}
+
+
+mycmd3(
+	mycmd2(
+		mycmd1(mycmd0()),
+		"pie"
+	),
+	"cake",
+	"ice cream"
+)
+

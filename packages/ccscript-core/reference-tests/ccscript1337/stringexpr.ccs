@@ -1,0 +1,35 @@
+///@name: String Expression Test
+///@desc: Tests string expressions with compound evaluation
+///@expect:
+/// "My string is: hoopy"
+/// "My number is: [2a 00 00 00]"
+/// "My flag is: [02 00]"
+/// "Command result: mycmd(hoopy)"
+/// "0xAABBCCDD as a byte: [dd]"
+/// "0x11223344 as a short: [44 33]"
+/// "Hiword of 0x11223344: [22 11]"
+/// "Loword of 0x11223344: [44 33]"
+
+
+define mystring = "hoopy"
+define mynumber = 42
+define myflag = flag 2
+
+"My string is: {mystring}"
+"My number is: {mynumber}"
+"My flag is: {myflag}"
+
+
+// Compose string with command
+command mycmd(arg) {
+	"mycmd({arg})"
+}
+
+"Command result: {mycmd(mystring)}"
+
+
+"0xAABBCCDD as a byte: {byte 0xaabbccdd}"
+"0x11223344 as a short: {short 0x11223344}"
+
+"Hiword of 0x11223344: {short[1] 0x11223344}"
+"Loword of 0x11223344: {short[0] 0x11223344}"

@@ -1,0 +1,21 @@
+///@name: Sound Library Test
+///@desc: Tests the sound commands in the standard library.
+///@expect:
+/// 
+/// "Bash sound [1f 02 1a]"
+/// "Music [1f 00 00 2a]"
+/// "Stop the music! [1f 01 02]"
+/// "Play it again, Sam [1f 03]"
+/// "Fade out [1f 07 03]"
+/// "Disable switching [1f 05]"
+/// "Enable switching [1f 06]"
+/// 
+
+
+"Bash sound " sound(SND_BASH)
+"Music " music(42)
+"Stop the music! " music_stop()
+"Play it again, Sam " music_resume()
+"Fade out " music_effect(3)
+"Disable switching " music_switching_off()
+"Enable switching " music_switching_on()

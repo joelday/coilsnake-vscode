@@ -1,0 +1,76 @@
+///@name: ROM Writes Test
+///@desc: Tests ROM writing statement output
+///@expect:
+/// "16 bytes of text"
+/// "[2a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00]"
+/// "[ff ff ff ff 00 00 00 00 01 01 00 00 00 00 00 00]"
+/// "This is a string"
+/// "pies[ef be ad de 2a 00 00 00 2a 00 00 00]"
+/// "[0a 00 00 c0 00 00 00 00 00 00 00 00 00 00 00 00]"
+/// "[0a 10 00 c0 00 00 00 00 ef be ad de]pies"
+/// "[dd cc bb aa 00 00 00 00 00 00 00 00 00 00 00 00]"
+/// "[44 33 22 11 00 00 00 00 00 00 00 00 00 00 00 00]"
+/// "[88 77 66 55 00 00 00 00 00 00 00 00 00 00 00 00]"
+/// "Insane Cultist[00 00]"
+/// "that's all folks"
+/// "Pie is wery good"
+/// "[ff ff ff 2a ff ff ff bb aa ff ff ff ff ff ff ff]"
+/// "[00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00]"
+
+
+// First, a starting label and a bit of text
+start:
+	"16 bytes of text"
+// One more label, at c0:0010	
+label0:
+
+
+//
+// Write some literal values
+//
+ROM[0xc00010] = 42
+ROM[0xc00020] = 0xffffffff
+ROM[0xc00028] = flag 257
+ROM[0xc00030] = "This is a string"
+
+
+//
+// Write compound values using identifiers and commands
+//
+define mystring = "pies"
+define mynumber = 0xdeadbeef
+command foo(x) {
+	x x
+}
+
+ROM[0xc00040] = "{mystring}{mynumber}{foo(42)}"
+ROM[0xc00050] = goto(start)
+ROM[0xc00060] = goto(label0)
+ROM[0xc00068] = mynumber
+ROM[0xc0006c] = mystring
+
+
+//
+// Perform some table writes
+//
+ROMTBL[0xc00070, 16, 0] = 0xaabbccdd
+ROMTBL[0xc00070, 16, 1] = 0x11223344
+ROMTBL[0xc00070, 16, 2] = 0x55667788
+ROMTBL[0xc00070, 16, 3] = "Insane Cultist"
+ROMTBL[0xc00070, 16, 4] = "that's all folks"
+
+
+//
+// Test partial overwrites
+//
+ROM[0xc000c0] = "Pie is very good"
+ROM[0xc000c7] = "w"
+
+ROM[0xc000d0] = 0xffffffff
+ROM[0xc000d4] = 0xffffffff
+ROM[0xc000d8] = 0xffffffff
+ROM[0xc000dc] = 0xffffffff
+
+ROM[0xc000d3] = byte 42
+ROM[0xc000d7] = short 0xaabb
+

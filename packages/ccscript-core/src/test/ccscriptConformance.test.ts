@@ -17,8 +17,8 @@ import * as path from 'path';
 import { SyntaxTree } from '../syntaxTree';
 import { SyntaxKind } from '../syntax/syntaxKind';
 
-// Path to CCScript compiler tests
-const CCSCRIPT_TESTS_DIR = path.join(__dirname, '../../../ccscript-compiler/ccscript13/src/tests');
+// The CCScript 1.337 reference compiler's test scripts, vendored with the package.
+const CCSCRIPT_TESTS_DIR = path.join(__dirname, '../../reference-tests/ccscript1337');
 
 /**
  * Check if CCScript compiler is available
@@ -91,7 +91,7 @@ describe('CCScript Conformance Tests', () => {
         it('should have CCScript compiler available', () => {
             console.warn(`
                 CCScript compiler not found at: ${CCSCRIPT_TESTS_DIR}
-                Run: ./scripts/setup-ccscript-compiler.sh to download it
+                See packages/ccscript-core/reference-tests/ccscript1337/README.md
                 Skipping conformance tests.
             `);
             expect(isCCScriptCompilerAvailable()).toBe(false);

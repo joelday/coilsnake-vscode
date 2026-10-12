@@ -8,10 +8,11 @@
 
 ```sh
 npm ci
-./scripts/setup-ccscript-compiler.sh   # once: the CCScript 1.337 test corpus for the conformance tests
 npm run build
 npm test
 ```
+
+The conformance tests run against the CCScript 1.337 reference compiler's own test scripts, vendored under `packages/ccscript-core/reference-tests`. `scripts/setup-ccscript-compiler.sh` fetches the full compiler distribution if you want the compiler itself or its documentation; starmen.net sits behind a browser challenge, so it may need a manual download.
 
 `npm run vsce:package -w packages/vscode-extension` builds the VSIX. Press F5 in VS Code to run the extension from source; the **Run Extension (MaternalBound-Redux)** launch opens a real CoilSnake project from the submodule (`git submodule update --init MaternalBound-Redux`).
 

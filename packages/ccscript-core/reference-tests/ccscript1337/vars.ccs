@@ -1,0 +1,33 @@
+///@name: Variable Declaration Test
+///@desc: Tests CCScript constant definitions
+///@expect:
+/// "[01 00 00 00]"
+/// "Hello!"
+/// "[2a 00]"
+/// "FOO([03 00 00 00])"
+/// "@This is a test."
+/// "[0c 00 c0 00]"
+
+
+
+var test1 = 1
+var test2 = "Hello!"
+var test3 = flag 42
+var test4 = foo(3)
+var test5 = {
+	"@This is"
+	" a test."
+}
+var test6 = label
+
+command foo(x) { "FOO(" x ")" }
+
+test1
+test2
+test3
+
+label:	// $C0:000C
+
+test4
+test5
+test6

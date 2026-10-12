@@ -1,0 +1,31 @@
+///@name: Basic Library Test
+///@desc: Tests the basic standard library commands.
+///@expect:
+/// "Hello![03 00]" "I am pie![13 02]" "[13 14 02]"
+/// "This is a...[10 30] dramatic pause!"
+/// "Setting flag...[04 02 00]"
+/// "Unsetting flag...[05 02 00]"
+/// "Newline...[00]"
+/// "Clearline...[12]"
+/// "[08 56 34 12 00]"
+/// "[0a bc 9a 78 00]"
+
+
+"Hello!" next
+"I am pie!" end
+
+wait prompt eob
+
+"This is a..." pause(0x30) " dramatic pause!"
+
+"Setting flag..." set(2)
+"Unsetting flag..." unset(2)
+
+// NOTE: toggle() involves conditional branching and
+//       is tested in advlibs.ccs
+
+"Newline..." newline
+"Clearline..." clearline
+
+call(0x123456)
+goto(0x789abc)

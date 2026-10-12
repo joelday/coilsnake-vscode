@@ -1,0 +1,29 @@
+///@name: If conditionals as expressions
+///@desc: Tests the new treatment of 'if' conditions as expressions.
+///@expect:
+/// "In command foo: [07 01 00][1b 02 2e 00 c0 00]"
+/// "Flag 1 is active[0a 3e 00 c0 00]"
+/// "Flag 1 is not on"
+
+
+//
+// Pass an if expression as a command parameter
+//
+
+command foo(x) {
+	"In command foo: " x
+}
+
+foo( if flag 1 { "Flag 1 is active" } else { "Flag 1 is not on" } )
+
+//
+// Result:
+// c0:0000		"In command foo: "
+// c0:0010		[07 01 00]				flag 1
+// c0:0013		[1b 02 2e 00 c0 00]		iffalse goto <else>
+// c0:0019		"Flag 1 is active"
+// c0:0029		[0a 3e 00 c0 00]		goto <end>
+//			<else>
+// c0:002e		"Flag 1 is not on"
+//			<end>
+// c0:003e

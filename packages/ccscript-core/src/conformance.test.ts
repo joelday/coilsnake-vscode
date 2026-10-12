@@ -7,7 +7,7 @@ import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { SyntaxTree } from './syntaxTree';
 
-const TEST_DIR = '../../../ccscript-compiler/ccscript13/src/tests';
+const TEST_DIR = '../reference-tests/ccscript1337';
 
 describe('CCScript Reference Compiler Conformance', () => {
     // Get all .ccs files

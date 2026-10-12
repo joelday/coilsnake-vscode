@@ -1,0 +1,96 @@
+///@name: Bounded Expression Test
+///@desc: Tests bounded array expressions
+///@expect:
+/// "[dd 78 56 44 33 22 11]"
+/// "sodoffbaldrick"
+/// "[00]h[00]foo[00 01 00 00 00 ff 00 ee ff 00 00]"
+/// "[44 00 00 00]"
+/// "E[44 33 22 11 44 33 22 11 ef be ad de]"
+/// "mubeinqui[00]"
+/// "[00 00 00]h[00 00 00]pie[00]o[00 00 00 00 00 00 00]"
+/// "T[33]Th[22 11]This[44 33 00 00]"
+
+
+// First just test various size interpretations:
+byte 0xaabbccdd				// [dd]
+short 0x12345678			// [78 56]
+long 0x11223344				// [44 33 22 11]
+
+
+byte "supercalifragilisticexpialidocious"
+short "odiferous sanguinity"
+short "of course you know, this means war."
+byte "foobar"
+long "bald eagles"
+long "rickety bridges"
+
+
+// If the interpreted size happens to be larger than the expression,
+// the remaining space should be filled with zeroes:
+
+byte ""						// [00]
+short "h"					// h[00]
+long "foo"					// foo[00]
+long flag 1					// [01 00 00 00]
+
+short byte 0xffffff			// [ff 00]
+long short 0x00c0ffee		// [ee ff 00 00]
+long byte 0x11223344		// [44 00 00 00]
+
+
+
+// Size-bounded expressions can be indexed to retrieve a particular
+// offset (in bytes, shorts, or longs) of the operand expression:
+
+byte [4] "ABCDEFG"			// E
+
+byte [0] 0x11223344			// [44]
+byte [1] 0x11223344			// [33]
+byte [2] 0x11223344			// [22]
+byte [3] 0x11223344			// [11]
+
+short [0] 0x11223344		// [44 33]
+short [1] 0x11223344		// [22 11]
+
+long [0] 0xdeadbeef			// [ef be ad de]
+
+short [3] "omnis mundi creatura"	// "mu"
+short [4] "quasi liber et pictura"	// "be"
+short [5] "nobis est in speculum"	// "in"
+
+long [8] "verba vana aut risui apta non loqui" // "qui[00]"
+
+
+// As before, overflows are filled with zeroes
+
+byte [0] ""					// [00]
+byte [1] "h"				// [00]
+byte [2512]	"pie"			// [00]
+
+short [0] "h"				// h[00]
+short [1] flag 4212			// [00 00]
+
+long [0] "pie"				// pie[00]
+long [1] "hello"			// o[00 00 00]
+long [42] 42				// [00 00 00 00]
+
+
+
+// Test expressions on identifiers
+
+define mystring = "This is a string"
+define mynumber = 0x11223344
+
+command mycmd(arg) {
+	short arg
+}
+
+byte [0] mystring			// T
+byte [1] mynumber			// [33]
+
+short[0] mystring			// Th
+short[1] mynumber			// [22 11]
+
+long [0] mystring			// This
+
+long mycmd(mynumber)		// [44 33 00 00]

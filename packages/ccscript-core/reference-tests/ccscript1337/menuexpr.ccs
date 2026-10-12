@@ -1,0 +1,57 @@
+///@name: Menus as expressions
+///@desc: Tests the new treatment of menus as expressions in the grammar
+///@expect:
+/// "Menu in command:"
+/// "[19 02]Yes[02][19 02]No[02][1c 07 02][11 12][09 02][2f 00 c0 00][39 00 c0 00]"
+/// "[0a 39 00 c0 00][0a 00 00 c0 00][0a 43 00 c0 00][0a 00 02 f0 00][0a 43 00 c0 00]"
+/// 
+
+
+
+//
+// Pass a menu as a command parameter
+//
+command foo(x) {
+	"Menu in command:" x
+}
+
+foo( menu { "Yes": goto(0xc00000) default "No" : goto(0xf00200) } )
+
+// Result:
+// c0:0000		"Menu in command:"
+// c0:0010		[19 02]Yes[02]			LOAD "Yes"
+// c0:0016		[19 02]No[02]			LOAD "No"
+// c0:001b		[1c 07 02]				Standard 2 column menu
+// c0:001e		[11 12]					Clear line
+// c0:0020		[09 02]					Begin multijump
+// c0:0022		[2f 00 c0 00]			JMP <yes>
+// c0:0026		[39 00 c0 00]			JMP <no>
+// c0:002a		[0a 39 00 c0 00]		GOTO <no> ; default option
+//			<yes>
+// c0:002f		[0a 00 00 c0 00]		GOTO $c0:0000
+// c0:0034		[0a 43 00 c0 00]		GOTO <end> ; strictly unnecessary; should be optimized out
+//			<no>
+// c0:0039		[0a 00 02 f0 00]		GOTO $f0:0200
+// c0:003e		[0a 43 00 c0 00]		GOTO <end> ; also unnecessary
+//			<end>
+// c0:0043
+
+
+//
+// Use a menu in a compound string
+//
+//define yes = "Yes"
+//define no = "No"
+
+//"Menu in string:{ menu { yes: end  no: end } }"
+
+//
+// TODO: Ah, here's another problem. String subexpressions were assumed not
+// to contain any '{' or '}' characters, so the expression block is assumed
+// to end on the first '}' character. We'll have to re-think the expression
+// hierarchy a bit, I think, or else make string subexpression parsing a bit
+// more intelligent.
+//
+// In any case, this is an uncommon use case, so we'll leave it for now,
+// file an issue, and address it later during expression refactoring.
+//

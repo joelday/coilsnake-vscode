@@ -1,0 +1,39 @@
+///@name: Text Library Test
+///@desc: Tests the text output commands of the standard library.
+///@expect:
+///	"Text position:[18 05 0a 01]"
+///	"Text color:[1c 00 04]"
+///	"Text blips:[1f 04 01]"
+///	"Boing! Zoom![1f 31]"
+///	"Boring stuff.[1f 30]"
+///	"SMAAASH![1c 08 01]  "
+///	"YOU WON![1c 08 02]  "
+///	"Hero's name:[1c 02 01]"
+///	"Hyper beam:[1c 05 2a]"
+///	"PSI Rockin'![1c 12 04]"
+///	"Teleport:[1c 06 01]"
+///	"Number:[1c 0a 20 00 00 00]"
+///	"Cash monies:[1c 0b 64 00 00 00]"
+///	"Action user:[1c 0d]"
+///	"Action target:[1c 0e]"
+///	"Action delta:[1c 0f]"
+///	"Ness's PP:[1c 01 0e]"
+
+
+"Text position:" text_pos(10, 1)
+"Text color:" text_color(4)
+"Text blips:" text_blips(1)
+"Boing! Zoom!" font_saturn()
+"Boring stuff." font_normal()
+"SMAAASH!" smash
+"YOU WON!" youwon
+"Hero's name:" name(1)
+"Hyper beam:" itemname(42)
+"PSI Rockin'!" psiname(4)
+"Teleport:" teleportname(1)
+"Number:" number(32)
+"Cash monies:" money(100)
+"Action user:" user()
+"Action target:" target()
+"Action delta:" delta()
+"Ness's PP:" stat(14)
