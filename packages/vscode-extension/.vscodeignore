@@ -1,0 +1,24 @@
+# Development files
+.vscode/**
+.vscode-test/**
+node_modules/**
+out/**
+.gitignore
+.yarnrc
+webpack.config.js
+vsc-extension-quickstart.md
+
+# Config files
+**/tsconfig.json
+**/.eslintrc.json
+eslint.config.mjs
+
+# Source files (keep compiled dist only)
+**/*.ts
+!dist/**/*.js
+
+# Maps
+**/*.map
+
+# Misc
+**/.DS_Store

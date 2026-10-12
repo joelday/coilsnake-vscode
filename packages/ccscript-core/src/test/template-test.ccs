@@ -1,0 +1,22 @@
+// Template string test file
+define player_name = "Ness"
+define hp = 100
+define item_id = 42
+
+// Simple identifier template
+define greeting = "Hello, {player_name}!"
+
+// Expression templates
+define status = "HP: {hp}, Item: {itemname(item_id)}"
+
+// Complex expressions
+define calculation = "Result: {10 + 20 * 3}"
+
+// Flag check template
+define flag_status = "Flag 5 is {flag 5}"
+
+// Nested function calls
+define complex_call = "Character: {name(player(1))}"
+
+// Multiple templates in one string
+define full_message = "{player_name} has {hp} HP and item {item_id}"

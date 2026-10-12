@@ -1,0 +1,12 @@
+///@name: Text
+///@desc: Tests simple text output.
+///@expect:
+/// "This is only a test.[12 34 56 78 9a bc de f0]"
+/// "@Pies are[10 FF] delicious!"
+/// "[04 02 00]Poop.[13 02]"
+
+
+"This is only a test."
+"[12 34 56 78 9a bc de f0]"
+"@Pies are[10 FF] delicious!"
+"[04 02 00]Poop.[13 02]"

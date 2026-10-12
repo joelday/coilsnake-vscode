@@ -1,0 +1,28 @@
+///@name: Sprite Library Test
+///@desc: Tests the sprite/visual effect commands in the standard library.
+///@expect:
+/// 
+/// "Ness face south [1f 13 01 05]"
+/// "TPT face northwest [1f 16 80 00 08]"
+/// "Show char [1f ec 01 02]"
+/// "Show party [1f ec ff 05]"
+/// "Show floaty on char [1f 1c 01 04]"
+/// "Show floaty on sprite [1f 1a 80 00 09]"
+/// "Hide char [1f eb 01 06]"
+/// "Hide party [1f eb ff 06]"
+/// "Hide sprite [1f 1e 80 00 08]"
+/// "Hide float on char [1f 1d 01]"
+/// "Hide float on sprite [1f 1b 80 00]"
+/// 
+
+"Ness face south " char_direction(1, SOUTH)
+"TPT face northwest " sprite_direction(128, NORTHWEST)
+"Show char " show_char(1, APPEAR_BLINK)
+"Show party " show_party(APPEAR_SPRAY)
+"Show floaty on char " show_char_float(1, FLOAT_BULB)
+"Show floaty on sprite " show_sprite_float(128, FLOAT_HEART)
+"Hide char " hide_char(1)
+"Hide party " hide_party()
+"Hide sprite " hide_sprite(128, VANISH_HORZ)
+"Hide float on char " hide_char_float(1)
+"Hide float on sprite " hide_sprite_float(128)

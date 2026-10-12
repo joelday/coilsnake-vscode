@@ -1,0 +1,40 @@
+// Single-line comments
+// This is a comment
+set flag 1 // Comment after statement
+
+// Multi-line comments
+/* This is a
+   multi-line
+   comment */
+
+/*
+ * Documentation style comment
+ * for a command definition
+ */
+command documented_command {
+    /* Inner comment */
+    set flag 2
+}
+
+// Nested block comment (if supported)
+/* Outer /* inner */ still in comment? */
+
+// Comments in various positions
+if flag 1 { // condition comment
+    // inside if block
+    set flag 2 // statement comment
+} // end if comment
+
+// Comment-only lines
+
+
+
+// Multiple blank lines above
+
+define value = 42 /* inline comment */ + 10
+
+/*******************
+ * Section Header  *
+ *******************/
+ 
+section_start:

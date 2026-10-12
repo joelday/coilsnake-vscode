@@ -1,0 +1,108 @@
+///@name: Conditional Expression Test
+///@desc: Tests conditional expressions
+///@expect:
+/// "[07 01 00][1b 02 14 00 c0 00]Test 1[0a 14 00 c0 00]"
+/// "[07 02 00][1b 02 38 00 c0 00]Multiplesubexpressions[0a 38 00 c0 00]"
+/// "[07 03 00][1b 02 4f 00 c0 00]flag 3 on[0a 5d 00 c0 00]flag 3 not set"
+///
+/// "[07 04 00][1b 02 7b 00 c0 00]flag 4 is active[0a e5 00 c0 00]"
+/// "[07 05 00][1b 02 99 00 c0 00]flag 5 is active[0a e5 00 c0 00]"
+/// "[07 06 00][1b 02 b7 00 c0 00]flag 6 is active[0a e5 00 c0 00]"
+/// "[07 07 00][1b 02 d5 00 c0 00]flag 7 is active[0a e5 00 c0 00]"
+/// "no flags are on!"
+
+
+// Single conditional, no else:
+if flag 1
+	"Test 1"
+	
+// Result:
+// c0:0000		[07 01 00]				flag 1
+// c0:0003		[1b 02 14 00 c0 00]		IFFALSE GOTO <end>
+// c0:0009		Test 1
+// c0:000f		[0a 14 00 c0 00]		GOTO <end>
+// c0:0014		<end>
+
+// NOTE: that last [0a] code is strictly unecessary when there's
+// no 'else' clause... it will be removed soon, so this test will
+// have to be updated.
+
+	
+if flag 2 {
+	"Multiple"
+	"subexpressions"
+}
+
+// Result:
+// c0:0014		[07 02 00]				flag 2
+// c0:0017		[1b 02 38 00 c0 00]		IFFALSE GOTO <end>
+// c0:001d		Multiple
+// c0:0025		subexpressions
+// c0:0033		[0a 38 00 c0 00]		GOTO <end>
+// c0:0038		<end>
+
+
+// With 'else' clause:
+if flag 3 {
+	"flag 3 on"
+}
+else {
+	"flag 3 not set"
+}
+
+// Result:
+// c0:0038		[07 03 00]				flag 3
+// c0:003b		[1b 02 4f 00 c0 00]		IFFALSE GOTO <else>
+// c0:0041		flag 3 on			
+// c0:004a		[0a 5d 00 c0 00]		GOTO <end>
+// c0:004f		<else>
+// c0:004f		flag 3 not set
+// c0:005d		<end>
+
+
+// Multiple else-if clause chaining:
+if flag 4 {
+	"flag 4 is active"
+}
+else if flag 5 {
+	"flag 5 is active"
+}
+else if flag 6 {
+	"flag 6 is active"
+}
+else if flag 7 {
+	"flag 7 is active"
+}
+else {
+	"no flags are on!"
+}
+
+// Result:
+// c0:005d		[07 04 00]				flag 4
+// c0:0060		[1b 02 7b 00 c0 00]		IFFALSE GOTO <else4>
+// c0:0066		flag 4 is active
+// c0:0076		[0a e5 00 c0 00]		GOTO <end4> ; this will be way at the end
+// c0:007b		<else4>
+//			here begin "if flag 5"
+// c0:007b		[07 05 00]				flag 5
+// c0:007e		[1b 02 99 00 c0 00]		IFFALSE GOTO <else5>
+// c0:0084		flag 5 is active		
+// c0:0094		[0a e5 00 c0 00]		GOTO <end5> ; will be same place as end4
+// c0:0099		<else5>
+//			here begin "if flag 6"
+// c0:0099		[07 06 00]				flag 6
+// c0:009c		[1b 02 b7 00 c0 00]		IFFALSE GOTO <else6>
+// c0:00a2		flag 6 is active		
+// c0:00b2		[0a e5 00 c0 00]		GOTO <end6> ; == <end5> == <end4>
+// c0:00b7		<else6>
+//			here begin "if flag 7"
+// c0:00b7		[07 07 00]				flag 7
+// c0:00ba		[1b 02 d5 00 c0 00]		IFFALSE GOTO <else7>
+// c0:00c0		flag 7 is active		
+// c0:00d0		[0a e5 00 c0 00]		GOTO <end7> ; == <end6> == <end5> == <end4>
+// c0:00d5		<else7>
+// c0:00d5		no flags are on!		
+// c0:00e5		<end7>
+// c0:00e5		<end6>
+// c0:00e5		<end5>
+// c0:00e5		<end4>

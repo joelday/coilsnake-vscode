@@ -1,0 +1,156 @@
+{
+    "name": "coilsnake-vscode",
+    "displayName": "CoilSnake",
+    "description": "CoilSnake project and CCScript language support",
+    "version": "1.0.0",
+    "publisher": "joelday",
+    "preview": true,
+    "engines": {
+        "vscode": "^1.100.0"
+    },
+    "icon": "images/icon.png",
+    "license": "MIT",
+    "keywords": [
+        "EarthBound",
+        "Mother 2",
+        "CCScript",
+        "Modding",
+        "PK Hack"
+    ],
+    "categories": [
+        "Programming Languages"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "ccscript",
+                "aliases": [
+                    "CCScript",
+                    "ccscript"
+                ],
+                "extensions": [
+                    ".ccs"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "configuration": {
+            "title": "CCScript",
+            "properties": {
+                "ccscript.stdLibPath": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Path to the CCScript standard library directory containing `std.ccs` and `stdarg.ccs`. If not set, standard library support will be disabled.\n\nExample: `/path/to/ccscript13/lib`"
+                },
+                "ccscript.inlayHints.parameterNames": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Show parameter names before literal arguments, e.g. `give(character: 1, item: 18)`."
+                },
+                "ccscript.inlayHints.values": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Show what literal values refer to: item, character, PSI, enemy and teleport names and NPC dialogue from the CoilSnake project's tables, and constants that name an address."
+                },
+                "ccscript.inlayHints.tableReferences": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Show which CoilSnake project table entries (items, NPCs, enemies...) use a label's text."
+                },
+                "ccscript.inlayHints.controlCodes": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Show the commands that raw control codes in strings encode, e.g. `\"[1C 02 03]\"` → `name(Jeff)`."
+                }
+            }
+        },
+        "views": {
+            "explorer": [
+                {
+                    "id": "ccscript-project-explorer",
+                    "name": "CCScript Project"
+                },
+                {
+                    "id": "ccscript-ast-explorer",
+                    "name": "CCScript AST"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "ccscript.refreshProjectExplorer",
+                "title": "Refresh",
+                "icon": "$(refresh)",
+                "category": "CCScript"
+            },
+            {
+                "command": "ccscript.refreshASTExplorer",
+                "title": "Refresh AST",
+                "icon": "$(refresh)",
+                "category": "CCScript"
+            },
+            {
+                "command": "ccscript.revealASTNode",
+                "title": "Reveal in Editor",
+                "category": "CCScript"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "ccscript.refreshProjectExplorer",
+                    "when": "view == ccscript-project-explorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "ccscript.refreshASTExplorer",
+                    "when": "view == ccscript-ast-explorer",
+                    "group": "navigation"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "build": "tsc -p ./ && webpack",
+        "build:watch": "tsc -watch -p ./",
+        "lint": "eslint .",
+        "clean": "rm -rf out dist",
+        "vsce:package": "vsce package --no-dependencies"
+    },
+    "dependencies": {
+        "ccscript-language-server": "^1.0.0",
+        "vscode-languageclient": "^10.1.2"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@types/node": "^22.20.5",
+        "@types/vscode": "~1.100.0",
+        "@types/webpack": "^5.28.5",
+        "@vscode/vsce": "^4.0.0",
+        "eslint": "^10.12.0",
+        "ts-loader": "^9.6.2",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.71.1",
+        "webpack": "^5.111.1",
+        "webpack-cli": "^7.2.3"
+    },
+    "bugs": {
+        "url": "https://github.com/joelday/coilsnake-vscode/issues",
+        "email": "joelday@gmail.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/joelday/coilsnake-vscode.git",
+        "directory": "packages/vscode-extension"
+    },
+    "homepage": "https://github.com/joelday/coilsnake-vscode",
+    "author": {
+        "name": "Joel Day",
+        "url": "https://github.com/joelday"
+    }
+}

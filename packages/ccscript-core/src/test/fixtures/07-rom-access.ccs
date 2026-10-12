@@ -1,0 +1,24 @@
+// Simple ROM writes
+ROM[0x1000] = 0xFF
+ROM[0x2000] = 42
+ROM[0x3000] = flag 5
+
+// ROM writes with expressions
+define base_addr = 0x8000
+ROM[base_addr] = 100
+ROM[base_addr + 1] = 200
+ROM[base_addr + 2] = 300
+
+// ROM table writes
+ROMTBL[0x10000, 4, 0] = 0xABCD
+ROMTBL[0x10000, 4, 1] = 0x1234
+ROMTBL[0x10000, 4, 2] = 0x5678
+
+// Complex ROM table writes
+define table_base = 0x20000
+define entry_size = 8
+define entry_index = 5
+ROMTBL[table_base, entry_size, entry_index] = 0xFF00
+
+// ROM writes with calculated addresses
+ROM[0x4000 + (flag 10 * 2)] = 99

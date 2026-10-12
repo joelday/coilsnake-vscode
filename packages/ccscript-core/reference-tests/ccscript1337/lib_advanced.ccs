@@ -1,0 +1,72 @@
+///@name: Advanced Library Test
+///@desc: Tests the library commands that use features like boolean operators and conditionals
+///@expect:
+/// "[07 ff 01 1b 02 11 00 c0 00 05 ff 01 0a 14 00 c0 00 04 ff 01]"
+/// "[18 04][1f 23 9a 01][1b 02 26 00 c0 00][02][0a 26 00 c0 00]"
+/// "[1d 03 02 0b 00]"
+/// "[1d 14 10 27 00 00 0b 00]"
+/// "[1d 14 ff ff ff ff 0b 00 1b 04]"
+/// "[1d 14 ff ff ff ff 0b 00 1b 04 0e 00]"
+///
+
+
+/*
+ * toggle(flag)
+ *  uses a conditional branch to set appropriate value
+ */
+toggle(0x1ff)
+
+// RESULT:
+// c0:0000		[07 ff 01]				TEST $1ff
+// c0:0003		[1b 02 11 00 c0 00]		IFFALSE GOTO c0:0011
+// c0:0009		[05 ff 01]				UNSET $1ff
+// c0:000c		[0a 14 00 c0 00]		GOTO c0:0014
+// c0:0011		[04 ff 01]				SET $1ff
+// c0:0014  --->
+
+
+
+
+/*
+ * battle(num)
+ *  uses a conditional branch to check for loss/victory
+ */
+battle(410)
+
+// RESULT:
+// c0:0014		[18 04]					WINDOW_CLOSEALL
+// c0:0016		[1f 23 9a 01]			BATTLE 0x19a
+// c0:001a		[1b 02 26 00 c0 00]		IFFALSE GOTO c0:0026
+// c0:0020		[02]					END BLOCK
+// c0:0021		[0a 26 00 c0 00]		GOTO c0:0026
+// c0:0026  --->
+
+// NOTE: eventually we will want to apply some optimizations
+// to conditional branches, like eliminating the unnecessary
+// goto in the above case. That will of course require updating
+// this test as well.
+
+
+
+/*
+ * full and hasmoney use 'not' to invert the result of the underlying control code
+ */
+full(2)
+// Result: [1d 03 02 0b 00]
+
+
+hasmoney(10000)
+// Result: [1d 14 10 27 00 00 0b 00]
+
+
+
+/*
+ * The memory commands arg_zero and counter_zero actually use hasmoney() as a way
+ * to get a zero into the result register. Will fail if the player somehow has
+ * INT_MAX dollars on hand. :P
+ */
+arg_zero()
+// Result: [1d 14 ff ff ff ff 0b 00 1b 04]
+
+counter_zero()
+// Result: [1d 14 ff ff ff ff 0b 00 1b 04 0e 00]

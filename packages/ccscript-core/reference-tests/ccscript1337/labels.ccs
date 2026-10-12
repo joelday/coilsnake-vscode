@@ -1,0 +1,60 @@
+///@name: Labels Test
+///@desc: Tests the creation and referencing of labels.
+///@expect:
+/// "[00 00 c0 00][20 00 c0 00][60 00 c0 00][70 00 c0 00]"
+/// "[20 01 c0 00][20 01 c0 00][20 01 c0 00][20 01 c0 00]"
+/// "This is some pointless filler text that is exactly 64 bytes long"
+/// "More filler text"
+///	"This text is not filler. It is actually extremely important"
+///	"and I strongly recommend that you take the time to read and"
+///	"understand its message, which is also extremely important."
+/// "[00 00 c0 00][20 00 c0 00][60 00 c0 00][70 00 c0 00]"
+/// "[20 01 c0 00][20 01 c0 00][20 01 c0 00][20 01 c0 00]"
+/// 
+
+
+start: 		// $c0:0000
+
+
+// Without the colon (':'), this is an expression that
+// evaluates to the address of the label:
+start
+
+// We can also refer to labels before actually defining them:
+label0
+label1
+label2
+label3
+label4
+label5
+label6
+
+
+
+// Now define the labels. The previous outputs took up 4*8 = 32 bytes,
+// so the next label's address is $c0:0020
+label0:		// $c0:0020
+	"This is some pointless filler text that is exactly 64 bytes long"
+	
+label1:		// $c0:0060
+	"More filler text"
+	
+label2:		// $c0:0070
+	"This text is not filler. It is actually extremely important"
+	"and I strongly recommend that you take the time to read and"
+	"understand its message, which is also extremely important."
+
+label3:		// $c0:0120
+label4:
+label5:
+label6:		// Consecutive label statements all share an address
+
+// Now output the addresses of all the labels, again.
+start
+label0
+label1
+label2
+label3
+label4
+label5
+label6

@@ -1,0 +1,6 @@
+{
+  "ccscript.stdLibPath": "/path/to/ccscript-compiler/ccscript13/lib",
+  
+  // Example for this repository:
+  // "ccscript.stdLibPath": "${workspaceFolder}/ccscript-compiler/ccscript13/lib"
+}

@@ -1,0 +1,34 @@
+///@name: Memory Library Test
+///@desc: Tests the memory commands in the standard library.
+///@expect:
+/// 
+/// "Number selector [1f 52 03 0d 00]"
+/// "Load argument [0e ff 0d 01]"
+/// "Load counter [0e 02]"
+/// "Counter is [0d 01][1b 04][0b 14]"
+/// "Increment [0f]"
+/// "Swap arg and result [1b 04]"
+/// "Counter to argument [0d 01]"
+/// "Result to argument [0d 00]"
+/// "Compare result [0b 32]"
+/// "Negative compare result [0c 64]"
+/// "Write registers [1b 00]"
+/// "Load registers [1b 01]"
+/// 
+
+
+// NOTE: counter_zero and arg_zero are compound commands that indirectly
+// use boolean negation, and are tested in lib_advanced.ccs
+
+"Number selector " input(3)
+"Load argument " arg(255)
+"Load counter " counter(2)
+"Counter is " counter_is(20)
+"Increment " inc()
+"Swap arg and result " swap()
+"Counter to argument " ctoarg()
+"Result to argument " rtoarg()
+"Compare result " result_is(50)
+"Negative compare result " result_not(100)
+"Write registers " store_registers
+"Load registers " load_registers

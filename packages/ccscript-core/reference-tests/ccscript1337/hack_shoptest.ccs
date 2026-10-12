@@ -1,0 +1,97 @@
+///@name: Hack -- Shop test
+///@desc: Small hack implementing a shop test and a sound test
+///@file: Earthbound.32mb.smc
+///@addr: F00000
+///@expect: hack_shoptest.smc
+
+/*
+ *  CCScript shopping test!
+ */
+
+// Initialization stuff
+setup_background(24)
+newgame_location(3072,1024)
+
+// Set the startup flyover text to point to the label "init"
+newgame_startup(init)
+
+
+
+command shop_item(item, price)
+{
+	"@Would you like to buy the {itemname(item)} for ${number(price)}?" next
+	menu
+	{
+		"Yes" :
+		{
+			// Make sure the player has enough money
+			if hasmoney(price)
+			{
+				give(0xFF, item)
+				takemoney(price)
+				
+				sound(SND_KACHING)
+				"@Your business is appreciated!" next
+				
+				sound(SND_SPECIALITEM)
+				"@({name(1)} got the {itemname(item)}.)"
+				next
+			}
+			else
+			{
+				"@Sorry, you don't have enough money." next
+			}
+		}
+		"No" :
+		{
+			"@Ah, I see." next
+			"@Come back if you change your mind!" next
+		}
+	}
+}
+
+
+init:
+
+	music(25)
+
+	hide_party
+
+	window_open(1)
+		
+	"@Shop test!" next
+
+	
+	shop_item(35, 5)
+	shop_item(221, 8)
+	shop_item(198, 4)
+	shop_item(102, 10)
+	
+	"@Done with shop test." next
+	
+	"@Go to sound test?" next
+	
+	menu {
+		"Yes" : call(soundtest)
+		default "No" : ""
+	}
+
+	prompt
+	window_closetop
+	eob
+	
+	
+soundtest:
+	clearline
+	// Ask for a number. If it's zero, exit the sound test
+	input(3)
+	if result_is(0)
+		goto(exit)
+
+	// Play the sound and loop back
+	clearline "{ sound(0) }@Playing sound #{ number(0) }" next
+	goto(soundtest)
+	
+exit:
+	"@Done!"
+	end

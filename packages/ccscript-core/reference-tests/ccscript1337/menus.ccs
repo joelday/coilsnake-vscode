@@ -1,0 +1,106 @@
+///@name: Menu Test
+///@desc: Tests the evaluation of menu expressions
+///@expect:
+/// "[19 02]Yes[02][19 02]No[02][1c 07 02][11 12]"
+/// "[09 02][1f 00 c0 00][28 00 c0 00][0a 28 00 c0 00]"
+/// "Yay![0a 34 00 c0 00]Ohnoes![0a 34 00 c0 00]"
+///
+/// "[19 02]Almonds[02][19 02]Pistachios[02]"
+/// "[19 02]Walnuts[02][19 02]Cashews[02]"
+/// "[1c 0c 01][11 12][09 04]"
+/// "[7b 00 c0 00][91 00 c0 00][ab 00 c0 00][d3 00 c0 00]"
+/// "[0a e4 00 c0 00]"
+/// "[04 2a 00]Yay almonds![13 02][0a e4 00 c0 00]"
+/// "Pistachios rock![0a 00 80 c5 00][0a e4 00 c0 00]"
+/// "Yeah, walnuts are pretty awesome.[13 02][0a e4 00 c0 00]"
+/// "Go banana![13 02][0a e4 00 c0 00]Nothin' doin', huh?"
+
+
+// A simple two-option menu
+menu {
+	"Yes": "Yay!"
+	default "No": "Ohnoes!"
+}
+
+// Result:
+// c0:0000		[19 02]Yes[02]			LOAD "Yes"
+// c0:0006		[19 02]No[02]			LOAD "No"
+// c0:000b		[1c 07 02]				Columns (1c 07 used when no columns specified)
+// c0:000e		[11 12]					clear line
+// c0:0010		[09 02]					begin multijump
+// c0:0012		[1f 00 c0 00]			JMP <yes>
+// c0:0016		[28 00 c0 00]			JMP <no>
+// c0:001a		[0a 28 00 c0 00]		GOTO <no> ; default option
+// c0:001f		<yes>
+// c0:001f		Yay!
+// c0:0023		[0a 34 00 c0 00]		GOTO <end>
+// c0:0028		<no>
+// c0:0028		Ohnoes!
+// c0:002f		[0a 34 00 c0 00]		GOTO <end>
+// c0:0034		<end>
+
+
+// Now, a more complex menu specifying the number of columns
+menu 1 {
+	"Almonds" : {
+		set(flag 42)
+		"Yay almonds!"
+		end
+	}
+	"Pistachios" : {
+		"Pistachios rock!"
+		goto(0xc58000)
+	}
+	"Walnuts" : {
+		"Yeah, walnuts are pretty awesome."
+		end
+	}
+	"Cashews" : {
+		"Go banana!"
+		end
+	}
+}
+"Nothin' doin', huh?"
+end
+
+// Result:
+// c0:0034		[19 02]Almonds[02]		LOAD "Almonds"
+// c0:003e		[19 02]Pistachios[02]	LOAD "Pistachios"
+// c0:004b		[19 02]Walnuts[02]		LOAD "Walnuts"
+// c0:0055		[19 02]Cashews[02]		LOAD "Cashews"
+// c0:005f		[1c 0c 01]				Columns
+// c0:0062		[11 12]					Clear line
+// c0:0064		[09 04]					BEGIN MULTIJUMP
+// c0:0066		[7b 00 c0 00]			JMP <almonds>
+// c0:006a		[91 00 c0 00]			JMP <pistachios>
+// c0:006e		[ab 00 c0 00]			JMP <walnuts>
+// c0:0072		[d3 00 c0 00]			JMP <cashews>
+// c0:0076		[0a e4 00 c0 00]		GOTO <end>
+// 			<almonds>
+// c0:007b		[04 2a 00]				set flag 42
+// c0:007e		Yay almonds!
+// c0:008a		[13 02]					END
+// c0:008c		[0a e4 00 c0 00]		GOTO <end>		// NOTE: jump unnecessary when block ends...
+//			<pistachios>
+// c0:0091		Pistachios rock!
+// c0:00a1		[0a 00 80 c5 00]		GOTO DEBUG MENU
+// c0:00a6		[0a e4 00 c0 00]		GOTO <end>
+//			<walnuts>
+// c0:00ab		Yeah, walnuts are pretty awesome.
+// c0:00cc		[13 02]					END
+// c0:00ce		[0a e4 00 c0 00]		GOTO <end>
+//			<pistachios>
+// c0:00d3		Go banana!
+// c0:00dd		[13 02]					END
+// c0:00df		[0a e4 00 c0 00]		GOTO <end>
+//			<end>
+// c0:00e4		Nothin' doin', huh?
+
+
+// Note that the above listing suggests a few opportunities
+// for optimization. In particular, the goto <end> codes after
+// each menu choice's text are redundant if that text ends
+// with an "end" or a "goto."
+// In particular, if that text consists _entirely_ of a "goto",
+// the whole block is redundant, and the goto address can be
+// merged into the multijump table.

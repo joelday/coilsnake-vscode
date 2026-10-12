@@ -1,0 +1,42 @@
+///@name: Number Test
+///@desc: Tests the compilation of simple numeric values
+///@expect:
+/// "[01 00 00 00][0c 00 00 00][7B 00 00 00][D2 04 00 00][39 30 00 00]"
+/// "[40 e2 01 00][87 d6 12 00][4e 61 bc 00][15 cd 5b 07][d2 02 96 49]"
+/// "[ff ff ff ff]"
+/// "[01 00 00 00][12 00 00 00][23 01 00 00][34 12 00 00][45 23 01 00]"
+/// "[56 34 12 00][67 45 23 01][78 56 34 12][ff ff ff ff][ff ff ff ff]"
+/// "[ff 00 00 00][ff 00 00 00][ff 00 00 00][ff 00 00 00][ff ff 00 00]"
+/// "[ff ff 00 00][ff ff ff 00][ef cd ab 00]"
+
+1
+12
+123
+1234
+12345
+123456
+1234567
+12345678
+123456789
+1234567890
+12345678901		// should be truncated
+
+0x1
+0x12
+0x123
+0x1234
+0x12345
+0x123456
+0x1234567
+0x12345678	
+0x123456789		// should be truncated
+0x123456789a	// should be truncated
+
+255
+0xFF
+0xff
+0xfF
+0xfFfF
+0xffff
+0xfFFfFF
+0xAbCdEf

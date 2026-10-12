@@ -1,0 +1,41 @@
+// Command without parameters
+command simple_command {
+    set flag 1
+    goto next
+}
+
+// Command with parameters
+command greet(name, age) {
+    call show_message
+    set flag 2
+}
+
+// Command with complex body
+command initialize_game(difficulty, player_name) {
+    ROM[0x1000] = difficulty
+    set flag 100
+    
+    if difficulty > 2 {
+        call hard_mode_setup
+    } else {
+        call normal_mode_setup
+    }
+    
+    goto start_game
+}
+
+// Nested command calls
+command outer_command {
+    call inner_command
+    call simple_command
+}
+
+command inner_command {
+    set flag 50
+}
+
+next:
+show_message:
+hard_mode_setup:
+normal_mode_setup:
+start_game:

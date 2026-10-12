@@ -1,0 +1,31 @@
+///@name: Flags Test
+///@desc: Tests the evaluation of flag expressions
+///@expect:
+/// "[01 00 02 00 00 01 ED 03 ff ff dd cc 2a 00 07 01 00 0b 00]"
+
+define myflag = flag 42
+
+
+//
+// In most contexts, flags are evaluated just as short integers:
+//
+flag 1				// [01 00]
+flag 2				// [02 00]
+flag 256			// [00 01]
+flag 1005			// [ED 03]
+flag 0xffff			// [ff ff]		TODO: flags should probably generate
+flag 0xaabbccdd		// [dd cc]		a warning when the value is > 1024
+
+myflag				// [2a 00]
+
+
+//
+// When evaluated as a boolean expression - i.e., in an 'if' test
+// or as and operand to a boolean operator - they are evaluated
+// using the 'load flag' code, [07 xx xx].
+//
+
+not flag 1			// [07 01 00 0b 00]
+
+// The more advanced examples of this using 'and'/'or' and 'if' are
+// tested in booleanexpr.ccs and conditionals.ccs, respectively.

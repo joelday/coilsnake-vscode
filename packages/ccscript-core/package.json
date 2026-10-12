@@ -1,0 +1,42 @@
+{
+    "name": "ccscript-core",
+    "version": "1.0.0",
+    "description": "CCScript language parser, semantic analyzer, and type system",
+    "main": "./out/index.js",
+    "types": "./out/index.d.ts",
+    "author": {
+        "name": "Joel Day",
+        "url": "https://github.com/joelday"
+    },
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/joelday/coilsnake-vscode.git",
+        "directory": "packages/ccscript-core"
+    },
+    "keywords": [
+        "CCScript",
+        "parser",
+        "compiler",
+        "EarthBound"
+    ],
+    "scripts": {
+        "build": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage",
+        "lint": "eslint src/",
+        "clean": "rm -rf out coverage"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@types/jest": "^30.0.0",
+        "@types/node": "^22.20.5",
+        "eslint": "^10.12.0",
+        "jest": "^30.5.2",
+        "ts-jest": "^29.4.14",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.71.1"
+    }
+}

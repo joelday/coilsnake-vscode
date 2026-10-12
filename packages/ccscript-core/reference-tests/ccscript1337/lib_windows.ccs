@@ -1,0 +1,17 @@
+///@name: Window Library Test
+///@desc: Tests the windowing commands of the standard library.
+///@expect:
+/// "Open window:[18 01 02]"
+/// "Switch window:[18 03 01]"
+/// "Close window:[18 03 01 18 00]"
+/// "Close topmost:[18 00]"
+/// "Close all:[18 04]"
+/// "Open wallet:[18 0a]"
+
+
+"Open window:" window_open(2)
+"Switch window:" window_switch(1)
+"Close window:" window_close(1)
+"Close topmost:" window_closetop()
+"Close all:" window_closeall()
+"Open wallet:" open_wallet()

@@ -1,0 +1,17 @@
+// String literals with control codes
+define msg1 = "[1B 00]Hello[1B 01] World"
+define msg2 = "Simple text"
+define msg3 = "[FF 00 01 02]Binary data"
+
+// String templates with expressions
+define name = "Ness"
+define greeting = "Hello, {name}!"
+define complex = "Value: {10 + 20}, Flag: {flag 5}"
+
+// Multi-line strings
+define long_text = "This is a very long string that might span " +
+                   "multiple lines in the source code"
+
+// Strings with special characters
+define special = "Quotes: \" and backslash: \\"
+define newlines = "Line 1\nLine 2\nLine 3"

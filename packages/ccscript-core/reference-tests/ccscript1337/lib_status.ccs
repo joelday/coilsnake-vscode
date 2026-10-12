@@ -1,0 +1,46 @@
+///@name: Status Library Test
+///@desc: Tests the character status commands in the standard library.
+///@expect:
+/// 
+/// "Inflict:[19 05 02 01 00]"
+/// "Heal all:[1E 00 FF 64][1E 04 FF 64]"
+/// "Heal:[1E 02 01 0a]"
+/// "Hurt:[1E 03 01 0a]"
+/// "Heal%:[1E 00 02 14]"
+/// "Hurt%:[1E 01 03 64]"
+/// "Yay PP:[1E 06 01 0f]"
+/// "Onoes PP:[1E 07 01 0f]"
+/// "Recover PP %:[1e 04 02 64]"
+/// "Consume PP %:[1e 05 04 32]"
+/// 
+/// "Change level:[1e 08 01 63]"
+/// 
+/// "Boost EXP:[1e 09 01 64 00 00]"
+/// "Boost IQ:[1e 0a 03 0a]"
+/// "Boost GUTS:[1e 0b 01 32]"
+/// "Boost SPD:[1e 0c 01 14]"
+/// "Boost VIT:[1e 0d 04 05]"
+/// "Boost LUCK:[1e 0e 01 02]"
+/// 
+
+
+
+"Inflict:" inflict(2, 1)
+"Heal all:" healall()
+"Heal:" heal(1, 10)
+"Hurt:" hurt(1, 10)
+"Heal%:" heal_percent(2, 20)
+"Hurt%:" hurt_percent(3, 100)
+"Yay PP:" recoverpp(1, 15)
+"Onoes PP:" consumepp(1, 15)
+"Recover PP %:" recoverpp_percent(2, 100)
+"Consume PP %:" consumepp_percent(4, 50)
+
+"Change level:" change_level(1, 99)
+
+"Boost EXP:" boost_exp(1, 100)
+"Boost IQ:" boost_iq(3, 10)
+"Boost GUTS:" boost_guts(1, 50)		// that means you have huge guts!
+"Boost SPD:" boost_speed(1, 20)
+"Boost VIT:" boost_vitality(4, 5)
+"Boost LUCK:" boost_luck(1, 2)

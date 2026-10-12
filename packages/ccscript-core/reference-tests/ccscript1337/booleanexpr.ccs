@@ -1,0 +1,73 @@
+///@name: Boolean Expression Test
+///@desc: Tests the output of the boolean operators
+///@expect:
+/// "[07 01 00][1b 03 0c 00 c0 00][07 02 00]"
+/// "[07 01 00][1b 02 18 00 c0 00][07 02 00]"
+/// "[07 01 00][0b 00]"
+///
+/// "[07 01 00][1b 02 2b 00 c0 00][07 02 00][0b 00]"
+/// "[1b 03 3d 00 c0 00][07 03 00][1b 02 3d 00 c0 00][07 04 00]"
+/// "[1b 02 46 00 c0 00][07 05 00]"
+
+
+// OR
+flag 1 or flag 2
+
+// Result:
+// c0:0000		[07 01 00]				flag 1
+// c0:0003		[1b 03 0c 00 c0 00]		IFTRUE GOTO END
+// c0:0009		[07 02 00]				flag 2
+// c0:000c		<END>
+
+
+// AND
+flag 1 and flag 2
+
+// Result:
+// c0:000c		[07 01 00]				flag 1
+// c0:000f		[1b 02 18 00 c0 00]		IFFALSE GOTO END
+// c0:0015		[07 02 00]				flag 2
+// c0:0018		<END>
+
+
+// NOT
+not flag 1
+
+// Result:
+// c0:0018		[07 01 00]				flag 1
+// c0:001b		[0b 00]					NOT
+
+
+// And now for a nice and hair compound example:
+((flag 1 and not flag 2) or (flag 3 and flag 4)) and flag 5
+
+// Parsed as:
+// 	A and flag 5
+// 	where
+// 		A = B or C
+// 		where
+//			B = flag 1 and not flag 2
+// 		and
+//			C = flag 3 and flag 4
+
+// So, the first expression emitted is A -> B -> flag 1
+
+
+// c0:001d		[07 01 00]				flag 1
+// c0:0020		[1b 02 2b 00 c0 00]		IFFALSE GOTO end1
+// c0:0026		[07 02 00]				flag 2
+// c0:0029		[0b 00]					NOT
+// c0:002b		<end1>					// END OF "flag 1 and not flag 2"
+//			that was B, now for the "or C"
+// c0:002b		[1b 03 3d 00 c0 00]		IFTRUE GOTO end2
+//			C = flag 3 and flag 4, so first we lower flag 3
+// c0:0031		[07 03 00]				flag 3
+// c0:0034		[1b 02 3d 00 c0 00]		IFFALSE goto end2
+// c0:003a		[07 04 00]				flag 4
+// c0:003d		<end2>					// END OF "flag 3 and flag 4"
+//			so now we've finished "B or C", which is "A"
+// c0:003d		[1b 02 46 00 c0 00]		IFFALSE goto end3
+// c0:0043		[07 05 00]				flag 5
+// c0:0046		<end3>					// END of "A and flag 5"
+
+// Whew! That wasn't so bad.

@@ -1,0 +1,25 @@
+///@name: Command Internal Labels Test
+///@desc: Tests the use of labels inside command definitions.
+///@expect:
+/// "Label test."
+/// "[0a 00 00 c0 00]"
+/// "[0a 15 00 c0 00]bar[0a 15 00 c0 00]"
+/// "[0a 22 00 c0 00]bar[0a 22 00 c0 00]"
+/// "[0a 00 00 c0 00]"
+///
+
+label:	// $c0:0000
+	"Label test."
+
+command foo(a) {
+	goto(label)
+	label:
+		a
+	goto(label)
+}
+
+
+goto(label)
+foo("bar")	// for this call, foo's internal label is at $c0:0015
+foo("bar")  // and for this one, it is at $c0:0022
+goto(label)

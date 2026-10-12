@@ -1,0 +1,29 @@
+// Binary expressions with all operators
+define result1 = 1 + 2
+define result2 = 10 - 5
+define result3 = 3 * 4
+define result4 = 20 / 4
+define result5 = 15 % 7
+
+// Comparison operators
+define check1 = 5 == 5
+define check2 = 3 != 4
+define check3 = 10 > 5
+define check4 = 2 < 8
+define check5 = 5 >= 5
+define check6 = 3 <= 7
+
+// Logical operators
+define logic1 = 1 and 0
+define logic2 = 1 or 0
+define logic3 = not 1
+
+// Bitwise operators
+define bits1 = 0xFF & 0x0F
+define bits2 = 0xF0 | 0x0F
+define bits3 = 0xFF ^ 0x0F
+
+// Unary operators
+define neg = -42
+define pos = +10
+define inv = ~0xFF

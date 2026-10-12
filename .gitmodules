@@ -1,0 +1,6 @@
+[submodule "coilsnake"]
+	path = coilsnake
+	url = https://github.com/pk-hack/CoilSnake.git
+[submodule "MaternalBound-Redux"]
+	path = MaternalBound-Redux
+	url = https://github.com/ShadowOne333/MaternalBound-Redux

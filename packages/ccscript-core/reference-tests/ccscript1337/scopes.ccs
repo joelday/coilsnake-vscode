@@ -1,0 +1,52 @@
+///@name: Block Scoping Test
+///@desc: Tests the use of statement blocks to create scopes.
+///@expect:
+/// "[0a 00 00 c0 00]"
+/// "[0a 20 00 c0 00]A label in this scope:[0a 20 00 c0 00]"
+/// "A new scope(A nested scope)"
+/// "[0a 40 00 c0 00]"
+/// "[0a 30 00 c0 00]"
+/// "[0a 00 00 c0 00]"
+/// "!"
+/// "[0a 55 00 c0 00]Pies![0a 55 00 c0 00]"
+
+
+label:	// $C0:0000
+goto(label)
+
+{
+	goto(label)
+	"A label in this scope:"
+	label:	// $C0:0020
+	goto(label)
+}
+
+
+{
+	"A new scope"
+	label:	// $C0:0030
+	
+	{
+		"(A nested scope)"
+		label:	// $C0:0040
+		goto(label)
+	}
+	
+	goto(label)
+}
+
+goto(label)
+
+
+// Now try some scoping in a command invocation
+command foo(x) {
+	"!"
+	x
+}
+
+foo( {
+	goto(label)
+	label:	// should be at $C0:0055 for this invocation
+	"Pies!"
+	goto(label)
+})
