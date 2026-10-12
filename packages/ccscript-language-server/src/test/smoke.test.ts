@@ -2,7 +2,7 @@ import { Hover } from 'vscode-languageserver-protocol';
 import { TestClient, positionOf } from './testClient';
 
 it('starts, publishes diagnostics and answers hover', async () => {
-    const client = await TestClient.start({ files: { '/project/main.ccs': 'command main() { next nope }' } });
+    const client = await TestClient.start({ files: { '/project/main.ccs': 'command main() { next nope }\nmain' } });
     try {
         await client.open('/project/main.ccs');
         const diagnostics = await client.waitForDiagnostics('/project/main.ccs');

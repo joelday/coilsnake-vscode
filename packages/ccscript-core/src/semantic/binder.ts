@@ -21,6 +21,22 @@ export interface SemanticDiagnostic {
     message: string;
     /** Severity level */
     severity: 'error' | 'warning' | 'info';
+    /**
+     * For an unresolved name in a top-level command body or constant value: that declaration.
+     * The compiler only evaluates those when they're reached, so the diagnostic is a warning
+     * here and becomes an error once the declaration is (see Program.getSemanticDiagnostics).
+     */
+    deferredIn?: DeferredDeclaration;
+}
+
+/**
+ * A top-level command or constant, which the compiler evaluates only when it's referenced.
+ */
+export interface DeferredDeclaration {
+    /** Symbol ID */
+    id: string;
+    name: string;
+    kind: SymbolKind.Command | SymbolKind.Constant;
 }
 
 /**
@@ -54,6 +70,10 @@ export interface BindingResult {
     diagnostics: SemanticDiagnostic[];
     /** Map from node to inferred type */
     types: Map<RedNode, Type>;
+    /** IDs of the commands and constants referenced by the module's top-level code */
+    topLevelReferences: Set<string>;
+    /** IDs of the commands and constants referenced by each top-level command or constant (by ID) */
+    deferredReferences: Map<string, Set<string>>;
 }
 
 /**
@@ -67,6 +87,10 @@ export class Binder {
     private references = new Map<RedNode, Symbol>();
     private diagnostics: SemanticDiagnostic[] = [];
     private types = new Map<RedNode, Type>();
+    private topLevelReferences = new Set<string>();
+    private deferredReferences = new Map<string, Set<string>>();
+    /** The top-level command or constant whose body is being bound */
+    private deferredIn: DeferredDeclaration | undefined;
     private readonly context: BindingContext;
 
     private constructor(context: BindingContext) {
@@ -116,6 +140,8 @@ export class Binder {
             references: binder.references,
             diagnostics: binder.diagnostics,
             types: binder.types,
+            topLevelReferences: binder.topLevelReferences,
+            deferredReferences: binder.deferredReferences,
         };
     }
 
@@ -153,6 +179,54 @@ export class Binder {
             message,
             severity,
         });
+    }
+
+    /**
+     * Reports an unresolved name. Like the compiler, which only evaluates a command body or
+     * constant value when it's reached, one in a top-level declaration is only a warning
+     * until something reaches that declaration.
+     */
+    private addUnresolvedDiagnostic(node: RedNode, message: string): void {
+        this.addDiagnostic(node, message, this.deferredIn ? 'warning' : 'error');
+        if (this.deferredIn) {
+            this.diagnostics[this.diagnostics.length - 1].deferredIn = this.deferredIn;
+        }
+    }
+
+    /**
+     * Records a reference to a command or constant, for working out which are evaluated.
+     */
+    private recordReference(symbol: Symbol): void {
+        if (symbol.kind !== SymbolKind.Command && symbol.kind !== SymbolKind.Constant) {
+            return;
+        }
+        if (!this.deferredIn) {
+            this.topLevelReferences.add(symbol.id);
+            return;
+        }
+        let references = this.deferredReferences.get(this.deferredIn.id);
+        if (!references) {
+            references = new Set();
+            this.deferredReferences.set(this.deferredIn.id, references);
+        }
+        references.add(symbol.id);
+    }
+
+    /**
+     * Binds a top-level command body or constant value as deferred to that declaration.
+     * (Nested declarations belong to the top-level one they're in.)
+     */
+    private bindDeferred(symbol: Symbol, bind: () => void): void {
+        if (this.deferredIn || (symbol.kind !== SymbolKind.Command && symbol.kind !== SymbolKind.Constant)) {
+            bind();
+            return;
+        }
+        this.deferredIn = { id: symbol.id, name: symbol.name, kind: symbol.kind };
+        try {
+            bind();
+        } finally {
+            this.deferredIn = undefined;
+        }
     }
 
     /**
@@ -478,16 +552,22 @@ export class Binder {
             return;
         }
 
+        // Check if symbol already exists from pass 1 (module-level)
+        const symbol = this.symbols.lookup(name, [this.currentScope.id]);
+        const isModuleLevel = this.currentScope === this.scopes.getGlobalScope() &&
+            symbol?.modulePath === this.context.filePath;
+
         // Bind the value expression to infer type
         const valueNode = this.findChildExpression(node);
         if (valueNode) {
-            this.bindNode(valueNode);
+            if (symbol && isModuleLevel) {
+                this.bindDeferred(symbol, () => this.bindNode(valueNode));
+            } else {
+                this.bindNode(valueNode);
+            }
         }
 
         const type = valueNode ? (this.types.get(valueNode) || Types.unknown) : Types.unknown;
-
-        // Check if symbol already exists from pass 1 (module-level)
-        const symbol = this.symbols.lookup(name, [this.currentScope.id]);
 
         if (symbol) {
             // Module-level constant, update type
@@ -551,7 +631,7 @@ export class Binder {
         }
 
         // Bind command body
-        this.bindChildren(node);
+        this.bindDeferred(symbol, () => this.bindChildren(node));
 
         this.exitScope();
     }
@@ -589,9 +669,10 @@ export class Binder {
         if (symbol) {
             this.references.set(node, symbol);
             symbol.isUsed = true;
+            this.recordReference(symbol);
             this.types.set(node, symbol.type);
         } else {
-            this.addDiagnostic(node, `Undefined identifier '${name}'`);
+            this.addUnresolvedDiagnostic(node, `Undefined identifier '${name}'`);
             this.types.set(node, Types.unknown);
         }
     }
@@ -626,7 +707,7 @@ export class Binder {
 
         const moduleDeclarations = this.context.resolveModule?.(moduleName);
         if (!moduleDeclarations) {
-            this.addDiagnostic(node, `Unknown module '${moduleName}'`);
+            this.addUnresolvedDiagnostic(node, `Unknown module '${moduleName}'`);
             this.types.set(node, Types.unknown);
             return;
         }
@@ -637,10 +718,11 @@ export class Binder {
 
         if (memberSymbol) {
             memberSymbol.isUsed = true;
+            this.recordReference(memberSymbol);
             this.references.set(node, memberSymbol);
             this.types.set(node, memberSymbol.type);
         } else {
-            this.addDiagnostic(node, `'${moduleName}' has no member '${memberName}'`);
+            this.addUnresolvedDiagnostic(node, `'${moduleName}' has no member '${memberName}'`);
             this.types.set(node, Types.unknown);
         }
     }
@@ -674,12 +756,13 @@ export class Binder {
                             this.addDiagnostic(targetNode, `'${name}' is not a command`);
                         } else {
                             symbol.isUsed = true;
+                            this.recordReference(symbol);
                             commandSymbol = symbol;
                         }
                         this.types.set(node, symbol.type);
                         this.references.set(targetNode, symbol);
                     } else {
-                        this.addDiagnostic(targetNode, `Undefined command '${name}'`);
+                        this.addUnresolvedDiagnostic(targetNode, `Undefined command '${name}'`);
                         this.types.set(node, Types.unknown);
                     }
                 }

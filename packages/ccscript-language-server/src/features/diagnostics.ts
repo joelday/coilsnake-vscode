@@ -36,7 +36,7 @@ function toLspSeverity(severity: DiagnosticSeverity | 'error' | 'warning' | 'inf
 }
 
 export function computeDiagnostics(workspace: Workspace, analysis: Analysis): Diagnostic[] {
-    const { document, tree, binding, filePath } = analysis;
+    const { document, tree, module, filePath } = analysis;
     const range = (start: number, length: number) =>
         Range.create(document.positionAt(start), document.positionAt(start + length));
 
@@ -52,7 +52,7 @@ export function computeDiagnostics(workspace: Workspace, analysis: Analysis): Di
         });
     }
 
-    for (const d of binding.diagnostics) {
+    for (const d of workspace.program.getSemanticDiagnostics(module)) {
         diagnostics.push({
             range: range(d.position, d.length),
             severity: toLspSeverity(d.severity),

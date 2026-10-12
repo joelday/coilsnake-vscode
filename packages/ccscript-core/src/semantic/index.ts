@@ -9,7 +9,7 @@
  */
 
 // Core semantic analysis
-export { Binder, BindingResult, SemanticDiagnostic } from './binder';
+export { Binder, BindingResult, SemanticDiagnostic, DeferredDeclaration } from './binder';
 
 // Symbol table
 export { Symbol, SymbolKind, SymbolTable } from './symbol';

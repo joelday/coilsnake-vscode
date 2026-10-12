@@ -16,7 +16,7 @@ import { SyntaxTree } from './syntaxTree';
 import { RedToken } from './redNode';
 import { SyntaxKind } from './syntax/syntaxKind';
 import { Diagnostic, DiagnosticSeverity } from './syntax/types';
-import { Binder, BindingResult, BindingContext } from './semantic/binder';
+import { Binder, BindingResult, BindingContext, SemanticDiagnostic } from './semantic/binder';
 import { SymbolTable, SymbolKind } from './semantic/symbol';
 
 /**
@@ -121,6 +121,8 @@ export class Program {
     private previousImportedSymbolsCache = new Map<string, { trees: SyntaxTree[]; table: SymbolTable }>();
     /** Top-level declarations per parsed tree (collected once per parse) */
     private readonly declarationCache = new WeakMap<SyntaxTree, SymbolTable>();
+    /** IDs of the commands and constants a build evaluates (computed on demand) */
+    private evaluatedDeclarations: Set<string> | undefined;
     /** Loads that have started but not yet registered their module */
     private readonly inFlightLoads = new Map<string, Promise<Module | null>>();
 
@@ -339,6 +341,63 @@ export class Program {
     }
 
     /**
+     * A module's semantic diagnostics as a build would report them. The compiler only evaluates
+     * a command body or constant value when the code it compiles reaches it, so an unresolved
+     * name in one is an error only if that declaration is reached, and a warning otherwise.
+     */
+    getSemanticDiagnostics(module: Module): SemanticDiagnostic[] {
+        const diagnostics = module.binding?.diagnostics ?? [];
+        if (!diagnostics.some(d => d.deferredIn)) {
+            return diagnostics;
+        }
+        const evaluated = this.getEvaluatedDeclarations();
+        return diagnostics.map(d => {
+            if (!d.deferredIn) {
+                return d;
+            }
+            if (evaluated.has(d.deferredIn.id)) {
+                return { ...d, severity: 'error' };
+            }
+            const kind = d.deferredIn.kind === SymbolKind.Command ? 'command' : 'constant';
+            return { ...d, message: `${d.message} (an error once ${kind} '${d.deferredIn.name}' is used)` };
+        });
+    }
+
+    /**
+     * Whether a build evaluates a command or constant: whether it's referenced by top-level code,
+     * or by a command or constant that is.
+     */
+    isEvaluated(symbolId: string): boolean {
+        return this.getEvaluatedDeclarations().has(symbolId);
+    }
+
+    private getEvaluatedDeclarations(): Set<string> {
+        if (this.evaluatedDeclarations) {
+            return this.evaluatedDeclarations;
+        }
+        const evaluated = new Set<string>();
+        const pending: string[] = [];
+        const reach = (id: string) => {
+            if (!evaluated.has(id)) {
+                evaluated.add(id);
+                pending.push(id);
+            }
+        };
+        const deferredReferences = new Map<string, Set<string>>();
+        for (const module of this.getAllModules()) {
+            module.binding?.deferredReferences.forEach((ids, id) => deferredReferences.set(id, ids));
+        }
+        for (const module of this.getAllModules()) {
+            module.binding?.topLevelReferences.forEach(reach);
+        }
+        while (pending.length > 0) {
+            deferredReferences.get(pending.pop()!)?.forEach(reach);
+        }
+        this.evaluatedDeclarations = evaluated;
+        return evaluated;
+    }
+
+    /**
      * Bind a module against its imports.
      */
     private bindModule(module: Module): void {
@@ -357,6 +416,7 @@ export class Program {
 
         const binding = Binder.bindReferences(module.tree.getRoot(), context);
         (module as { binding?: BindingResult }).binding = binding;
+        this.evaluatedDeclarations = undefined;
 
         this.log(`Bound ${module.name}: ${binding.diagnostics.length} diagnostics`);
     }
@@ -454,6 +514,7 @@ export class Program {
         }
 
         this.modules.delete(normalizedPath);
+        this.evaluatedDeclarations = undefined;
         if (this.modulesByName.get(module.name) === module) {
             this.modulesByName.delete(module.name);
         }

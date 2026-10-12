@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
     Diagnostic,
+    DiagnosticSeverity,
     FileChangeType,
     Hover,
     Position,
@@ -45,7 +46,7 @@ describe('Editing', () => {
     });
 
     it('applies incremental edits', async () => {
-        client = await TestClient.start({ files: { '/project/main.ccs': 'command main() {\n    nxt\n}' } });
+        client = await TestClient.start({ files: { '/project/main.ccs': 'command main() {\n    nxt\n}\nmain' } });
         await client.open('/project/main.ccs');
         expect(messages(await client.waitForDiagnostics('/project/main.ccs'))).toEqual(["Undefined identifier 'nxt'"]);
 
@@ -57,7 +58,7 @@ describe('Editing', () => {
         client = await TestClient.start({
             files: {
                 '/project/lib.ccs': 'command helper() { }',
-                '/project/main.ccs': 'import lib\ncommand main() { helper() }',
+                '/project/main.ccs': 'import lib\ncommand main() { helper() }\nmain',
             },
         });
         await client.open('/project/main.ccs');
@@ -69,11 +70,28 @@ describe('Editing', () => {
             .toEqual(["Undefined command 'helper'"]);
     });
 
+    it('reports unresolved names in a command as errors once another file uses it', async () => {
+        client = await TestClient.start({
+            files: {
+                '/project/lib.ccs': 'command helper() { nope }',
+                '/project/main.ccs': 'import lib',
+            },
+        });
+        await client.open('/project/main.ccs');
+        await client.open('/project/lib.ccs');
+        const unused = await client.waitForDiagnostics('/project/lib.ccs');
+        expect(unused.map(d => d.severity)).toEqual([DiagnosticSeverity.Warning]);
+
+        await client.change('/project/main.ccs', 'import lib\nhelper');
+        const used = await client.waitForDiagnostics('/project/lib.ccs', d => d[0]?.severity === DiagnosticSeverity.Error);
+        expect(messages(used)).toEqual(["Undefined identifier 'nope'"]);
+    });
+
     it('reverts to the file on disk when a document is closed without saving', async () => {
         client = await TestClient.start({
             files: {
                 '/project/lib.ccs': 'command helper() { }',
-                '/project/main.ccs': 'import lib\ncommand main() { helper() }',
+                '/project/main.ccs': 'import lib\ncommand main() { helper() }\nmain',
             },
         });
         await client.open('/project/main.ccs');
@@ -89,7 +107,7 @@ describe('Editing', () => {
         client = await TestClient.start({
             files: {
                 '/project/lib.ccs': 'command helper() { }',
-                '/project/main.ccs': 'import lib\ncommand main() { helper() }',
+                '/project/main.ccs': 'import lib\ncommand main() { helper() }\nmain',
             },
         });
         await client.open('/project/main.ccs');
@@ -111,7 +129,7 @@ describe('Editing', () => {
         client = await TestClient.start({
             files: {
                 '/project/lib.ccs': 'command helper() { }',
-                '/project/main.ccs': 'import lib\ncommand main() { helper() }',
+                '/project/main.ccs': 'import lib\ncommand main() { helper() }\nmain',
             },
         });
         await client.open('/project/main.ccs');
@@ -125,7 +143,7 @@ describe('Editing', () => {
 
     it('publishes diagnostics when files load slowly (as from a real disk)', async () => {
         // Opening a file loads its whole directory; validation can run before that finishes
-        const files: Record<string, string> = { '/project/main.ccs': 'command main() { next nope }' };
+        const files: Record<string, string> = { '/project/main.ccs': 'command main() { next nope }\nmain' };
         for (let i = 0; i < 20; i++) {
             files[`/project/sibling_${i}.ccs`] = `command c${i}() { next }`;
         }
