@@ -126,7 +126,7 @@ jobs:
           npx vsce package --no-dependencies $VERSION_ARGS $PRERELEASE_ARG
           --out coilsnake-vscode-${{ needs.setup.outputs.version }}.vsix
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vsix
           path: packages/vscode-extension/*.vsix
